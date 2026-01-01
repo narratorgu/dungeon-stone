@@ -1,0 +1,59 @@
+{
+    "TYPES.Actor.character": "Персонаж",
+    "TYPES.Actor.monster": "Монстр",
+    "TYPES.Item.weapon": "Оружие",
+    "TYPES.Item.armor": "Снаряжение",
+    "TYPES.Item.consumable": "Расходник",
+    "TYPES.Item.loot": "Лут/Сокровище",
+    "TYPES.Item.essence": "Эссенция",
+    "TYPES.Item.spell": "Заклинание",
+    "TYPES.Item.feature": "Навык",
+    "TYPES.Item.lineage": "Родословная",
+  
+    "DUNGEON.Physique": "Телосложение",
+    "DUNGEON.Spirit": "Дух",
+    
+    "DUNGEON.Strength": "Сила",
+    "DUNGEON.Agility": "Ловкость",
+    "DUNGEON.Endurance": "Выносливость",
+    "DUNGEON.Accuracy": "Точность",
+    "DUNGEON.Throwing": "Метание",
+    "DUNGEON.Flexibility": "Гибкость",
+    "DUNGEON.BoneDensity": "Плотность Костей",
+    "DUNGEON.NaturalRegeneration": "Естественная Регенерация",
+    "DUNGEON.Perception": "Восприятие",
+    "DUNGEON.Vision": "Зрение",
+    "DUNGEON.PhysicalResistance": "Физ. Сопротивление",
+    
+    "DUNGEON.MagicResistance": "Маг. Сопротивление",
+    "DUNGEON.ManaSensitivity": "Чувствительность Маны",
+    "DUNGEON.SpiritRecovery": "Восстановление Духа",
+  
+    "DUNGEON.Resistances": "Сопротивления",
+    "DUNGEON.DamageTypes": {
+      "slashing": "Рубящий",
+      "blunt": "Дробящий",
+      "piercing": "Колющий",
+      "fire": "Огонь",
+      "cold": "Холод",
+      "lightning": "Молния",
+      "acid": "Кислота",
+      "poison": "Яд",
+      "psychic": "Психический",
+      "light": "Свет",
+      "dark": "Тьма",
+      "pure": "Чистый"
+    },
+  
+    "DUNGEON.Rank": "Ранг",
+    "DUNGEON.DropChance": "Шанс Дропа",
+    "DUNGEON.Price": "Цена",
+    "DUNGEON.Weight": "Вес",
+    "DUNGEON.Range": "Дистанция",
+    "DUNGEON.Damage": "Урон",
+    
+    "DUNGEON.Attacks": "Атаки",
+    "DUNGEON.Abilities": "Способности",
+    "DUNGEON.Inventory": "Инвентарь",
+    "DUNGEON.Description": "Описание"
+}

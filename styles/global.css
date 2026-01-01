@@ -1,0 +1,111 @@
+/* --- БАЗА ОКНА --- */
+.dungeon-stone.sheet.actor {
+    min-height: 800px;
+    min-width: 1050px;
+}
+
+.dungeon-stone .window-content {
+    background: #0e0e0e; /* Fallback */
+    background: var(--color-bg-dark);
+    color: #e0e0e0;
+    font-family: "Signika", sans-serif;
+    padding: 8px;
+    font-size: 13px;
+}
+
+/* Сброс стилей инпутов */
+.dungeon-stone input[type="text"], 
+.dungeon-stone input[type="number"] {
+    background: #000 !important;
+    color: #fff !important;
+    border: 1px solid #444 !important;
+    border-radius: 2px;
+    height: 24px;
+    padding: 0 5px;
+    box-shadow: none;
+}
+.dungeon-stone input:focus { 
+    border-color: #d4af37 !important; 
+}
+
+/* --- ШАПКА --- */
+.sheet-header {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 15px;
+    margin-bottom: 10px;
+    background: #151515;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+.profile-img {
+    width: 110px;
+    height: 110px;
+    border: 1px solid #555;
+    background: #000;
+    object-fit: cover;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.charname input {
+    font-size: 26px;
+    border: none !important;
+    background: transparent !important;
+    width: 300px;
+    font-weight: bold;
+}
+
+/* --- ТАБЫ --- */
+.sheet-tabs {
+    flex: 0 0 30px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+}
+
+.sheet-tabs .item {
+    padding: 5px 10px;
+    color: #888;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.sheet-tabs .item:hover {
+    color: #ccc;
+}
+
+.sheet-tabs .item.active {
+    color: #d4af37;
+    border-bottom: 3px solid #d4af37;
+}
+
+/* --- ДИАЛОГИ --- */
+.dungeon-dialog .form-group {
+    margin-bottom: 10px;
+}
+
+.dungeon-dialog label {
+    display: block;
+    margin-bottom: 3px;
+    color: #ccc;
+}
+
+.dungeon-dialog input,
+.dungeon-dialog select {
+    width: 100%;
+    padding: 5px;
+    background: #222;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 3px;
+}

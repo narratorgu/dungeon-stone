@@ -1,0 +1,33 @@
+/* --- СЕТКИ И ПАНЕЛИ --- */
+.resources-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.sheet-body .grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    align-items: start;
+}
+
+.panel {
+    background: #181818;
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.panel h3 {
+    margin: 0 0 10px 0;
+    border-bottom: 1px solid #d4af37;
+    padding-bottom: 2px;
+    color: #d4af37;
+    font-size: 14px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

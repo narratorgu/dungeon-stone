@@ -1,0 +1,524 @@
+/* --- УРОВЕНЬ И ОПЫТ --- */
+.level-container {
+    text-align: right;
+    width: 250px;
+}
+
+.level-display {
+    font-size: 16px;
+    font-weight: bold;
+    color: #d4af37;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+}
+
+.xp-bar-container {
+    position: relative;
+    height: 14px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #b8860b, #ffd700);
+    width: 0%;
+    transition: width 0.5s;
+    position: absolute;
+    left: 0; 
+    top: 0;
+}
+
+.xp-text {
+    position: relative;
+    width: 100%;
+    text-align: center;
+    font-size: 10px;
+    line-height: 14px;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.xp-add-btn {
+    display: inline-block;
+    background: #333;
+    color: #0f0;
+    border: 1px solid #555;
+    width: 16px;
+    height: 16px;
+    line-height: 14px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 5px;
+    z-index: 3;
+}
+.xp-add-btn:hover { background: #444; color: #fff; }
+
+/* --- РЕСУРСЫ (HP/MANA/REGEN) --- */
+.res-box {
+    background: #000;
+    border: 1px solid #333;
+    padding: 4px;
+    text-align: center;
+    border-radius: 3px;
+}
+
+.res-box label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    display: block;
+}
+
+.res-bar {
+    position: relative;
+    height: 20px;
+    background: #222;
+    border: 1px solid #444;
+    margin-top: 2px;
+}
+
+.res-fill { 
+    height: 100%; 
+    position: absolute; 
+    top: 0; 
+    left: 0;
+    transition: width 0.3s ease;
+}
+
+.res-val {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+    z-index: 2;
+}
+
+.res-val input {
+    background: transparent !important;
+    border: none !important;
+    text-align: center;
+    width: 60px;
+    color: #fff !important;
+}
+
+.regen-btn {
+    background: #400;
+    color: #faa;
+    border: 1px solid #600;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.regen-btn:hover { background: #600; color: #fff; }
+
+/* ========================================
+   ГЛАЗИКИ ВИДИМОСТИ (VISIBILITY)
+   ======================================== */
+.vis-btn {
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 3px;
+    border: 1px solid #555;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.vis-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: #888;
+    transform: scale(1.1);
+}
+
+.vis-btn .fa-eye { 
+    color: #0f0 !important; 
+    text-shadow: 0 0 6px #0f0, 0 0 10px #0f0;
+    opacity: 1 !important;
+}
+
+.vis-btn .fa-eye-slash,
+.vis-btn i.hidden { 
+    color: #f44 !important; 
+    text-shadow: 0 0 6px #f00, 0 0 10px #f00;
+    opacity: 1 !important;
+}
+
+.vis-icon {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* --- ТАБЛИЦА СТАТОВ --- */
+.stat-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 60px;
+    gap: 5px;
+    align-items: center;
+    background: #222;
+    margin-bottom: 4px;
+    padding: 4px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+}
+.stat-row:hover { border-color: #555; }
+
+.stat-name {
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stat-name:hover { color: #fff; text-shadow: 0 0 5px #d4af37; }
+.stat-name.dimmed { color: #555; font-style: italic; }
+
+.stat-row input { text-align: center; width: 100% !important; }
+.stat-val-display { text-align: center; font-weight: bold; font-size: 14px; color: #fff; }
+
+/* --- БОЛЬШИЕ СТАТЫ --- */
+.big-stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.big-stat {
+    flex: 1;
+    background: #0a0a0a;
+    border: 1px solid #444;
+    padding: 8px;
+    text-align: center;
+    position: relative;
+}
+
+.big-stat label {
+    display: block;
+    color: #d4af37;
+    font-size: 12px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.big-stat input {
+    font-size: 24px;
+    width: 100%;
+    text-align: center;
+    background: transparent !important;
+    border: none;
+    color: #fff !important;
+    font-weight: bold;
+}
+
+.big-stat .vis-btn { position: absolute; top: 5px; left: 5px; font-size: 12px; }
+.big-stat .stat-value-box { font-size: 24px; font-weight: bold; color: #fff; }
+.big-stat .stat-value-box.dimmed { color: #555; }
+
+/* === СОПРОТИВЛЕНИЯ === */
+.resist-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 10px;
+}
+
+.resist-row {
+    display: grid;
+    grid-template-columns: 24px 1fr 50px; /* Увеличили место под кнопку (было 20px) */
+    gap: 5px;
+    align-items: center;
+    background: #222;
+    padding: 4px 6px;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+.resist-row > span:first-of-type { color: #aaa; white-space: nowrap; }
+.resist-row > span:last-of-type { color: #fff; font-weight: bold; text-align: center; }
+.resist-row span.dimmed { color: #555 !important; font-style: italic; }
+
+.resist-row input {
+    width: 100% !important;
+    height: 22px !important;
+    font-size: 11px !important;
+    text-align: center !important;
+    padding: 2px !important;
+}
+
+/* --- ИНВЕНТАРЬ (Внутри актера) --- */
+.inventory-section { margin-bottom: 15px; }
+.inventory-section h3 {
+    border-bottom: 1px solid #555;
+    padding-bottom: 3px;
+    color: #ddd;
+    font-size: 13px;
+    display: flex; 
+    justify-content: space-between;
+}
+
+.items-list { list-style: none; margin: 0; padding: 0; }
+.item-entry { 
+    background: #252525; 
+    padding: 4px; 
+    margin-bottom: 2px; 
+    display: flex; 
+    align-items: center; 
+    border: 1px solid #333;
+    border-radius: 2px;
+}
+.item-entry:hover { border-color: #555; background: #2a2a2a; }
+
+.item-entry img { width: 24px; height: 24px; margin-right: 5px; border: none; }
+.item-name { flex: 1; font-weight: bold; color: #ddd; }
+
+.item-controls { display: flex; gap: 3px; }
+.item-controls a { color: #666; cursor: pointer; padding: 2px 4px; }
+.item-controls a:hover { color: #fff; }
+.item-controls button {
+    background: #333;
+    border: 1px solid #555;
+    color: #aaa;
+    cursor: pointer;
+    border-radius: 2px;
+}
+.item-controls button:hover { background: #444; color: #fff; }
+
+.editor-box {
+    background: #000;
+    border: 1px solid #333;
+    padding: 5px;
+    height: 250px; 
+    min-height: 250px;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-box.small {
+    height: 150px;
+    min-height: 150px;
+}
+
+.editor-box .editor {
+    height: 100%;
+    color: #ddd;
+}
+
+.editor-box .editor-content {
+    height: 100%;
+    padding: 5px;
+}
+
+/* --- КНОПКА МЕДИТАЦИИ (СИНЯЯ) --- */
+.meditation-btn {
+    background: #002244;
+    color: #aaddff;
+    border: 1px solid #004488;
+    float: right;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.meditation-btn:hover {
+    background: #003366;
+    color: #fff;
+    box-shadow: 0 0 5px #0088ff;
+}
+
+/* --- КАЛЬКУЛЯТОР КАМНЕЙ МАНЫ --- */
+.currency-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.currency-display {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 16px;
+    text-shadow: 0 0 2px #000;
+}
+
+.currency-input-wrapper {
+    display: flex;
+    width: 100%;
+    border-top: 1px solid #333;
+    margin-top: 2px;
+}
+
+.currency-input {
+    background: rgba(0,0,0,0.5) !important;
+    border: none !important;
+    color: #0f0 !important; /* Зеленый текст для ввода */
+    font-size: 11px !important;
+    text-align: center !important;
+    height: 18px !important;
+    width: 100%;
+}
+.currency-input::placeholder { color: #555; }
+
+/* --- ПОЛЕ РОЛИ --- */
+.role-box {
+    margin-top: 5px;
+    border-top: 1px solid #333;
+    padding-top: 5px;
+}
+.role-box label {
+    font-size: 10px;
+    color: #aaa;
+    text-transform: uppercase;
+}
+.role-input {
+    width: 100%;
+    background: #111 !important;
+    border: 1px solid #444 !important;
+    color: #d4af37 !important;
+    font-weight: bold;
+}
+
+/* --- СЛОТЫ ПРЕДМЕТОВ (Роль/Родословная) --- */
+.item-slot {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 4px;
+    min-height: 40px;
+    margin-top: 5px;
+    transition: all 0.2s;
+}
+
+/* Пустой слот - пунктир */
+.item-slot.empty {
+    border: 2px dashed #444;
+    justify-content: center;
+    color: #555;
+    font-size: 11px;
+    background: rgba(0,0,0,0.2);
+}
+
+/* Заполненный слот */
+.item-slot.filled {
+    background: #222;
+    border: 1px solid #444;
+}
+.item-slot.filled:hover {
+    border-color: #d4af37;
+    background: #2a2a2a;
+}
+
+.item-slot img {
+    width: 32px;
+    height: 32px;
+    border: none;
+    margin-right: 8px;
+    object-fit: cover;
+    background: #000;
+}
+
+.slot-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+}
+
+.slot-name {
+    font-weight: bold;
+    color: #e0e0e0;
+    font-size: 13px;
+}
+
+.slot-meta {
+    font-size: 10px;
+    color: #d4af37;
+}
+
+/* --- УМНЫЙ ИНПУТ (Base vs Total) --- */
+.smart-input-wrapper {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    display: inline-block;
+}
+
+/* Поле ввода (содержит БАЗУ) */
+.smart-input-wrapper input {
+    width: 100% !important;
+    height: 100% !important;
+    text-align: center !important;
+    color: #888 !important; /* База чуть тусклее */
+    background: #111 !important;
+    font-size: 12px;
+}
+
+/* Накладка (содержит ИТОГ) */
+.smart-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000; /* Цвет фона перекрывает инпут */
+    color: #fff;      /* Итог яркий */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 13px;
+    border: 1px solid #444;
+    border-radius: 2px;
+    pointer-events: none; /* Пропускает клик сквозь себя на инпут */
+    transition: opacity 0.1s;
+}
+
+/* Логика: Когда наводим на контейнер или инпут в фокусе - скрываем Итог */
+.smart-input-wrapper:hover .smart-overlay,
+.smart-input-wrapper input:focus + .smart-overlay {
+    opacity: 0;
+}
+
+/* Модификатор слева */
+.mod-label {
+    font-size: 10px;
+    color: #6bf;
+    margin-right: 5px;
+    font-weight: bold;
+}

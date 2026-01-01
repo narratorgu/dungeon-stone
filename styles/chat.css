@@ -1,0 +1,80 @@
+/* --- ЧАТ КАРТОЧКИ --- */
+.dungeon-chat-card {
+    background: #181818;
+    border: 1px solid #444;
+    color: #eee;
+    padding: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    font-family: "Signika", sans-serif;
+}
+
+.dungeon-chat-card header, 
+.dungeon-chat-card .card-header {
+    background: #222;
+    padding: 5px 8px;
+    border-bottom: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dungeon-chat-card h3 { 
+    margin: 0; 
+    color: #d4af37; 
+    font-size: 14px; 
+    border: none; 
+}
+
+.dungeon-chat-card .card-body, 
+.dungeon-chat-card .content { 
+    padding: 10px; 
+    text-align: center; 
+    font-size: 16px; 
+}
+
+.dungeon-chat-card .card-footer { 
+    background: #111; 
+    padding: 4px 8px; 
+    font-size: 10px; 
+    color: #666; 
+    text-align: right; 
+    border-top: 1px solid #333;
+}
+
+.dungeon-chat-card .outcome {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 5px;
+}
+
+.dungeon-chat-card.success { border-color: #4a4; }
+.dungeon-chat-card.success .outcome { color: #4f4; }
+.dungeon-chat-card.failure { border-color: #a44; }
+.dungeon-chat-card.failure .outcome { color: #f44; }
+
+.dungeon-chat-card button {
+    background: #333;
+    border: 1px solid #555;
+    color: #ddd;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.dungeon-chat-card button:hover {
+    background: #444;
+    color: #fff;
+}
+
+/* По умолчанию скрываем секретную инфу */
+.dungeon-stone .gm-only {
+    display: none;
+    background: #220000;
+    border: 1px solid #500;
+    padding: 5px;
+    margin-top: 5px;
+    font-size: 11px;
+    color: #ebb;
+}

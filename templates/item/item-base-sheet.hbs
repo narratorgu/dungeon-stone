@@ -1,0 +1,44 @@
+<form class="{{cssClass}}" autocomplete="off">
+    <header class="sheet-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название"/></h1>
+            <div class="resources-grid">
+                <div class="res-box">
+                    <label>Кол-во</label>
+                    <input type="number" name="system.quantity" value="{{system.quantity}}"/>
+                </div>
+                <div class="res-box">
+                    <label>Вес</label>
+                    <input type="number" name="system.weight" value="{{system.weight}}"/>
+                </div>
+                <div class="res-box">
+                    <label>Цена</label>
+                    <input type="number" name="system.price" value="{{system.price}}"/>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    {{#if (eq item.type "armor")}}
+    <div class="panel" style="margin: 10px 0;">
+        <div class="grid-2col">
+            <div class="form-group">
+                <label>Защита (Броня)</label>
+                <input type="number" name="system.armorValue" value="{{system.armorValue}}"/>
+            </div>
+            <div class="form-group">
+                <label>Штраф Ловкости</label>
+                <input type="number" name="system.armorPenalty" value="{{system.armorPenalty}}"/>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    <section class="sheet-body">
+        <div class="panel" style="height: 250px;">
+            <h3>Описание</h3>
+            {{editor system.description target="system.description" button=true owner=owner editable=editable}}
+        </div>
+    </section>
+</form>

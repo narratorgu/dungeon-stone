@@ -1,0 +1,91 @@
+<form class="{{cssClass}}" autocomplete="off">
+    <header class="sheet-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название оружия"/></h1>
+            <div class="resources-grid">
+                <div class="res-box">
+                    <label>Вес</label>
+                    <input type="number" name="system.weight" value="{{system.weight}}"/>
+                </div>
+                <div class="res-box">
+                    <label>Цена</label>
+                    <input type="number" name="system.price" value="{{system.price}}"/>
+                </div>
+                <div class="res-box">
+                    <label>Дистанция</label>
+                    <input type="number" name="system.range" value="{{system.range}}"/>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item" data-tab="attributes">Параметры</a>
+        <a class="item" data-tab="description">Описание</a>
+        <a class="item" data-tab="effects">Эффекты</a>
+    </nav>
+
+    <section class="sheet-body">
+                <div class="tab attributes" data-group="primary" data-tab="attributes">
+            <div class="panel">
+                <div class="form-group">
+                    <label>Урон (Формула)</label>
+                    <input type="text" name="system.damage" value="{{system.damage}}" placeholder="1d8"/>
+                </div>
+                
+                {{!-- СКАЛИРОВАНИЕ --}}
+                <div class="form-group">
+                    <label>Скалирование Атаки (Пул кубов)</label>
+                    <select name="system.scaling" style="width:100%">
+                        <option value="strength" {{#if (eq system.scaling "strength")}}selected{{/if}}>Сила</option>
+                        <option value="agility" {{#if (eq system.scaling "agility")}}selected{{/if}}>Ловкость</option>
+                        <option value="endurance" {{#if (eq system.scaling "endurance")}}selected{{/if}}>Выносливость</option>
+                        <option value="proficiency" {{#if (eq system.scaling "proficiency")}}selected{{/if}}>Только Владение</option>
+                    </select>
+                </div>
+
+                {{!-- ТИП АТАКИ --}}
+                <div class="form-group">
+                    <label>Тип Атаки</label>
+                    <select name="system.attackType" style="width:100%">
+                        {{selectOptions config.attackTypes selected=system.attackType}}
+                    </select>
+                </div>
+
+                {{!-- ВЛАДЕНИЕ --}}
+                {{#if (eq system.attackType "melee")}}
+                <div class="form-group">
+                    <label>Категория Владения</label>
+                    <select name="system.proficiency" style="width:100%">
+                        {{selectOptions config.proficiencies selected=system.proficiency}}
+                    </select>
+                </div>
+                {{/if}}
+            </div>
+
+            {{!-- ВЫБОР ТИПОВ УРОНА --}}
+            <div class="panel" style="margin-top:10px;">
+                <h3>Типы Урона (Опции)</h3>
+                <p style="font-size:10px; color:#aaa; margin-bottom:5px;">Отметьте все типы, которыми можно нанести удар этим оружием.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    {{#each config.damageTypes as |label type|}}
+                        <label style="display:flex; align-items:center; gap:5px; font-size:11px;">
+                            {{!-- lookup ищет значение переменной type внутри объекта system.availableTypes --}}
+                            <input type="checkbox" name="system.availableTypes.{{type}}" {{checked (lookup ../system.availableTypes type)}}/>
+                            {{label}}
+                        </label>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+
+        <div class="tab description" data-group="primary" data-tab="description">
+            <div class="editor-box">
+                {{editor system.description target="system.description" button=true owner=owner editable=editable}}
+            </div>
+        </div>
+        
+        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+    </section>
+</form>

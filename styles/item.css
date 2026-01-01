@@ -1,0 +1,5 @@
+/* --- СТИЛИ ПРЕДМЕТОВ --- */
+.dungeon-stone.sheet.item {
+    min-height: 400px;
+    min-width: 500px;
+}

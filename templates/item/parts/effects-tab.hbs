@@ -1,0 +1,23 @@
+<div class="tab effects" data-group="primary" data-tab="effects">
+    <div class="panel">
+        <h3 style="display:flex; justify-content:space-between;">
+            Активные Эффекты
+            <a class="effect-create" title="Создать Эффект"><i class="fas fa-plus"></i></a>
+        </h3>
+        <ul class="items-list">
+            {{#each effects as |effect|}}
+            <li class="item-entry effect-item" data-effect-id="{{effect.id}}">
+                <img src="{{effect.img}}"/>
+                <div class="item-name" style="{{#if effect.disabled}}text-decoration:line-through; color:#777;{{/if}}">{{effect.name}}</div>
+                <div class="item-controls">
+                    <a class="effect-toggle"><i class="fas {{#if effect.disabled}}fa-toggle-off{{else}}fa-toggle-on{{/if}}"></i></a>
+                    <a class="effect-edit"><i class="fas fa-edit"></i></a>
+                    <a class="effect-delete"><i class="fas fa-trash"></i></a>
+                </div>
+            </li>
+            {{else}}
+                <li style="text-align:center; color:#555; font-style:italic; padding:5px;">Нет эффектов</li>
+            {{/each}}
+        </ul>
+    </div>
+</div>

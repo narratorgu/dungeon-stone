@@ -1,0 +1,67 @@
+<form class="{{cssClass}}" autocomplete="off">
+    <header class="sheet-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Эссенции"/></h1>
+            <div class="grid-2col">
+                 <div class="res-box">
+                    <label>Ранг</label>
+                    <select name="system.rank" style="background:#000; color:#fff; width:100%;">
+                        {{selectOptions config.ranks selected=system.rank}}
+                    </select>
+                </div>
+                <div class="res-box">
+                    <label>Цена</label>
+                    <input type="number" name="system.price" value="{{system.price}}"/>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item" data-tab="details">Способности</a>
+        <a class="item" data-tab="description">Лор</a>
+        <a class="item" data-tab="effects">Эффекты</a>
+    </nav>
+
+    <section class="sheet-body">
+        
+        {{!-- Вкладка Способности --}}
+        <div class="tab details" data-group="primary" data-tab="details">
+            <div class="panel">
+                <h3>Активная Способность</h3>
+                {{!-- Для активной способности делаем редактор поменьше --}}
+                <div class="editor-box small">
+                    {{editor system.activeAbility target="system.activeAbility" button=true owner=owner editable=editable}}
+                </div>
+            </div>
+            
+            <div class="panel" style="margin-top:10px;">
+                <h3>Пассивный Бонус</h3>
+                <div class="grid-2col">
+                    <div class="form-group">
+                        <label>Атрибут (ключ)</label>
+                        <input type="text" name="system.passiveBonuses.target" value="{{system.passiveBonuses.target}}" placeholder="strength"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Значение (+)</label>
+                        <input type="number" name="system.passiveBonuses.value" value="{{system.passiveBonuses.value}}"/>
+                    </div>
+                </div>
+                <p style="font-size:10px; color:#aaa; margin-top:5px;">
+                    Ключи: strength, agility, endurance, boneDensity, naturalRegeneration, magicResistance...
+                </p>
+            </div>
+        </div>
+
+        {{!-- Вкладка Лор/Описание --}}
+        <div class="tab description" data-group="primary" data-tab="description">
+            <div class="editor-box">
+                {{editor system.description target="system.description" button=true owner=owner editable=editable}}
+            </div>
+        </div>
+        
+        {{!-- Вкладка Эффекты --}}
+        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+    </section>
+</form>

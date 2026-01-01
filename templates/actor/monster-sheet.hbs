@@ -1,0 +1,166 @@
+<form class="{{cssClass}}" autocomplete="off">
+    <header class="sheet-header">
+        <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
+        <div class="header-fields">
+            <div class="header-top">
+                <div class="charname"><input name="name" type="text" value="{{actor.name}}" placeholder="Название Монстра"/></div>
+                <div class="level-box" style="color:#f44; font-weight:bold; font-size:18px;">
+                    Ранг <input type="number" name="system.rank" value="{{system.rank}}" style="width:40px; display:inline-block; text-align:center; background:#111; color:#fff; border:1px solid #444;"/>
+                </div>
+            </div>
+            <div class="resources-grid">
+                <div class="res-box">
+                    <label>HP</label>
+                    <div class="res-bar">
+                        <div class="res-fill" style="width:{{hpPercent}}%; background:#800;"></div>
+                        <div class="res-val">
+                            <input type="number" name="system.resources.hp.value" value="{{system.resources.hp.value}}"/> / {{system.resources.hp.max}}
+                        </div>
+                    </div>
+                </div>
+                <div class="res-box">
+                    <label>Дух</label>
+                    <div class="res-bar">
+                         <div class="res-fill" style="width:{{manaPercent}}%; background:#004;"></div>
+                         <div class="res-val">
+                             <input type="number" name="system.resources.mana.value" value="{{system.resources.mana.value}}"/> / {{system.resources.mana.max}}
+                         </div>
+                    </div>
+                </div>
+                <div class="res-box">
+                    <label>Шанс Дропа</label>
+                    <input type="number" name="system.dropChance" value="{{system.dropChance}}" step="0.01" style="text-align:center;"/>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="sheet-body grid-2col">
+        <div class="column">
+            <div class="form-group">
+                <label>Размер</label>
+                <select name="system.details.size" style="background:#111; color:#fff;">
+                    {{selectOptions config.sizes selected=system.details.size labelAttr="label"}}
+                </select>
+            </div>
+            <div class="panel">
+                <h3>Характеристики</h3>
+                {{!-- Используем тот же Partial, что и у персонажа --}}
+                {{!-- Это починит внешний вид и возможность редактирования --}}
+
+                {{!-- СКОРОСТЬ (Исправленная верстка) --}}
+                <div class="stat-row" style="display: flex; align-items: center; justify-content: space-between;">
+                    <label>Скорость</label>
+                    
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                         {{!-- Поле ввода бонуса (База) --}}
+                         <input class="direct-edit" 
+                                type="number" 
+                                name="system.attributes.speedBonus" 
+                                value="{{sourceSystem.attributes.speedBonus}}" 
+                                placeholder="0"
+                                style="width: 40px !important; flex: 0 0 40px; height: 22px; text-align: center; background: #111; border: 1px solid #444; color: #aaa;"/>
+                         
+                         {{!-- Итоговое значение (Не редактируется) --}}
+                         <span style="font-weight: bold; color: #fff; min-width: 35px; text-align: right;">
+                             {{system.attributes.speed}} м
+                         </span>
+                    </div>
+                </div>
+                
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="strength" label="Сила" val=system.subAttributes.strength sourceVal=sourceSystem.subAttributes.strength visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="agility" label="Ловкость" val=system.subAttributes.agility sourceVal=sourceSystem.subAttributes.agility visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="endurance" label="Выносливость" val=system.subAttributes.endurance sourceVal=sourceSystem.subAttributes.endurance visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="boneDensity" label="Плотность" val=system.subAttributes.boneDensity sourceVal=sourceSystem.subAttributes.boneDensity visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="accuracy" label="Точность" val=system.subAttributes.accuracy sourceVal=sourceSystem.subAttributes.accuracy visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="naturalRegeneration" label="Регенерация" val=system.subAttributes.naturalRegeneration sourceVal=sourceSystem.subAttributes.naturalRegeneration visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="physicalResistance" label="Физ. Сопр." val=system.subAttributes.physicalResistance sourceVal=sourceSystem.subAttributes.physicalResistance visible=true isGM=true}}
+                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="magicResistance" label="Маг. Сопр." val=system.subAttributes.magicResistance sourceVal=sourceSystem.subAttributes.magicResistance visible=true isGM=true}}
+            </div>
+
+            <div class="panel" style="margin-top:10px;">
+                <h3>Сопротивления</h3>
+                <div class="resist-grid">
+                    {{!-- Хелпер для Монстра (упрощенный, без глазиков, всегда виден) --}}
+                    {{#*inline "monsterResist"}}
+                    <div class="resist-row" style="grid-template-columns: 1fr 50px;">
+                        <span>{{label}}</span>
+                        {{!-- Используем direct-edit для надежного сохранения --}}
+                        <input class="direct-edit" type="number" name="system.resistances.{{stat}}" value="{{val}}"/>
+                    </div>
+                    {{/inline}}
+
+                    {{> monsterResist stat="slashing" label="Рубящий" val=system.resistances.slashing}}
+                    {{> monsterResist stat="blunt" label="Дробящий" val=system.resistances.blunt}}
+                    {{> monsterResist stat="piercing" label="Колющий" val=system.resistances.piercing}}
+                    {{> monsterResist stat="fire" label="Огонь" val=system.resistances.fire}}
+                    {{> monsterResist stat="cold" label="Холод" val=system.resistances.cold}}
+                    {{> monsterResist stat="lightning" label="Молния" val=system.resistances.lightning}}
+                    {{> monsterResist stat="poison" label="Яд" val=system.resistances.poison}}
+                    {{> monsterResist stat="acid" label="Кислота" val=system.resistances.acid}}
+                    {{> monsterResist stat="psychic" label="Психика" val=system.resistances.psychic}}
+                    {{> monsterResist stat="light" label="Свет" val=system.resistances.light}}
+                    {{> monsterResist stat="dark" label="Тьма" val=system.resistances.dark}}
+                    {{> monsterResist stat="pure" label="Чистый" val=system.resistances.pure}}
+                </div>
+            </div>
+        </div>
+
+        <div class="column">
+            <div class="panel">
+                <h3>Атаки <a class="item-create" data-type="weapon" style="float:right;">+</a></h3>
+                <ol class="items-list">
+                    {{#each weapons as |item|}}
+                    <li class="item-entry" data-item-id="{{item._id}}">
+                        <img src="{{item.img}}"/>
+                        <div class="item-name">
+                            {{item.name}}
+                            <span style="font-size:10px; color:#aaa;">{{item.system.damage}} {{item.system.damageType}}</span>
+                        </div>
+                        <div class="item-controls">
+                            <button class="weapon-roll" style="width:24px; padding:0;"><i class="fas fa-crosshairs"></i></button>
+                            <a class="item-edit"><i class="fas fa-edit"></i></a>
+                            <a class="item-delete"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                    {{/each}}
+                </ol>
+            </div>
+
+            <div class="panel" style="margin-top:10px;">
+                <h3>Лут / Инвентарь <a class="item-create" data-type="loot" style="float:right;">+</a></h3>
+                <ol class="items-list">
+                    {{#each loot as |item|}}
+                    <li class="item-entry" data-item-id="{{item._id}}">
+                        <img src="{{item.img}}"/>
+                        <span class="item-name">{{item.name}}</span>
+                        <div class="item-controls">
+                            <a class="item-edit"><i class="fas fa-edit"></i></a>
+                            <a class="item-delete"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                    {{/each}}
+                    {{#each essencesByRank as |rankItems rankNum|}}
+                        {{#each rankItems as |item|}}
+                        <li class="item-entry" data-item-id="{{item._id}}">
+                            <img src="{{item.img}}"/>
+                            <span class="item-name" style="color:#d4af37;">{{item.name}} (Р{{rankNum}})</span>
+                            <div class="item-controls">
+                                <a class="item-edit"><i class="fas fa-edit"></i></a>
+                                <a class="item-delete"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </li>
+                        {{/each}}
+                    {{/each}}
+                </ol>
+            </div>
+            
+            <div class="panel" style="margin-top:10px; height:200px;">
+                <h3>Описание / Заметки</h3>
+                <div class="editor-box">
+                    {{editor system.biography target="system.biography" button=true owner=owner editable=editable}}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

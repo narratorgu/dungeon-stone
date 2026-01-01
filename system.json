@@ -1,0 +1,97 @@
+{
+    "id": "dungeon-stone",
+    "title": "Dungeon & Stone TTRPG",
+    "description": "System based on Dungeon & Stone mechanics.",
+    "version": "1.0.0",
+    "compatibility": {
+      "minimum": "13",
+      "verified": "13"
+    },
+    "authors": [
+      {
+        "name": "narratorgu",
+        "flags": {}
+      }
+    ],
+    "esmodules": ["dungeon-stone.mjs"],
+    "styles": [
+        "styles/variables.css",
+        "styles/global.css",
+        "styles/layout.css",
+        "styles/actor.css",
+        "styles/item.css",
+        "styles/chat.css"
+    ],
+    "documentTypes": {
+    "Actor": {
+      "character": {},
+      "monster": {}
+    },
+    "Item": {
+      "weapon": {},
+      "armor": {},
+      "consumable": {},
+      "loot": {},
+      "essence": {},
+      "feature": {},
+      "lineage": {},
+      "contract": {},
+      "spell": {}, 
+      "role": {}
+    }
+  },
+  "grid": {
+    "distance": 2,
+    "units": "m"
+  },
+  "languages": [
+    {
+      "lang": "ru",
+      "name": "Russian",
+      "path": "lang/ru.json"
+    }
+  ],
+  "primaryTokenAttribute": "resources.hp",
+  "secondaryTokenAttribute": "resources.mana",
+  "packs": [
+    {
+      "name": "roles",
+      "label": "Классы (Роли)",
+      "path": "packs/roles",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
+      "name": "lineages",
+      "label": "Родословные",
+      "path": "packs/lineages",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
+      "name": "essences",
+      "label": "Эссенции",
+      "path": "packs/essences",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
+      "name": "spells",
+      "label": "Книга Заклинаний",
+      "path": "packs/spells",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
+      "name": "gear",
+      "label": "Снаряжение и Оружие",
+      "path": "packs/gear",
+      "type": "Item",
+      "system": "dungeon-stone"
+    }
+  ],
+  "socket": true,
+  "manifest": "https://github.com/narratorgu/dungeon-stone/releases/latest/download/system.json",
+  "download": "https://github.com/narratorgu/dungeon-stone/releases/latest/download/dungeon-stone.zip",
+  "readme": "https://github.com/narratorgu/dungeon-stone/blob/master/README.md"
+}
