@@ -27,13 +27,6 @@ The **code** (JavaScript, CSS, HTML) provided in this repository is licensed und
 ## Установка
 
 1. Скопируйте ссылку на манифест:
-   `https://github.com/ВАШ_НИК/dungeon-stone/releases/latest/download/system.json`
+   `https://github.com/narratorgu/dungeon-stone/releases/latest/download/system.json`
 2. В Foundry VTT перейдите в **Game Systems** -> **Install System**.
 3. Вставьте ссылку в поле **Manifest URL** и нажмите Install.
-
-## Функционал
-
-*   **Хардкорная боевка:** Автоматический расчет КС, КУ, Истощение защиты.
-*   **Глубокая физика:** Логарифмические резисты, Плотность костей.
-*   **Конструктор:** Роли, Родословные, Эссенции с Активными Эффектами.
-*   **QoL:** Макросы, авто-сброс защиты, калькулятор маны.
