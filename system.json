@@ -2,7 +2,7 @@
     "id": "dungeon-stone",
     "title": "Dungeon & Stone TTRPG",
     "description": "System based on Dungeon & Stone mechanics.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "compatibility": {
       "minimum": "13",
       "verified": "13"
