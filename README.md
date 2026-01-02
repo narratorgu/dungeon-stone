@@ -2,7 +2,7 @@
 
 A fan-made system implementation for Foundry VTT based on the mechanics and setting of the webnovel/manhwa **"Surviving the Game as a Barbarian"**.
 
-**Версия системы:** 1.0.0  
+**Версия системы:** 1.0.1  
 **Совместимость:** Foundry V12 / V13
 
 ---
