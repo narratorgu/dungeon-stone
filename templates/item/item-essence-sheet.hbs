@@ -3,17 +3,48 @@
         <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
         <div class="header-fields">
             <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Эссенции"/></h1>
-            <div class="grid-2col">
-                 <div class="res-box">
-                    <label>Ранг</label>
-                    <select name="system.rank" style="background:#000; color:#fff; width:100%;">
-                        {{selectOptions config.ranks selected=system.rank}}
-                    </select>
-                </div>
+                        <div class="grid-3col">
+                {{!-- ... Ранг, Мана ... --}}
+                <div class="res-box"><label>Ранг</label>...</div>
+                <div class="res-box"><label>MP</label><input type="number" name="system.manaCost" value="{{system.manaCost}}"/></div>
                 <div class="res-box">
                     <label>Цена</label>
                     <input type="number" name="system.price" value="{{system.price}}"/>
                 </div>
+                
+                <div class="res-box">
+                    <label>Скалирование</label>
+                    <select name="system.scaling" style="width:100%">
+                        <option value="spirit" {{#if (eq system.scaling "spirit")}}selected{{/if}}>Дух</option>
+                        <option value="accuracy" {{#if (eq system.scaling "accuracy")}}selected{{/if}}>Точность</option>
+                        <option value="cognition" {{#if (eq system.scaling "cognition")}}selected{{/if}}>Когнитивность</option>
+                        <option value="none" {{#if (eq system.scaling "none")}}selected{{/if}}>Нет броска</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid-2col" style="margin-top:5px;">
+                <div class="form-group">
+                    <label>Урон (Формула)</label>
+                    <input type="text" name="system.damage" value="{{system.damage}}" placeholder="3d6"/>
+                </div>
+                <div class="form-group">
+                    <label>Тип Урона</label>
+                    <select name="system.damageType">
+                        {{selectOptions config.damageTypes selected=system.damageType}}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top:5px;">
+                <label>Спасбросок Цели (Атрибут)</label>
+                <select name="system.saveAttribute">
+                    <option value="">-- Нет --</option>
+                    <option value="physique" {{#if (eq system.saveAttribute "physique")}}selected{{/if}}>Телосложение</option>
+                    <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость (Рефлекс)</option>
+                    <option value="spirit" {{#if (eq system.saveAttribute "spirit")}}selected{{/if}}>Дух (Воля)</option>
+                    <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля (Спец)</option>
+                </select>
             </div>
         </div>
     </header>

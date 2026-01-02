@@ -23,8 +23,8 @@ game.dungeon = {
     
     // Запускаем логику в зависимости от типа
     if (item.type === "weapon") return actor.rollWeaponAttack(item.id);
-    if (item.type === "spell" || item.type === "contract") {
-        return actor.useItem(item.id);
+    if (["spell", "essence", "contract", "feature"].includes(item.type)) {
+      return actor.useItem(item.id);
     }
     
     return item.sheet.render(true); // Для остальных просто открываем лист

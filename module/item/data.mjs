@@ -37,17 +37,44 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
   }
 }
 
-export class EssenceData extends foundry.abstract.TypeDataModel {
+export class SpellData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
     return {
       rank: new NumberField({ initial: 9, min: 1, max: 9 }),
-      activeAbility: new HTMLField(),
-      passiveBonuses: new SchemaField({
-        target: new StringField({ initial: "strength" }),
-        value: new NumberField({ initial: 0 })
-      }),
-      price: new NumberField({ initial: 100 }),
+      manaCost: new NumberField({ initial: 10 }),
+      
+      // Скалирование атаки (если есть бросок)
+      scaling: new StringField({ initial: "spirit" }), // spirit, intelligence, accuracy...
+      
+      // Урон
+      damage: new StringField({ initial: "" }),
+      damageType: new StringField({ initial: "magic" }),
+      
+      // Спасбросок (для цели)
+      saveAttribute: new StringField({ initial: "" }), // "", physique, agility, spirit...
+      saveDC: new NumberField({ initial: 0 }), // 0 = авторасчет (например, 10 + Spirit/5)
+      
       description: new HTMLField()
+    };
+  }
+}
+
+// EssenceData (добавляем то же самое)
+export class EssenceData extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {
+      rank: new NumberField({ initial: 9 }),
+      activeAbility: new HTMLField(),
+      passiveBonuses: new SchemaField({ /*...*/ }),
+      price: new NumberField({ initial: 100 }),
+      description: new HTMLField(),
+      
+      // Новые поля для активки
+      manaCost: new NumberField({ initial: 0 }),
+      damage: new StringField({ initial: "" }),
+      damageType: new StringField({ initial: "pure" }),
+      scaling: new StringField({ initial: "spirit" }),
+      saveAttribute: new StringField({ initial: "" })
     };
   }
 }
@@ -77,17 +104,6 @@ export class RoleData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
       return {
         rank: new NumberField({ initial: 9, min: 1, max: 9 }),
-        description: new HTMLField()
-      };
-    }
-}
-  
-export class SpellData extends foundry.abstract.TypeDataModel {
-    static defineSchema() {
-      return {
-        rank: new NumberField({ initial: 9, min: 1, max: 9 }), // Ранг самого заклинания
-        manaCost: new NumberField({ initial: 10 }),
-        damage: new StringField({ initial: "" }),
         description: new HTMLField()
       };
     }

@@ -425,7 +425,7 @@
                                     </h4>
                                     <ol class="items-list">
                                         {{#each group.list as |item|}}
-                                        <li class="item-entry" data-item-id="{{item._id}}">
+                                        <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                                             <img src="{{item.img}}"/>
                                             <div class="item-name">{{item.name}}</div>
                                             <div class="item-controls">
@@ -468,7 +468,7 @@
                 
                 <ol class="items-list">
                     {{#each contracts as |item|}}
-                    <li class="item-entry" data-item-id="{{item._id}}">
+                    <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                         <img src="{{item.img}}"/>
                         <div class="item-name">
                             {{item.name}}
@@ -571,7 +571,7 @@
                 <h3>Оружие</h3>
                 <ol class="items-list">
                     {{#each weapons as |item|}}
-                    <li class="item-entry" data-item-id="{{item._id}}">
+                    <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                         <img src="{{item.img}}"/>
                         <div class="item-name">
                             {{item.name}} 
@@ -595,7 +595,7 @@
                 <h3>Активные Способности (Эссенции)</h3>
                 <ol class="items-list">
                     {{#each abilities as |item|}}
-                    <li class="item-entry" data-item-id="{{item._id}}">
+                    <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                         <img src="{{item.img}}"/>
                         <div class="item-name">{{item.name}}</div>
                         <div class="item-controls">
@@ -623,7 +623,7 @@
                         </h3>
                         <ol class="items-list">
                             {{#each weapons as |item|}}
-                            <li class="item-entry" data-item-id="{{item._id}}">
+                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                                 <img src="{{item.img}}"/>
                                 <span class="item-name">{{item.name}}</span>
                                 {{#if ../isGM}}
@@ -644,7 +644,7 @@
                         </h3>
                         <ol class="items-list">
                             {{#each armor as |item|}}
-                            <li class="item-entry" data-item-id="{{item._id}}">
+                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                                 <img src="{{item.img}}"/>
                                 <span class="item-name">{{item.name}}</span>
                                 {{#if ../isGM}}
@@ -665,7 +665,7 @@
                         </h3>
                         <ol class="items-list">
                             {{#each consumables as |item|}}
-                            <li class="item-entry" data-item-id="{{item._id}}">
+                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                                 <img src="{{item.img}}"/>
                                 <span class="item-name">{{item.name}}</span>
                                 {{#if ../isGM}}
@@ -693,7 +693,7 @@
                             </div>
                             <ol class="items-list">
                                 {{#each rankItems as |item|}}
-                                <li class="item-entry" data-item-id="{{item._id}}">
+                                <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                                     <img src="{{item.img}}"/>
                                     <span class="item-name">{{item.name}}</span>
                                     {{#if ../../isGM}}
@@ -716,7 +716,7 @@
                         </h3>
                         <ol class="items-list">
                             {{#each loot as |item|}}
-                            <li class="item-entry" data-item-id="{{item._id}}">
+                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
                                 <img src="{{item.img}}"/>
                                 <span class="item-name">{{item.name}}</span>
                                 {{#if ../isGM}}

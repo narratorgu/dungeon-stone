@@ -173,6 +173,34 @@ export class DungeonActorSheet extends BaseActorSheet {
     context.contracts = contracts;
   }
 
+  /** @override */
+  _onDragStart(event) {
+    const li = event.currentTarget;
+    
+    // 1. Если это Предмет (стандартная логика)
+    if (li.dataset.itemId) {
+        const item = this.actor.items.get(li.dataset.itemId);
+        event.dataTransfer.setData("text/plain", JSON.stringify({
+            type: "Item",
+            uuid: item.uuid
+        }));
+        return;
+    }
+    
+    // 2. Если это Атрибут/Навык (наш кастомный draggable)
+    // В шаблоне нужно добавить draggable="true" и data-key="..." к строкам статов
+    if (li.dataset.key) {
+        const label = li.dataset.label || "Check";
+        const rollData = {
+            type: "Macro", // Обманываем Foundry, говорим что это макрос
+            command: `const actor = game.actors.get("${this.actor.id}"); if(actor) actor.rollAttribute("${li.dataset.key}", "${label}");`,
+            name: label,
+            img: "icons/svg/d20.svg" // Или иконка стата
+        };
+        event.dataTransfer.setData("text/plain", JSON.stringify(rollData));
+    }
+  }
+
   activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
@@ -184,6 +212,11 @@ export class DungeonActorSheet extends BaseActorSheet {
 
     // --- БРОСКИ СТАТОВ ---
     html.find('.rollable').click(this._onRoll.bind(this));
+
+    // Разрешаем перетаскивание статов
+    html.find('.rollable').attr("draggable", "true").on("dragstart", this._onDragStart.bind(this));
+    // Разрешаем перетаскивание предметов (если класс .item не сработал)
+    html.find('.item-entry').attr("draggable", "true").on("dragstart", this._onDragStart.bind(this));
     
     // --- ГЛАЗИКИ ---
     html.find('.vis-btn').click(async (event) => {

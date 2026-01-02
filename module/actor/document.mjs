@@ -55,22 +55,64 @@ export class DungeonActor extends Actor {
     const item = this.items.get(itemId);
     if (!item) return;
     
-    let content = `<div class="card-body">${item.system.activeAbility || item.system.description}</div>`;
+    const sys = item.system;
+    const manaCost = sys.manaCost || 0;
     
-    if (item.type === 'spell') {
-        content = `
-          <div style="font-size:12px; color:#aaa; margin-bottom:5px;">Ранг ${item.system.rank} | Мана: ${item.system.manaCost}</div>
-          <div class="card-body">${item.system.description}</div>
-          ${item.system.damage ? `<div style="margin-top:5px; font-weight:bold; color:#d4af37;">Эффект: ${item.system.damage}</div>` : ""}
-        `;
+    // 1. Проверка и трата маны
+    if (manaCost > 0) {
+        const currentMana = this.system.resources.mana.value;
+        if (currentMana < manaCost) {
+            return ui.notifications.warn(`Недостаточно маны! Нужно ${manaCost}, есть ${currentMana}.`);
+        }
+        // Сразу вычитаем? Или кнопку добавить? Обычно удобнее сразу.
+        await this.update({"system.resources.mana.value": currentMana - manaCost});
     }
+
+    // 2. Формируем кнопки для чата
+    let buttons = "";
+    
+    // Кнопка Атаки (если есть скалирование)
+    if (sys.scaling && sys.scaling !== "none") {
+        // Используем наш универсальный метод атаки, но передаем itemId
+        // Нам придется научить rollWeaponAttack работать с заклинаниями или сделать rollSpellAttack
+        // Проще всего: добавить data-action="spell-attack" и обработать его
+        buttons += `<button data-action="spell-attack" data-item-id="${item.id}">⚔️ Бросок Магии (${sys.scaling})</button>`;
+    }
+    
+    // Кнопка Урона (если есть формула)
+    if (sys.damage) {
+        buttons += `<button data-action="roll-damage" data-item-id="${item.id}">🎲 Урон (${sys.damage})</button>`;
+    }
+    
+    // Кнопка требования Спасброска (для ГМа)
+    if (sys.saveAttribute) {
+        // Расчет DC спасброска (например, 10 + Дух/5 + Ранг)
+        const spirit = this.system.attributes.spirit;
+        const dc = 20 + Math.floor(spirit / 5) + (sys.rank * 2); 
+        buttons += `<div style="margin-top:5px; border-top:1px dashed #555; padding-top:2px;">
+                      <div style="font-size:11px; color:#aaa;">Сложность спаса: ${dc} (${sys.saveAttribute})</div>
+                      <button data-action="request-save" data-dc="${dc}" data-attr="${sys.saveAttribute}">🛡️ Запросить Спас</button>
+                    </div>`;
+    }
+
+    // 3. Вывод в чат
+    const description = sys.description || sys.activeAbility || "";
     
     ChatMessage.create({ 
         speaker: ChatMessage.getSpeaker({actor: this}), 
         content: `
           <div class="dungeon-chat-card">
-              <h3>${item.name}</h3>
-              ${content}
+              <header>
+                  <img src="${item.img}" width="30" height="30">
+                  <h3>${item.name}</h3>
+              </header>
+              <div class="card-body">
+                  ${manaCost > 0 ? `<div style="color:#aaf; font-size:11px; margin-bottom:5px;">Потрачено ${manaCost} Маны</div>` : ""}
+                  ${description}
+              </div>
+              <div class="card-buttons" style="margin-top:10px;">
+                  ${buttons}
+              </div>
           </div>
         `, 
         style: CONST.CHAT_MESSAGE_STYLES.OTHER 
@@ -363,7 +405,10 @@ export class DungeonActor extends Actor {
         const scaling = item.system.scaling || "strength";
         
         let statVal = 0;
-        if (scaling === "strength") statVal = this.system.subAttributes.strength;
+        if (scaling === "spirit") statVal = this.system.attributes.spirit;
+        else if (scaling === "accuracy") statVal = this.system.subAttributes.accuracy;
+        else if (scaling === "cognition") statVal = this.system.subAttributes.cognition;
+        else if (scaling === "strength") statVal = this.system.subAttributes.strength;
         else if (scaling === "agility") statVal = this.system.subAttributes.agility;
         else if (scaling === "endurance") statVal = this.system.subAttributes.endurance;
         else if (scaling === "proficiency") statVal = 0;
@@ -501,7 +546,7 @@ export class DungeonActor extends Actor {
                               hit = true;
                               outcome = "ПОПАДАНИЕ";
                               outcomeColor = "green";
-                              if (targetActor) depletion = Math.floor(atkSuccesses / 3);
+                              if (targetActor) depletion = Math.max(1, Math.ceil(successes / 3));
                           } else {
                               if (atkSuccesses > 0) {
                                   outcome = "ЗАБЛОКИРОВАНО (КУ)";
