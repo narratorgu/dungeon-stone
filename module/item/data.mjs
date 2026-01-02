@@ -51,9 +51,22 @@ export class SpellData extends foundry.abstract.TypeDataModel {
       damageType: new StringField({ initial: "magic" }),
       
       // Спасбросок (для цели)
+      saveDC: new NumberField({ initial: 0 }), 
+      saveKU: new NumberField({ initial: 1 }),
       saveAttribute: new StringField({ initial: "" }), // "", physique, agility, spirit...
       saveDC: new NumberField({ initial: 0 }), // 0 = авторасчет (например, 10 + Spirit/5)
       
+      description: new HTMLField()
+    };
+  }
+}
+
+export class BlessingData extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {
+      source: new StringField({ initial: "Divine" }), // От кого (Бог, Раса)
+      active: new BooleanField({ initial: true }), // Включено ли
+      duration: new StringField({ initial: "Permanent" }), 
       description: new HTMLField()
     };
   }

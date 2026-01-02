@@ -18,6 +18,8 @@ export class DungeonItemSheet extends BaseItemSheet {
     if (type === 'essence') return "systems/dungeon-stone/templates/item/item-essence-sheet.hbs";
     if (type === 'role') return "systems/dungeon-stone/templates/item/item-role-sheet.hbs";
     if (type === 'spell') return "systems/dungeon-stone/templates/item/item-spell-sheet.hbs";
+    if (type === 'contract') return "systems/dungeon-stone/templates/item/item-contract-sheet.hbs";
+    if (type === 'blessing') return "systems/dungeon-stone/templates/item/item-blessing-sheet.hbs";
     if (type === 'lineage') return "systems/dungeon-stone/templates/item/item-lineage-sheet.hbs"; // Новый шаблон
     return "systems/dungeon-stone/templates/item/item-base-sheet.hbs";
   }

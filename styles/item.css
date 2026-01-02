@@ -3,3 +3,31 @@
     min-height: 400px;
     min-width: 500px;
 }
+
+/* Исправление для выпадающих списков в ресурсах */
+.res-box select {
+    text-overflow: clip !important;
+    white-space: normal !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    min-width: 0; /* Разрешаем сжиматься, но контент покажем */
+    font-size: 11px !important;
+    background: transparent !important;
+    border: none !important;
+    text-align: center;
+    text-align-last: center; /* Для центрирования выбранной опции */
+    color: #fff !important;
+    -webkit-appearance: none; /* Убираем стандартную стрелочку браузера */
+    appearance: none;
+}
+
+/* Добавляем свою стрелочку (опционально, если хотите) */
+.res-box {
+    position: relative;
+}
+
+/* Расширим сами коробки в хедерах предметов */
+.sheet-header .grid-3col .res-box,
+.sheet-header .grid-2col .res-box {
+    overflow: visible !important; /* Разрешаем вылезать за границы */
+}

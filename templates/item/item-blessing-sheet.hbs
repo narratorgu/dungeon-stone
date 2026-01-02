@@ -1,0 +1,32 @@
+<form class="{{cssClass}}" autocomplete="off">
+    <header class="sheet-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Благословения"/></h1>
+            <div class="grid-2col">
+                <div class="res-box">
+                    <label>Источник</label>
+                    <input type="text" name="system.source" value="{{system.source}}"/>
+                </div>
+                <div class="res-box">
+                    <label>Активно?</label>
+                    <input type="checkbox" name="system.active" {{checked system.active}}/>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item" data-tab="description">Описание</a>
+        <a class="item" data-tab="effects">Эффекты</a>
+    </nav>
+
+    <section class="sheet-body">
+        <div class="tab description" data-group="primary" data-tab="description">
+            <div class="editor-box">
+                {{editor system.description target="system.description" button=true owner=owner editable=editable}}
+            </div>
+        </div>
+        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+    </section>
+</form>

@@ -126,6 +126,7 @@ export class DungeonActorSheet extends BaseActorSheet {
     const abilities = [];
     const others = [];
     const contracts = [];
+    const blessings = [];
     
     // Создаем каркас для заклинаний: [ {rank: 9, list: [], visible: false}, ... ]
     const spellsByRank = [];
@@ -138,6 +139,7 @@ export class DungeonActorSheet extends BaseActorSheet {
     for (let i of context.items) {
       if (i.type === 'weapon') weapons.push(i);
       else if (i.type === 'armor') armor.push(i);
+      else if (i.type === 'blessing') blessings.push(i);
       else if (i.type === 'consumable') consumables.push(i);
       else if (i.type === 'loot') loot.push(i);
       else if (i.type === 'lineage') lineages.push(i);
@@ -175,6 +177,7 @@ export class DungeonActorSheet extends BaseActorSheet {
 
   /** @override */
   _onDragStart(event) {
+    if (event.originalEvent) event = event.originalEvent;
     const li = event.currentTarget;
     
     // 1. Если это Предмет (стандартная логика)
@@ -315,7 +318,13 @@ export class DungeonActorSheet extends BaseActorSheet {
     });
 
     // Использование способности
-    html.find('.ability-use').click(this._onAbilityUse.bind(this));
+    html.find('.ability-use').click(ev => {
+        ev.preventDefault();
+        const element = $(ev.currentTarget).closest("[data-item-id]");
+        const itemId = element.data("itemId");
+        // Вызов метода актера
+        if (itemId) this.actor.useItem(itemId); 
+    });
   }
 
   async _onRoll(event) {

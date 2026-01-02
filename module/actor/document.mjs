@@ -5,6 +5,32 @@ import * as Dice from "../mechanics/dice.mjs";       // Импортируем �
 export class DungeonActor extends Actor {
 
   /** @override */
+  async _preUpdate(changed, options, user) {
+    await super._preUpdate(changed, options, user);
+
+    // Если меняются ресурсы
+    if (changed.system?.resources) {
+        const hp = changed.system.resources.hp;
+        const mana = changed.system.resources.mana;
+        const data = this.system.resources;
+
+        // Ограничение HP
+        if (hp?.value !== undefined) {
+            // Если max не меняется в этом апдейте, берем текущий, иначе новый
+            const max = hp.max !== undefined ? hp.max : data.hp.max;
+            // Зажимаем между 0 и Max
+            hp.value = Math.max(0, Math.min(hp.value, max));
+        }
+
+        // Ограничение Маны
+        if (mana?.value !== undefined) {
+            const max = mana.max !== undefined ? mana.max : data.mana.max;
+            mana.value = Math.max(0, Math.min(mana.value, max));
+        }
+    }
+  }
+
+  /** @override */
   prepareDerivedData() {
     super.prepareDerivedData();
     const system = this.system;
@@ -56,46 +82,69 @@ export class DungeonActor extends Actor {
     if (!item) return;
     
     const sys = item.system;
-    const manaCost = sys.manaCost || 0;
+    console.log("Dungeon & Stone | Use Item:", item.name, sys); // <--- ОТЛАДКА
+
+    const manaCost = Number(sys.manaCost) || 0;
     
-    // 1. Проверка и трата маны
+    // 1. ТРАТА МАНЫ
     if (manaCost > 0) {
         const currentMana = this.system.resources.mana.value;
         if (currentMana < manaCost) {
-            return ui.notifications.warn(`Недостаточно маны! Нужно ${manaCost}, есть ${currentMana}.`);
+            return ui.notifications.warn(`Недостаточно маны! Требуется ${manaCost}, у вас ${currentMana}.`);
         }
-        // Сразу вычитаем? Или кнопку добавить? Обычно удобнее сразу.
         await this.update({"system.resources.mana.value": currentMana - manaCost});
     }
 
-    // 2. Формируем кнопки для чата
+    // 2. ПОДГОТОВКА КНОПОК
     let buttons = "";
     
-    // Кнопка Атаки (если есть скалирование)
+    // А) Кнопка Атаки
+    // Проверяем scaling. Если он undefined, null или "none" - кнопки не будет.
+    // В консоли посмотрите, чему равен sys.scaling
     if (sys.scaling && sys.scaling !== "none") {
-        // Используем наш универсальный метод атаки, но передаем itemId
-        // Нам придется научить rollWeaponAttack работать с заклинаниями или сделать rollSpellAttack
-        // Проще всего: добавить data-action="spell-attack" и обработать его
-        buttons += `<button data-action="spell-attack" data-item-id="${item.id}">⚔️ Бросок Магии (${sys.scaling})</button>`;
+        let label = sys.scaling;
+        if (label === 'spirit') label = "Дух";
+        else if (label === 'intelligence') label = "Интеллект";
+        else if (label === 'accuracy') label = "Точность";
+        else if (label === 'cognition') label = "Когнитивность";
+        
+        buttons += `<button data-action="spell-attack" data-item-id="${item.id}">⚔️ Атака (${label})</button>`;
     }
     
-    // Кнопка Урона (если есть формула)
-    if (sys.damage) {
+    // Б) Кнопка Урона
+    if (sys.damage && String(sys.damage).trim() !== "") {
         buttons += `<button data-action="roll-damage" data-item-id="${item.id}">🎲 Урон (${sys.damage})</button>`;
     }
     
-    // Кнопка требования Спасброска (для ГМа)
-    if (sys.saveAttribute) {
-        // Расчет DC спасброска (например, 10 + Дух/5 + Ранг)
-        const spirit = this.system.attributes.spirit;
-        const dc = 20 + Math.floor(spirit / 5) + (sys.rank * 2); 
-        buttons += `<div style="margin-top:5px; border-top:1px dashed #555; padding-top:2px;">
-                      <div style="font-size:11px; color:#aaa;">Сложность спаса: ${dc} (${sys.saveAttribute})</div>
-                      <button data-action="request-save" data-dc="${dc}" data-attr="${sys.saveAttribute}">🛡️ Запросить Спас</button>
+    // В) Кнопка Спасброска
+    let saveInfo = "";
+    if (sys.saveAttribute && sys.saveAttribute !== "") {
+        let dc = sys.saveDC;
+        const ku = sys.saveKU || 1;
+        // Если DC не задан (0 или null), считаем авто-DC
+        if (!dc || dc === 0) {
+            const spirit = this.system.attributes.spirit || 0;
+            const k = 6; 
+            dc = Math.min(90, 50 + k * Math.log(1 + spirit));
+            dc = Math.floor(dc);
+        }
+        
+        const attrNames = {
+            "physique": "Телосложение",
+            "agility": "Ловкость",
+            "spirit": "Дух",
+            "willpower": "Воля"
+        };
+        const attrLabel = attrNames[sys.saveAttribute] || sys.saveAttribute;
+
+        saveInfo = `<div style="margin-top:5px; border-top:1px dashed #555; padding-top:2px; font-size:11px; color:#aaa;">
+                      DC Спаса: <b>${dc}</b> (${attrLabel})
                     </div>`;
+                    
+        buttons += `<button data-action="request-save" data-dc="${dc}" data-ku="${ku}" data-attr="${sys.saveAttribute}">🛡️ Запросить Спас (DC ${dc}, КУ ${ku})</button>`;
     }
 
-    // 3. Вывод в чат
+    // 3. ОТПРАВКА В ЧАТ
     const description = sys.description || sys.activeAbility || "";
     
     ChatMessage.create({ 
@@ -103,14 +152,17 @@ export class DungeonActor extends Actor {
         content: `
           <div class="dungeon-chat-card">
               <header>
-                  <img src="${item.img}" width="30" height="30">
+                  <img src="${item.img}" width="30" height="30" style="margin-right:5px">
                   <h3>${item.name}</h3>
               </header>
+              
               <div class="card-body">
-                  ${manaCost > 0 ? `<div style="color:#aaf; font-size:11px; margin-bottom:5px;">Потрачено ${manaCost} Маны</div>` : ""}
+                  ${manaCost > 0 ? `<div style="color:#aaddff; font-weight:bold; font-size:11px; margin-bottom:5px;">💧 Потрачено ${manaCost} Маны</div>` : ""}
                   ${description}
+                  ${saveInfo}
               </div>
-              <div class="card-buttons" style="margin-top:10px;">
+              
+              <div class="card-buttons" style="margin-top:10px; display:flex; flex-direction:column; gap:5px;">
                   ${buttons}
               </div>
           </div>
@@ -423,7 +475,12 @@ export class DungeonActor extends Actor {
             profBonus += this.system.subAttributes.throwing;
         }
   
-        const totalStat = statVal + profBonus;
+        let totalStat = 0;
+        if (statVal > profBonus) {
+            totalStat = statVal;
+        } else if (statVal <= profBonus) {
+            totalStat = profBonus;
+        }
         const attackPool = Calc.getDicePool(totalStat);
   
         // --- 2. ЦЕЛЬ ---
@@ -546,13 +603,13 @@ export class DungeonActor extends Actor {
                               hit = true;
                               outcome = "ПОПАДАНИЕ";
                               outcomeColor = "green";
-                              if (targetActor) depletion = Math.max(1, Math.ceil(successes / 3));
+                              if (targetActor) depletion = Math.max(1, Math.ceil(atkSuccesses / 3));
                           } else {
                               if (atkSuccesses > 0) {
                                   outcome = "ЗАБЛОКИРОВАНО (КУ)";
                                   outcomeColor = "orange";
                                   // Истощение работает даже при блоке
-                                  if (targetActor) depletion = Math.floor(atkSuccesses / 3);
+                                  if (targetActor) depletion = Math.max(1, Math.ceil(atkSuccesses / 3));
                               }
                           }
                       } else {
@@ -626,8 +683,8 @@ export class DungeonActor extends Actor {
                       ChatMessage.create({
                           speaker: ChatMessage.getSpeaker({actor: this}),
                           content: content,
-                          type: CONST.CHAT_MESSAGE_TYPES.ROLL,
-                          rolls: rollsArray, // Foundry покажет кубы обоих
+                          style: CONST.CHAT_MESSAGE_STYLES.OTHER, 
+                          rolls: rollsArray, // Этого достаточно для 3D Dice
                           sound: CONFIG.sounds.dice
                       });
                   }
@@ -646,20 +703,23 @@ export class DungeonActor extends Actor {
     const item = this.items.get(itemId);
     if (!item) return;
     
-    // 1. Расчет бонуса силы (Stat / 13)
-    // Берем силу с учетом всех баффов
-    const strength = this.system.subAttributes.strength || 0;
+    const attackType = item.system.attackType || "melee";
+    const scaling = item.system.scaling || "strength";
+
+    let strength = 0;
+    if (attackType === "melee" && scaling === "strength") {
+        strength = this.system.subAttributes.strength || 0;
+    } else if (attackType === "melee" && scaling === "agility") {
+        strength = this.system.subAttributes.agility || 0;
+    }
     const strBonus = Math.floor(strength / 13);
-    
-    // 2. Расчет дополнительных кубов за успехи (Crit damage)
-    // Каждый успех сверх 1 дает +1d4
-    // Если успехов 1 -> 0d4. Если 3 -> 2d4.
+
     const extraDiceCount = Math.max(0, successes - 1);
     
     // 3. Сборка формулы
     // Пример: "1d8 + 2 + 2d4"
     let damageFormula = item.system.damage || "0";
-    damageFormula += Math.floor((strength % 13) / 5)
+    damageFormula += ` + ${Math.floor((strength % 13) / 6)}`;
     
     // Добавляем бонус силы, если он есть
     if (strBonus > 0) {
@@ -729,8 +789,8 @@ export class DungeonActor extends Actor {
         ChatMessage.create({
             speaker: ChatMessage.getSpeaker({actor: this}),
             content: content,
-            type: CONST.CHAT_MESSAGE_TYPES.ROLL,
-            rolls: [roll], // Чтобы Foundry понимала, что это бросок (для 3D кубов)
+            style: CONST.CHAT_MESSAGE_STYLES.OTHER, 
+            rolls: [roll], // Этого достаточно для 3D Dice
             sound: CONFIG.sounds.dice
         });
     };

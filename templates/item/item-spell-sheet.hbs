@@ -5,7 +5,12 @@
             <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Заклинания"/></h1>
             <div class="grid-3col">
                 {{!-- ... Ранг, Мана ... --}}
-                <div class="res-box"><label>Ранг</label>...</div>
+                <div class="res-box" style="min-width: 50px;"> {{!-- Добавили min-width --}}
+                    <label>Ранг</label>
+                    <select name="system.rank">
+                        {{selectOptions config.ranks selected=system.rank}}
+                    </select>
+                </div>
                 <div class="res-box"><label>Мана</label><input type="number" name="system.manaCost" value="{{system.manaCost}}"/></div>
                 
                 <div class="res-box">
@@ -33,14 +38,24 @@
             </div>
             
             <div class="form-group" style="margin-top:5px;">
-                <label>Спасбросок Цели (Атрибут)</label>
-                <select name="system.saveAttribute">
-                    <option value="">-- Нет --</option>
-                    <option value="physique" {{#if (eq system.saveAttribute "physique")}}selected{{/if}}>Телосложение</option>
-                    <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость (Рефлекс)</option>
-                    <option value="spirit" {{#if (eq system.saveAttribute "spirit")}}selected{{/if}}>Дух (Воля)</option>
-                    <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля (Спец)</option>
-                </select>
+                <div style="flex:1;">
+                    <label>Спасбросок Цели</label>
+                    <select name="system.saveAttribute" style="width:100%">
+                        <option value="">-- Нет --</option>
+                        <option value="physique" {{#if (eq system.saveAttribute "physique")}}selected{{/if}}>Телосложение</option>
+                        <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость (Рефлекс)</option>
+                        <option value="spirit" {{#if (eq system.saveAttribute "spirit")}}selected{{/if}}>Дух (Воля)</option>
+                        <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля (Спец)</option>
+                    </select>
+                </div>
+                <div style="width: 80px;">
+                    <label title="Кол-во успехов для спаса">Треб. КУ</label>
+                    <input type="number" name="system.saveKU" value="{{system.saveKU}}" placeholder="1"/>
+                </div>
+                <div style="width: 80px;">
+                    <label title="0 = Авторасчет">DC (Слож)</label>
+                    <input type="number" name="system.saveDC" value="{{system.saveDC}}" placeholder="Авто"/>
+                </div>
             </div>
         </div>
     </header>
