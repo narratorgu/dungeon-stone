@@ -1,82 +1,230 @@
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Заклинания"/></h1>
-            <div class="grid-3col">
-                {{!-- ... Ранг, Мана ... --}}
-                <div class="res-box" style="min-width: 50px;"> {{!-- Добавили min-width --}}
-                    <label>Ранг</label>
-                    <select name="system.rank">
-                        {{selectOptions config.ranks selected=system.rank}}
-                    </select>
-                </div>
-                <div class="res-box"><label>Мана</label><input type="number" name="system.manaCost" value="{{system.manaCost}}"/></div>
-                
-                <div class="res-box">
-                    <label>Скалирование</label>
-                    <select name="system.scaling" style="width:100%">
-                        <option value="spirit" {{#if (eq system.scaling "spirit")}}selected{{/if}}>Дух</option>
-                        <option value="accuracy" {{#if (eq system.scaling "accuracy")}}selected{{/if}}>Точность</option>
-                        <option value="cognition" {{#if (eq system.scaling "cognition")}}selected{{/if}}>Когнитивность</option>
-                        <option value="none" {{#if (eq system.scaling "none")}}selected{{/if}}>Нет броска</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="grid-2col" style="margin-top:5px;">
-                <div class="form-group">
-                    <label>Урон (Формула)</label>
-                    <input type="text" name="system.damage" value="{{system.damage}}" placeholder="3d6"/>
-                </div>
-                <div class="form-group">
-                    <label>Тип Урона</label>
-                    <select name="system.damageType">
-                        {{selectOptions config.damageTypes selected=system.damageType}}
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-group" style="margin-top:5px;">
-                <div style="flex:1;">
-                    <label>Спасбросок Цели</label>
-                    <select name="system.saveAttribute" style="width:100%">
-                        <option value="">-- Нет --</option>
-                        <option value="physique" {{#if (eq system.saveAttribute "physique")}}selected{{/if}}>Телосложение</option>
-                        <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость (Рефлекс)</option>
-                        <option value="spirit" {{#if (eq system.saveAttribute "spirit")}}selected{{/if}}>Дух (Воля)</option>
-                        <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля (Спец)</option>
-                    </select>
-                </div>
-                <div style="width: 80px;">
-                    <label title="Кол-во успехов для спаса">Треб. КУ</label>
-                    <input type="number" name="system.saveKU" value="{{system.saveKU}}" placeholder="1"/>
-                </div>
-                <div style="width: 80px;">
-                    <label title="0 = Авторасчет">DC (Слож)</label>
-                    <input type="number" name="system.saveDC" value="{{system.saveDC}}" placeholder="Авто"/>
-                </div>
-            </div>
+
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+  {{!-- Полоса статистики --}}
+  <div class="spell-header-stats">
+    <div class="spell-stat-badge">
+      <i class="fas fa-layer-group"></i> <span class="value">Ранг {{system.rank}}</span>
+    </div>
+    <div class="spell-stat-badge">
+      {{#if (eq system.magicSource "divine")}}
+        <i class="fas fa-cross"></i> <span class="value">{{system.gpCost}} GP</span>
+      {{else}}
+        <i class="fas fa-tint"></i> <span class="value">{{system.manaCost}} Маны</span>
+      {{/if}}
+    </div>
+    <div class="spell-stat-badge">
+      <i class="fas fa-clock"></i> <span class="value">{{system.castTime}} д.</span>
+    </div>
+    {{#if system.canConcentrate}}
+    <div class="concentration-badge">Концентрация</div>
+    {{/if}}
+  </div>
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="properties">Свойства</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    {{!-- ОПИСАНИЕ --}}
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    {{!-- СВОЙСТВА --}}
+    <div class="tab" data-group="primary" data-tab="properties">
+      
+      {{!-- Основное --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-magic"></i> <h3>Параметры</h3></div>
+        <div class="rigid-grid">
+          
+          {{!-- НОВОЕ: Источник Магии --}}
+          <div class="form-group">
+            <label>Источник</label>
+            <select name="system.magicSource" style="width:100%">
+                <option value="arcane" {{#if (eq system.magicSource "arcane")}}selected{{/if}}>Заклинательная (Мана)</option>
+                <option value="divine" {{#if (eq system.magicSource "divine")}}selected{{/if}}>Божественная (GP)</option>
+            </select>
+          </div>
+
+          {{!-- НОВОЕ: Тип Заклинания --}}
+          <div class="form-group">
+            <label>Тип</label>
+            <select name="system.spellType" style="width:100%">
+                <option value="attack" {{#if (eq system.spellType "attack")}}selected{{/if}}>Атака</option>
+                <option value="support" {{#if (eq system.spellType "support")}}selected{{/if}}>Поддержка</option>
+                <option value="utility" {{#if (eq system.spellType "utility")}}selected{{/if}}>Утилита</option>
+                <option value="ritual" {{#if (eq system.spellType "ritual")}}selected{{/if}}>Ритуал</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Ранг</label>
+            <select name="system.rank" style="width:100%">{{selectOptions config.ranks selected=system.rank}}</select>
+          </div>
+
+          {{!-- Стоимость меняется в зависимости от Источника --}}
+          {{#if (eq system.magicSource "divine")}}
+          <div class="form-group">
+            <label>Стоимость GP</label>
+            <input type="number" name="system.gpCost" value="{{system.gpCost}}" min="0"/>
+          </div>
+          {{else}}
+          <div class="form-group">
+            <label>Стоимость маны</label>
+            <input type="number" name="system.manaCost" value="{{system.manaCost}}" min="0"/>
+          </div>
+          {{/if}}
+
+          <div class="form-group">
+            <label>Время каста (действия)</label>
+            <input type="number" name="system.castTime" value="{{system.castTime}}" min="1" max="2"/>
+          </div>
+          <div class="form-group inline">
+            <label>Концентрация</label>
+            <input type="checkbox" name="system.canConcentrate" {{checked system.canConcentrate}}/>
+          </div>
         </div>
-    </header>
+      </div>
 
-    <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="description">Описание</a>
-        <a class="item" data-tab="effects">Эффекты</a>
-    </nav>
-
-    <section class="sheet-body">
-        {{!-- Вкладка Описание --}}
-        <div class="tab description" data-group="primary" data-tab="description">
-            <div class="panel">
-                <h3>Описание заклинания</h3>
-                <div class="editor-box">
-                    {{editor system.description target="system.description" button=true owner=owner editable=editable}}
-                </div>
-            </div>
+      {{!-- Компоненты (как было) --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-hand-sparkles"></i> <h3>Компоненты</h3></div>
+        <div class="spell-components">
+          <label class="spell-component {{#if system.components.verbal}}active{{/if}}" title="Вербальный">
+            <input type="checkbox" name="system.components.verbal" {{checked system.components.verbal}} hidden/> V
+          </label>
+          <label class="spell-component {{#if system.components.somatic}}active{{/if}}" title="Соматический">
+            <input type="checkbox" name="system.components.somatic" {{checked system.components.somatic}} hidden/> S
+          </label>
+          <label class="spell-component {{#if system.components.material}}active{{/if}}" title="Материальный">
+            <input type="checkbox" name="system.components.material" {{checked system.components.material}} hidden/> M
+          </label>
         </div>
+        {{#if system.components.material}}
+        <div class="form-group mt-1">
+          <label>Материальный компонент</label>
+          <input type="text" name="system.components.materialDescription" value="{{system.components.materialDescription}}" placeholder="Кристалл, пыль..."/>
+        </div>
+        {{/if}}
+      </div>
 
-        {{!-- Вкладка Эффекты --}}
-        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
-    </section>
+      {{!-- Механика --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-dice-d20"></i> <h3>Механика</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group full-row">
+            <label>Тип броска</label>
+            <select name="system.rollType" style="width:100%">
+              <option value="attack" {{#if (eq system.rollType "attack")}}selected{{/if}}>Атака</option>
+              <option value="save" {{#if (eq system.rollType "save")}}selected{{/if}}>Спасбросок</option>
+              <option value="none" {{#if (eq system.rollType "none")}}selected{{/if}}>Нет (Авто)</option>
+            </select>
+          </div>
+
+          {{#if (eq system.rollType "attack")}}
+          <div class="form-group full-row">
+            <label>Атрибут атаки</label>
+            <select name="system.attackAttribute" style="width:100%">
+              {{selectOptions config.subAttributes selected=system.attackAttribute}}
+            </select>
+          </div>
+          {{!-- НОВОЕ: Вторичный атрибут для сложного броска --}}
+          <div class="form-group full-row">
+            <label>Доп. Атрибут</label>
+            <select name="system.secondaryAttribute" style="width:100%">
+              <option value="">[НЕТ]</option>
+              {{selectOptions config.subAttributes selected=system.secondaryAttribute}}
+            </select>
+          </div>
+          {{/if}}
+
+          {{!-- Спасбросок (как было) --}}
+          {{#if (eq system.rollType "save")}}
+          <div class="form-group">
+            <label>Атрибут спаса</label>
+            <select name="system.saveAttribute" style="width:100%">
+              <option value="">-- Выбор игрока --</option>
+              <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость</option>
+              <option value="fortitude" {{#if (eq system.saveAttribute "fortitude")}}selected{{/if}}>Стойкость</option>
+              <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля</option>
+              <option value="cognition" {{#if (eq system.saveAttribute "cognition")}}selected{{/if}}>Разум</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>КС (0 = авто)</label>
+            <input type="number" name="system.saveDC" value="{{system.saveDC}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Треб. КУ</label>
+            <input type="number" name="system.saveKU" value="{{system.saveKU}}" min="1"/>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Цель и Область (как было) --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-bullseye"></i> <h3>Цель и Область</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Цель</label>
+            <select name="system.targetType" style="width:100%">
+              <option value="enemy" {{#if (eq system.targetType "enemy")}}selected{{/if}}>Враг</option>
+              <option value="ally" {{#if (eq system.targetType "ally")}}selected{{/if}}>Союзник</option>
+              <option value="self" {{#if (eq system.targetType "self")}}selected{{/if}}>На себя</option>
+              <option value="point" {{#if (eq system.targetType "point")}}selected{{/if}}>Точка</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Дальность</label>
+            <input type="number" name="system.range" value="{{system.range}}" min="-1"/>
+          </div>
+          <div class="form-group">
+            <label>Область</label>
+            <select name="system.areaType" style="width:100%">
+              <option value="none" {{#if (eq system.areaType "none")}}selected{{/if}}>Нет</option>
+              <option value="sphere" {{#if (eq system.areaType "sphere")}}selected{{/if}}>Сфера</option>
+              <option value="cone" {{#if (eq system.areaType "cone")}}selected{{/if}}>Конус</option>
+              <option value="line" {{#if (eq system.areaType "line")}}selected{{/if}}>Линия</option>
+            </select>
+          </div>
+          {{#unless (eq system.areaType "none")}}
+          <div class="form-group">
+            <label>Размер</label>
+            <input type="number" name="system.areaSize" value="{{system.areaSize}}" min="0"/>
+          </div>
+          {{/unless}}
+        </div>
+      </div>
+
+      {{!-- Эффекты (как было) --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-bolt"></i> <h3>Эффекты</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group"><label>Урон</label><input type="text" name="system.damage" value="{{system.damage}}"/></div>
+          <div class="form-group"><label>Тип</label><select name="system.damageType">{{selectOptions config.damageTypes selected=system.damageType}}</select></div>
+          <div class="form-group full-row"><label>Длительность</label><input type="text" name="system.duration" value="{{system.duration}}"/></div>
+        </div>
+      </div>
+
+    </div>
+
+    {{!-- ЭФФЕКТЫ (AE) --}}
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
+  
+  {{#if isOwned}}
+  <footer class="item-sheet-footer">
+    <button type="button" class="spell-cast-btn cast-spell"><i class="fas fa-wand-magic-sparkles"></i> Сотворить</button>
+  </footer>
+  {{/if}}
 </form>

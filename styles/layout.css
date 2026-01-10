@@ -31,3 +31,463 @@
     justify-content: space-between;
     align-items: center;
 }
+
+/* ===== Armor "Type" panel layout ===== */
+.armor-sheet .armor-type-panel {
+  padding-bottom: 12px;
+}
+
+/* Ряд с тумблерами */
+.armor-sheet .armor-type-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* Тумблер-плашка */
+.armor-sheet .toggle-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  height: 34px;
+  padding: 0 12px;
+
+  background: rgba(0,0,0,0.25);
+  border: 1px solid #444;
+  border-radius: 6px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.armor-sheet .toggle-pill span {
+  font-size: 12px;
+  color: #ddd;
+  letter-spacing: 0.3px;
+}
+
+/* Делаем чекбокс визуально аккуратным */
+.armor-sheet .toggle-pill input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* Центрированный слот (не комплект) */
+.armor-sheet .slot-center-wrap {
+  margin-top: 12px;
+  padding: 10px;
+
+  background: rgba(0,0,0,0.18);
+  border: 1px solid #333;
+  border-radius: 6px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.armor-sheet .slot-center-title {
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.armor-sheet .slot-center-select {
+  width: min(320px, 85%);
+  height: 34px;
+
+  text-align-last: center; /* центр выбранного значения */
+  background: rgba(0,0,0,0.35);
+  border: 1px solid #444;
+  color: #eee;
+
+  border-radius: 6px;
+  padding: 0 10px;
+}
+
+/* ============================================
+   ДОПОЛНЕНИЯ К ITEM.CSS
+   ============================================ */
+
+/* Для Loot - информационная панель */
+.loot-info-display {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.loot-info-display .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #444;
+}
+
+.loot-info-display .info-row:last-child {
+    border-bottom: none;
+}
+
+.loot-info-display .label {
+    color: #aaa;
+    font-size: 12px;
+}
+
+.loot-info-display .value {
+    color: #d4af37;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Essence rank display */
+.essence-rank-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    margin: 10px auto;
+    background: linear-gradient(135deg, #654321 0%, #8b4513 100%);
+    border: 3px solid #d4af37;
+    border-radius: 50%;
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    box-shadow: 0 0 15px rgba(212,175,55,0.4);
+}
+
+/* Кнопки использования способностей */
+.essence-use-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #654321 0%, #8b4513 100%);
+    border: 2px solid #d4af37;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.essence-use-btn:hover {
+    background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+    box-shadow: 0 0 16px rgba(212,175,55,0.5);
+    transform: translateY(-1px);
+}
+
+.essence-use-btn:active {
+    transform: translateY(0);
+}
+
+/* Компоненты заклинаний (если ещё нет) */
+.spell-components {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.spell-component {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #555;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.spell-component:hover {
+    border-color: #888;
+}
+
+.spell-component.active {
+    background: rgba(212,175,55,0.2);
+    border-color: #d4af37;
+    color: #d4af37;
+    box-shadow: 0 0 8px rgba(212,175,55,0.3);
+}
+
+.spell-component input {
+    display: none;
+}
+
+/* Concentration badge */
+.concentration-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(155,89,182,0.2);
+    border: 1px solid #9b59b6;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #9b59b6;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Spell header stats */
+.spell-header-stats {
+    display: flex;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid #444;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.spell-stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.spell-stat-badge i {
+    color: #d4af37;
+}
+
+.spell-stat-badge .label {
+    color: #888;
+}
+
+.spell-stat-badge .value {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Helper для multiply в handlebars */
+.text-muted {
+    color: #888;
+}
+
+/* ============================================
+   LINEAGE, ROLE, BLESSING, KNOWLEDGE
+   ============================================ */
+
+/* Lineage type badge */
+.lineage-type-badge {
+    text-align: center;
+    padding: 12px;
+    background: rgba(139,69,19,0.2);
+    border: 1px solid #8b4513;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.lineage-type-badge .type-label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.lineage-type-badge .type-value select {
+    cursor: pointer;
+}
+
+/* Lineage bonuses grid */
+.lineage-bonuses .rigid-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Role rank display */
+.role-rank-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(139,69,19,0.2);
+    border: 1px solid #8b4513;
+    border-radius: 6px;
+    margin: 10px 12px;
+}
+
+.role-rank-display i {
+    color: #d4af37;
+    font-size: 20px;
+}
+
+.role-rank-display .rank-label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.role-rank-display input {
+    width: 50px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+/* Blessing source */
+.blessing-source {
+    padding: 10px;
+}
+
+.blessing-source .deity-name {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(212,175,55,0.1);
+    border-radius: 4px;
+}
+
+.blessing-active-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #444;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.blessing-active-toggle label {
+    font-size: 12px;
+    color: #ddd;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.blessing-active-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #d4af37;
+}
+
+/* Knowledge type badge */
+.knowledge-type-badge {
+    text-align: center;
+    padding: 12px;
+    background: rgba(65,105,225,0.2);
+    border: 1px solid #4169e1;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.knowledge-type-badge .type-value select {
+    cursor: pointer;
+}
+
+/* Recipe ingredients */
+.recipe-ingredients {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.recipe-ingredients h4 {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+}
+
+.ingredient-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 6px;
+    border-bottom: 1px solid #444;
+    font-size: 12px;
+}
+
+.ingredient-item:last-child {
+    border-bottom: none;
+}
+
+.ingredient-item .name {
+    color: #ccc;
+}
+
+.ingredient-item .qty {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* --- РЕДАКТОР PROSEMIRROR (БИОГРАФИЯ/ЗАМЕТКИ) --- */
+.editor-container, .editor-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #444;
+    border-radius: 4px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Меню редактора (Кнопки жирного, курсива и т.д.) */
+.ProseMirror-menubar {
+    background: #222 !important;
+    border-bottom: 1px solid #444 !important;
+    border-radius: 4px 4px 0 0;
+}
+
+.ProseMirror-menuitem {
+    color: #ccc !important;
+}
+.ProseMirror-menuitem:hover {
+    color: #fff !important;
+    background: #444 !important;
+}
+
+/* Сам текст */
+.ProseMirror {
+    color: #e0e0e0 !important;
+    padding: 10px !important;
+    min-height: 100px;
+}
+
+/* --- МОНСТР (Специфика) --- */
+.monster-header {
+    background: linear-gradient(135deg, #2c0000 0%, #1a0505 100%); /* Красный оттенок */
+    border-bottom: 2px solid #800;
+}
+.res-fill.hp-monster { background: linear-gradient(90deg, #c00, #600); }
+.res-fill.mana-monster { background: linear-gradient(90deg, #44f, #004); }
+

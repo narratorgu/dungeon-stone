@@ -1,0 +1,300 @@
+<div class="tab inventory" data-group="primary" data-tab="inventory">
+    
+    <div class="grid-2col inv-layout">
+        
+        {{!-- =================== ЛЕВАЯ КОЛОНКА: ЭКИПИРОВКА =================== --}}
+        <div class="column equipment-doll">
+            
+            <div class="doll-header">
+                <h3>ЭКИПИРОВКА</h3>
+            </div>
+            
+            {{!-- СЕТКА СЛОТОВ --}}
+            <div class="doll-grid-new">
+    
+                {{!-- ЛЕВАЯ СТОРОНА --}}
+                <div class="doll-col left">
+                    <div class="slot head" data-slot="head" title="Голова">
+                        <i class="fas fa-helmet-battle slot-bg"></i>
+                        {{#if equipment.head}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.head}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot neck" data-slot="neck" title="Шея">
+                        <i class="fas fa-scarf slot-bg"></i>
+                        {{#if equipment.neck}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.neck}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot shoulders" data-slot="shoulders" title="Плечи">
+                        <i class="fas fa-user-shield slot-bg"></i>
+                        {{#if equipment.shoulders}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.shoulders}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot body" data-slot="body" title="Корпус">
+                        <i class="fas fa-tshirt slot-bg"></i>
+                        {{#if equipment.body}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.body}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot cloak" data-slot="cloak" title="Плащ">
+                        <i class="fas fa-user-secret slot-bg"></i>
+                        {{#if equipment.cloak}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.cloak}}
+                        {{/if}}
+                    </div>
+                </div>
+                
+                {{!-- ПРАВАЯ СТОРОНА --}}
+                <div class="doll-col right">
+                    <div class="slot arms" data-slot="arms" title="Наручи">
+                        <i class="fas fa-link slot-bg"></i>
+                        {{#if equipment.arms}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.arms}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot hands" data-slot="hands" title="Перчатки">
+                        <i class="fas fa-mitten slot-bg"></i>
+                        {{#if equipment.hands}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.hands}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot waist" data-slot="waist" title="Пояс">
+                        <i class="fas fa-bacon slot-bg"></i>
+                        {{#if equipment.waist}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.waist}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot legs" data-slot="legs" title="Поножи">
+                        <i class="fas fa-socks slot-bg"></i>
+                        {{#if equipment.legs}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.legs}}
+                        {{/if}}
+                    </div>
+                    
+                    <div class="slot feet" data-slot="feet" title="Сапоги">
+                        <i class="fas fa-shoe-prints slot-bg"></i>
+                        {{#if equipment.feet}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.feet}}
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+            
+            {{!-- УКРАШЕНИЯ --}}
+            <div class="jewelry-row">
+                <div class="slot ears" data-slot="ears" title="Серьги">
+                    <i class="fas fa-gem slot-bg"></i>
+                    {{#if equipment.ears}}
+                        {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.ears}}
+                    {{/if}}
+                </div>
+                
+                <div class="slot rings" title="Кольца">
+                    <i class="fas fa-ring slot-bg"></i>
+                    <div class="rings-list">
+                        {{#each equipment.rings as |ring|}}
+                            {{!-- Здесь уже готовые объекты, поэтому просто передаем item=ring --}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=ring}}
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+
+            {{!-- ОРУЖИЕ --}}
+            <div class="weapon-slots-row">
+                <div class="slot weapon-slot main-hand" data-slot="mainHand">
+                    <label>ПРАВАЯ РУКА</label>
+                    {{#if equipment.mainHand}}
+                        {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.mainHand}}
+                    {{else}}
+                        <i class="fas fa-fist-raised slot-bg-large"></i>
+                    {{/if}}
+                </div>
+                
+                <div class="slot weapon-slot off-hand" data-slot="offHand">
+                    <label>ЛЕВАЯ РУКА</label>
+                    {{#if equipment.offHand}}
+                        {{> "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs" item=equipment.offHand}}
+                    {{else}}
+                        <i class="fas fa-hand-paper slot-bg-large"></i>
+                    {{/if}}
+                </div>
+            </div>
+            
+            {{!-- КАЛЬКУЛЯТОР ВАЛЮТЫ --}}
+            <div class="currency-panel">
+                <div class="currency-header">
+                    <i class="fas fa-gem"></i>
+                    <span class="currency-title">Камни Маны</span>
+                </div>
+                <div class="currency-body">
+                    <div class="currency-display">
+                        <input class="currency-value" type="text" 
+                            value="{{formatNumber system.resources.currency}}" 
+                            data-raw="{{system.resources.currency}}"
+                            placeholder="0"/>
+                    </div>
+                    <div class="currency-controls">
+                        <button class="calc-btn sub" data-action="sub" title="Отнять">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" class="calc-amount" placeholder="0" min="0"/>
+                        <button class="calc-btn add" data-action="add" title="Добавить">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            {{!-- ВЕС --}}
+            <div class="encumbrance-box">
+                <div class="enc-labels">
+                    <span>Нагрузка</span>
+                    <span>{{system.encumbrance.value}} / {{system.encumbrance.max}} кг</span>
+                </div>
+                <div class="enc-bar">
+                    <div class="enc-fill {{#if (gt system.encumbrance.pct 100)}}overload{{/if}}" 
+                         style="width:{{system.encumbrance.pct}}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        {{!-- =================== ПРАВАЯ КОЛОНКА: СПИСКИ =================== --}}
+        <div class="column items-browser">
+            
+            {{!-- Навигация --}}
+            <nav class="inv-nav">
+                <a class="active" data-filter="all">ВСЕ</a>
+                <a data-filter="weapon">Оружие</a>
+                <a data-filter="armor">Броня</a>
+                <a data-filter="consumable">Расходники</a>
+                <a data-filter="essence">Эссенции</a>
+                <a data-filter="loot">Лут</a>
+                <a data-filter="container">Хранилища</a>
+            </nav>
+            
+            <div class="items-scroll-container">
+                
+                {{!-- ОРУЖИЕ --}}
+                <div class="item-category" data-type="weapon">
+                    <h4 class="category-header">
+                        ОРУЖИЕ
+                        {{#if isGM}}<a class="item-create" data-type="weapon"><i class="fas fa-plus"></i></a>{{/if}}
+                    </h4>
+                    <div class="item-list">
+                        {{#each weapons as |item|}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-row.hbs" item=item isGM=../isGM}}
+                        {{/each}}
+                    </div>
+                </div>
+                
+                {{!-- БРОНЯ --}}
+                <div class="item-category" data-type="armor">
+                    <h4 class="category-header">
+                        БРОНЯ
+                        {{#if isGM}}<a class="item-create" data-type="armor"><i class="fas fa-plus"></i></a>{{/if}}
+                    </h4>
+                    <div class="item-list">
+                        {{#each armor as |item|}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-row.hbs" item=item isGM=../isGM}}
+                        {{/each}}
+                    </div>
+                </div>
+                
+                {{!-- РАСХОДНИКИ --}}
+                <div class="item-category" data-type="consumable">
+                    <h4 class="category-header">
+                        РАСХОДНИКИ
+                        {{#if isGM}}<a class="item-create" data-type="consumable"><i class="fas fa-plus"></i></a>{{/if}}
+                    </h4>
+                    <div class="item-list">
+                        {{#each consumables as |item|}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-row.hbs" item=item isGM=../isGM}}
+                        {{/each}}
+                    </div>
+                </div>
+
+                {{!-- ЭССЕНЦИИ --}}
+                <div class="item-category" data-type="essence">
+                    <h4 class="category-header">
+                        ЭССЕНЦИИ 
+                        <span style="font-size:10px; color:#aaa;">({{essenceCount}} / {{essenceMax}})</span>
+                        {{#if isGM}}<a class="item-create" data-type="essence"><i class="fas fa-plus"></i></a>{{/if}}
+                    </h4>
+                    
+                    {{!-- СЛОТЫ (Экипированные) --}}
+                    <div class="essence-slots-visual">
+                        {{#each essenceSlots as |slot|}}
+                            <div class="slot-row" data-item-id="{{slot.item.id}}">
+                                {{#if slot.item}}
+                                    {{!-- Заполненный слот --}}
+                                    <img src="{{slot.item.img}}" style="width:32px; height:32px; border:1px solid #555; border-radius:4px; margin-right:8px; object-fit:cover; background:#000;">
+                                    <div style="flex:1; font-weight:bold; color:#d4af37;">{{slot.item.name}}</div>
+                                    
+                                    {{!-- Кнопки для слота --}}
+                                    <div class="item-controls" style="display:flex; gap:5px;">
+                                        <a class="item-control item-unequip" title="Снять"><i class="fas fa-minus-circle" style="color:#f44;"></i></a>
+                                        {{#if ../isGM}}
+                                        <a class="item-control item-edit"><i class="fas fa-edit"></i></a>
+                                        {{/if}}
+                                    </div>
+                                {{else}}
+                                    {{!-- Пустой слот --}}
+                                    <div style="width:32px; height:32px; border:1px dashed #555; border-radius:4px; margin-right:8px; display:flex; align-items:center; justify-content:center; opacity:0.3;">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div style="flex:1; color:#666; font-style:italic;">Пустой слот</div>
+                                {{/if}}
+                            </div>
+                        {{/each}}
+                    </div>
+
+                    {{!-- СПИСОК (Не экипированные) --}}
+                    <div class="item-list">
+                        {{#each essences as |item|}}
+                            {{#unless (eq item.system.equipStatus "equipped")}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/item-row.hbs" item=item isGM=../isGM}}
+                            {{/unless}}
+                        {{/each}}
+                    </div>
+                </div>
+                
+                {{!-- ХРАНИЛИЩА (Контейнеры) --}}
+                <div class="item-category" data-type="container">
+                    <h4 class="category-header">
+                        ХРАНИЛИЩА
+                        {{#if isGM}}<a class="item-create" data-type="container"><i class="fas fa-plus"></i></a>{{/if}}
+                    </h4>
+                    <div class="item-list">
+                        {{#each containers as |item|}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-row.hbs" item=item isGM=../isGM}}
+                        {{/each}}
+                    </div>
+                </div>
+                
+                {{!-- ЛУТ --}}
+                <div class="item-category" data-type="loot">
+                    <h4 class="category-header">
+                        СОКРОВИЩА
+                        {{#if isGM}}<a class="item-create" data-type="loot"><i class="fas fa-plus"></i></a>{{/if}}
+                    </h4>
+                    <div class="item-list">
+                        {{#each loot as |item|}}
+                            {{> "systems/dungeon-stone/templates/actor/parts/item-row.hbs" item=item isGM=../isGM}}
+                        {{/each}}
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,737 +1,1377 @@
 <form class="{{cssClass}}" autocomplete="off">
     
-    {{!-- ================= ШАПКА ================= --}}
     <header class="sheet-header">
-        <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
+        <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" alt="{{actor.name}}"/>
         
-        <div class="header-fields">
+        <div class="header-content">
+            {{!-- Строка 1: Имя, Организация, Возраст, Уровень --}}
             <div class="header-top">
-                <div class="charname">
-                    <input name="name" type="text" value="{{actor.name}}" placeholder="Имя Персонажа"/>
+                <div class="name-group">
+                    <input class="charname" 
+                        name="name" 
+                        type="text" 
+                        value="{{actor.name}}" 
+                        placeholder="Имя персонажа"/>
                 </div>
                 
-                <div class="level-container">
-                    <div class="level-display">
-                        УРОВЕНЬ: <span>{{system.resources.level}}</span>
-                        {{#if isGM}}
-                            <span class="vis-btn" data-key="xp">
-                                <i class="fas {{#if revealed.xp}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i>
-                            </span>
-                        {{/if}}
+                <div class="info-group">
+                    <div class="info-field">
+                        <label>Организация</label>
+                        <input type="text" 
+                            name="system.details.organization" 
+                            value="{{system.details.organization}}" 
+                            placeholder="Гильдия / Фракция"/>
                     </div>
                     
-                    {{#if isGM}}
-                        <div class="xp-bar-container">
-                            <div class="xp-fill" style="width: {{xpPercent}}%;"></div>
-                            <div class="xp-text">
-                                {{system.resources.xp.value}} / {{system.resources.xp.max}}
-                                <a class="xp-add-btn" title="Добавить XP">+</a>
-                            </div>
-                        </div>
-                    {{else}}
-                        {{#if revealed.xp}}
-                            <div class="xp-bar-container" title="{{system.resources.xp.value}} / {{system.resources.xp.max}} XP">
-                                <div class="xp-fill" style="width: {{xpPercent}}%;"></div>
-                                <div class="xp-text">{{xpPercent}}%</div>
-                            </div>
-                        {{else}}
-                            <div style="font-size:10px; color:#555; text-align:right;">XP Скрыт</div>
-                        {{/if}}
-                    {{/if}}
+                    <div class="info-field">
+                        <label>Возраст</label>
+                        <input type="number" 
+                            name="system.details.age" 
+                            value="{{system.details.age}}" 
+                            placeholder="Лет"
+                            min="0"
+                            step="1"
+                            data-dtype="Number"/>
+                    </div>
+                </div>
+                
+                <div class="level-box">
+                    <label>УР.</label>
+                    <input type="number" 
+                        name="system.resources.level" 
+                        value="{{system.resources.level}}" 
+                        min="1" max="11" step="1"
+                        data-dtype="Number"/>
                 </div>
             </div>
-
-            <div class="resources-grid">
+            
+            {{!-- Строка 2: Ресурсы --}}
+            <div class="resources-row">
                 {{!-- HP --}}
-                <div class="res-box">
-                    <label>Здоровье (HP)</label>
+                <div class="res-block hp">
+                    <div class="res-label">HP</div>
                     <div class="res-bar">
-                        <div class="res-fill" style="width:{{hpPercent}}%; background:#800;"></div>
-                        <div class="res-val">
+                        <div class="bar-fill hp-fill" style="width:{{hpPercent}}%;"></div>
+                        <div class="bar-text">
+                            <input type="number" 
+                                name="system.resources.hp.value" 
+                                value="{{system.resources.hp.value}}" 
+                                step="1"
+                                data-dtype="Number"/> 
+                            <span class="sep">/</span> 
+                            <span class="max">{{system.resources.hp.max}}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                {{!-- MP / GP (Динамически) --}}
+                <div class="res-block mp">
+                    <div class="res-label" style="{{#if isDivine}}color:#ffd700;{{/if}}">{{headerResourceLabel}}</div>
+                    <div class="res-bar">
+                        {{!-- CSS класс меняет цвет (синий/желтый) --}}
+                        <div class="bar-fill {{headerResourceClass}}" style="width:{{headerResourcePercent}}%;"></div>
+                        
+                        <div class="bar-text">
+                            {{!-- Числа видит только GM --}}
                             {{#if isGM}}
-                                <input type="number" name="system.resources.hp.value" value="{{system.resources.hp.value}}"/> / {{system.resources.hp.max}}
+                                <input type="number" 
+                                    name="system.resources.{{#if isDivine}}gp{{else}}mana{{/if}}.value" 
+                                    value="{{headerResourceValue}}" 
+                                    step="1"
+                                    data-dtype="Number"/> 
+                                <span class="sep">/</span> 
+                                <span class="max">{{headerResourceMax}}</span>
                             {{else}}
-                                {{hpPercent}}%
+                                {{!-- Игрок видит проценты или ничего --}}
+                                <span style="font-size:12px;">{{headerResourcePercent}}%</span>
                             {{/if}}
                         </div>
                     </div>
                 </div>
                 
-                {{!-- Дух --}}
-                <div class="res-box">
-                    <label>Дух (Мана)</label>
+                {{!-- FATE --}}
+                <div class="res-block fate">
+                    <div class="res-label">СУДЬБА</div>
                     <div class="res-bar">
-                        <div class="res-fill" style="width:{{manaPercent}}%; background:#006;"></div>
-                        <div class="res-val">
-                            {{#if isGM}}
-                                <input type="number" name="system.resources.mana.value" value="{{system.resources.mana.value}}"/> / {{system.resources.mana.max}}
-                            {{else}}
-                                {{manaPercent}}%
-                            {{/if}}
+                        <div class="bar-text">
+                            <input type="number" 
+                                name="system.resources.fate.value" 
+                                value="{{system.resources.fate.value}}" 
+                                min="0" max="3" step="1"
+                                data-dtype="Number"/> 
+                            <span class="sep">/</span> 3
                         </div>
-                    </div>
-                </div>
-                
-                {{!-- Камни Маны (Калькулятор) --}}
-                <div class="res-box">
-                    <label>Камни Маны</label>
-                    <div class="currency-widget">
-                        <div class="currency-display">{{system.resources.currency}}</div>
-                        {{#if (or isGM owner)}}
-                        <div class="currency-input-wrapper">
-                            <input type="text" class="currency-input" placeholder="+ / -"/>
-                        </div>
-                        {{/if}}
                     </div>
                 </div>
             </div>
+            
+            {{!-- Строка 3: XP (только для GM) --}}
+            {{#if isGM}}
+            <div class="xp-row">
+                <div class="xp-fill" style="width:{{xpPercent}}%;"></div>
+                <div class="xp-val">{{system.resources.xp.value}} / {{system.resources.xp.max}} XP</div>
+                <a class="xp-add-btn" title="Добавить XP"><i class="fas fa-plus"></i></a>
+            </div>
+            {{/if}}
         </div>
     </header>
 
-    {{!-- ================= НАВИГАЦИЯ ================= --}}
+    {{!-- НАВИГАЦИЯ --}}
     <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="attributes">Характеристики</a>
-        
-        {{!-- Магия (только для магов и ГМ) --}}
-        {{#if showSpellsTab}}
-            <a class="item" data-tab="spells">Заклинания</a>
-        {{/if}}
-        
-        {{!-- Контракты (Зверолюди, Эльфы) --}}
-        {{#if showContractsTab}}
-            <a class="item" data-tab="contracts">Контракты</a>
-        {{/if}}
-        
+        <a class="item" data-tab="attributes">Атрибуты</a>
         <a class="item" data-tab="combat">Бой</a>
         <a class="item" data-tab="inventory">Инвентарь</a>
-        <a class="item" data-tab="blessings">Благословения</a>
+        {{#if showSpellsTab}}<a class="item" data-tab="spells">Магия</a>{{/if}}
+        {{#if showContractsTab}}<a class="item" data-tab="contracts">Контракты</a>{{/if}}
         <a class="item" data-tab="biography">Биография</a>
     </nav>
 
-    {{!-- ================= ТЕЛО ЛИСТА ================= --}}
     <section class="sheet-body">
         
-        {{!-- === ВКЛАДКА: ХАРАКТЕРИСТИКИ === --}}
         <div class="tab attributes" data-group="primary" data-tab="attributes">
-            <div class="sheet-body grid-2col">
-                
-                {{!-- ЛЕВАЯ КОЛОНКА --}}
-                <div class="column">
-                    {{!-- Базовые атрибуты --}}
-                    <div class="panel">
-                        <h3>Базовые Атрибуты</h3>
-                        <div class="big-stats-row">
-                            <div class="big-stat">
-                                {{#if isGM}}
-                                    <div class="vis-btn" data-key="physique">
-                                        <i class="fas {{#if revealed.physique}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i>
+        
+            {{!-- ГЛОБАЛЬНАЯ ПАНЕЛЬ --}}
+            <div class="global-dashboard">
+                {{!-- Слоты родословной и класса --}}
+                <div class="origins-row">
+                        
+                        {{!-- РОДОСЛОВНАЯ --}}
+                        <div class="origin-slot {{#unless lineageItem}}empty{{/unless}}" data-item-id="{{lineageItem._id}}">
+                            <label class="slot-label">РОДОСЛОВНАЯ</label>
+                            <div class="slot-content">
+                                {{#if lineageItem}}
+                                    <img src="{{lineageItem.img}}" class="slot-img"/>
+                                    <div class="slot-info">
+                                        <span class="slot-name">{{lineageItem.name}}</span>
                                     </div>
-                                {{/if}}
-                                <label class="rollable" data-key="physique" data-label="Телосложение">Тело</label>
-                                {{#if isGM}}
-                                    <input type="number" name="system.attributes.physique" value="{{system.attributes.physique}}"/>
+                                    <div class="slot-actions">
+                                        <a class="item-edit" title="Открыть лист"><i class="fas fa-book-open"></i></a>
+                                        {{#if isGM}}<a class="item-delete" title="Удалить"><i class="fas fa-trash-alt"></i></a>{{/if}}
+                                    </div>
                                 {{else}}
-                                    <div class="stat-value-box {{#unless revealed.physique}}dimmed{{/unless}}">
-                                        {{#if revealed.physique}}{{system.attributes.physique}}{{else}}?{{/if}}
+                                    <div class="slot-placeholder">
+                                        <i class="fas fa-dna"></i><span>Перетащите родословную</span>
                                     </div>
                                 {{/if}}
+                            </div>
+                        </div>
+                        
+                        {{!-- КЛАСС --}}
+                        <div class="origin-slot {{#unless roleItem}}empty{{/unless}}" data-item-id="{{roleItem._id}}">
+                            <label class="slot-label">КЛАСС</label>
+                            <div class="slot-content">
+                                {{#if roleItem}}
+                                    <img src="{{roleItem.img}}" class="slot-img"/>
+                                    <div class="slot-info">
+                                        <span class="slot-name">{{roleItem.name}}</span>
+                                        <div class="rank-display">
+                                            <select name="items.{{roleItem._id}}.system.rank" style="background:#000; color:#d4af37; border:1px solid #d4af37; font-weight:bold; height:20px; font-size:12px;">
+                                                {{#each config.ranks as |label key|}}
+                                                    <option value="{{key}}" {{#if (eq ../roleItem.system.rank key)}}selected{{/if}}>{{label}}</option>
+                                                {{/each}}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="slot-actions">
+                                        <a class="item-edit" title="Открыть лист"><i class="fas fa-book-open"></i></a>
+                                        {{#if isGM}}<a class="item-delete" title="Удалить"><i class="fas fa-trash-alt"></i></a>{{/if}}
+                                    </div>
+                                {{else}}
+                                    <div class="slot-placeholder">
+                                        <i class="fas fa-user-tag"></i><span>Перетащите класс</span>
+                                    </div>
+                                {{/if}}
+                            </div>
+                        </div>
+
+                    </div>
+
+                {{!-- Статы и кнопки --}}
+                <div class="stats-row">
+                    <button class="btn-action btn-initiative" type="button">
+                        <i class="fas fa-bolt"></i>
+                        <span>ИНИЦИАТИВА</span>
+                    </button>
+                    
+                    <div class="stat-display">
+                        <label>Уровень Предметов</label>
+                        <span class="stat-value">{{globalStats.itemLevel}}</span>
+                    </div>
+                    
+                    <div class="stat-display">
+                        <label>Уровень Угрозы</label>
+                        <span class="stat-value">{{globalStats.threatLevel}}</span>
+                    </div>
+                    
+                    <div class="stat-display stat-speed">
+                        <label>Скорость</label>
+                        <div class="speed-controls">
+                            <input type="number" 
+                                name="system.attributes.speedBonus" 
+                                value="{{sourceSystem.attributes.speedBonus}}" 
+                                step="1"
+                                placeholder="Бонус"
+                                data-dtype="Number"/>
+                            <span class="speed-total">={{globalStats.speed}}</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-action btn-rest" type="button">
+                        <i class="fas fa-campground"></i>
+                        <span>ОТДЫХ</span>
+                    </button>
+                </div>
+            </div>
+
+            {{!-- ВТОРИЧНАЯ НАВИГАЦИЯ --}}
+            <div class="tab-container">
+                <div class="sub-nav">
+                    <a class="sub-tab-link" data-tab="body">ПОДАТРИБУТЫ ТЕЛА</a>
+                    <a class="sub-tab-link" data-tab="spirit">ПОДАТРИБУТЫ ДУХА</a>
+                </div>
+
+                {{!-- ============ ТЕЛО ============ --}}
+                <div class="sub-tab-content" data-tab="body">
+                    <div class="main-attr-header body">
+                        <label class="rollable" data-key="attributes.body" data-label="ТЕЛО">ТЕЛО</label>
+                        <input type="number" 
+                            name="system.attributes.body" 
+                            value="{{system.attributes.body}}"
+                            data-dtype="Number"/>
+                    </div>
+                    
+                    <div class="grid-2col">
+                        {{!-- ============ ЛЕВЫЙ СТОЛБЕЦ ============ --}}
+                        <div class="column">
+                            {{!-- ОСНОВНЫЕ --}}
+                            <div class="panel">
+                                <h3>ОСНОВНЫЕ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.strength" 
+                                    label="Сила" 
+                                    val=system.subAttributes.strength 
+                                    sourceVal=sourceSystem.subAttributes.strength 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.agility" 
+                                    label="Ловкость" 
+                                    val=system.subAttributes.agility 
+                                    sourceVal=sourceSystem.subAttributes.agility 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.precision" 
+                                    label="Точность" 
+                                    val=system.subAttributes.precision 
+                                    sourceVal=sourceSystem.subAttributes.precision 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.flexibility" 
+                                    label="Гибкость" 
+                                    val=system.subAttributes.flexibility 
+                                    sourceVal=sourceSystem.subAttributes.flexibility 
+                                    isGM=isGM}}
                             </div>
                             
-                            <div class="big-stat">
-                                {{#if isGM}}
-                                    <div class="vis-btn" data-key="spirit">
-                                        <i class="fas {{#if revealed.spirit}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i>
-                                    </div>
-                                {{/if}}
-                                <label class="rollable" data-key="spirit" data-label="Дух">Дух</label>
-                                {{#if isGM}}
-                                    <input type="number" name="system.attributes.spirit" value="{{system.attributes.spirit}}"/>
-                                {{else}}
-                                    <div class="stat-value-box {{#unless revealed.spirit}}dimmed{{/unless}}">
-                                        {{#if revealed.spirit}}{{system.attributes.spirit}}{{else}}?{{/if}}
-                                    </div>
-                                {{/if}}
+                            {{!-- ЗДОРОВЬЕ --}}
+                            <div class="panel">
+                                <h3>ЗДОРОВЬЕ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.stamina" 
+                                    label="Выносливость" 
+                                    val=system.subAttributes.stamina 
+                                    sourceVal=sourceSystem.subAttributes.stamina 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.fortitude" 
+                                    label="Стойкость" 
+                                    val=system.subAttributes.fortitude 
+                                    sourceVal=sourceSystem.subAttributes.fortitude 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.naturalRegeneration" 
+                                    label="Регенерация" 
+                                    val=system.subAttributes.naturalRegeneration 
+                                    sourceVal=sourceSystem.subAttributes.naturalRegeneration 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.physicalResistance" 
+                                    label="Физ. Сопр." 
+                                    val=system.subAttributes.physicalResistance
+                                    sourceVal=sourceSystem.subAttributes.physicalResistance
+                                    isGM=isGM}}
+                            </div>
+                            
+                            {{!-- ОРГАНЫ ЧУВСТВ --}}
+                            <div class="panel">
+                                <h3>ОРГАНЫ ЧУВСТВ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.vision" 
+                                    label="Зрение" 
+                                    val=system.subAttributes.vision 
+                                    sourceVal=sourceSystem.subAttributes.vision 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.hearing" 
+                                    label="Слух" 
+                                    val=system.subAttributes.hearing 
+                                    sourceVal=sourceSystem.subAttributes.hearing 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.touch" 
+                                    label="Осязание" 
+                                    val=system.subAttributes.touch 
+                                    sourceVal=sourceSystem.subAttributes.touch 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.smell" 
+                                    label="Обоняние" 
+                                    val=system.subAttributes.smell 
+                                    sourceVal=sourceSystem.subAttributes.smell 
+                                    isGM=isGM}}
+                            </div>
+                            
+                            {{!-- ПРОБИТИЕ --}}
+                            <div class="panel">
+                                <h3>ПРОБИТИЕ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.cuttingForce" 
+                                    label="Режущая Сила" 
+                                    val=system.subAttributes.cuttingForce 
+                                    sourceVal=sourceSystem.subAttributes.cuttingForce 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.crushingForce" 
+                                    label="Дробящая Сила" 
+                                    val=system.subAttributes.crushingForce 
+                                    sourceVal=sourceSystem.subAttributes.crushingForce 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.piercingForce" 
+                                    label="Колющая Сила" 
+                                    val=system.subAttributes.piercingForce 
+                                    sourceVal=sourceSystem.subAttributes.piercingForce 
+                                    isGM=isGM}}
                             </div>
                         </div>
-                    </div>
-
-                    {{!-- ДУХ --}}
-                    <div class="panel">
-                        <h3>
-                            Дух
-                            <button class="meditation-btn regen-btn" type="button"><i class="fas fa-star"></i> Медитация</button>
-                        </h3>
                         
-                        {{!-- Исследование и Разум --}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="intuition" label="Интуиция (Чутье)" val=system.subAttributes.intuition sourceVal=sourceSystem.subAttributes.intuition visible=revealed.intuition isGM=isGM}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="cognition" label="Когнитивность (Ум)" val=system.subAttributes.cognition sourceVal=sourceSystem.subAttributes.cognition visible=revealed.cognition isGM=isGM}}
-                        
-                        {{!-- Социалка и Защита --}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="presence" label="Присутствие (Соц)" val=system.subAttributes.presence sourceVal=sourceSystem.subAttributes.presence visible=revealed.presence isGM=isGM}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="willpower" label="Воля (Ментал. Деф)" val=system.subAttributes.willpower sourceVal=sourceSystem.subAttributes.willpower visible=revealed.willpower isGM=isGM}}
-                        
-                        {{!-- Магия --}}
-                        <hr style="border-color:#333;">
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="magicResistance" label="Маг. Сопр." val=system.subAttributes.magicResistance sourceVal=sourceSystem.subAttributes.magicResistance visible=revealed.magicResistance isGM=isGM}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="manaSensitivity" label="Чувств. Маны" val=system.subAttributes.manaSensitivity sourceVal=sourceSystem.subAttributes.manaSensitivity visible=revealed.manaSensitivity isGM=isGM}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="spiritRecovery" label="Восст. Духа" val=system.subAttributes.spiritRecovery sourceVal=sourceSystem.subAttributes.spiritRecovery visible=revealed.spiritRecovery isGM=isGM}}
-                        
-                        {{!-- ДРАКОНЫ: СИЛА ДРАКОНА (Тоже обновлено) --}}
-                        {{#if race.isDragon}}
-                        <div class="stat-row" style="border-top: 1px solid #522; margin-top:5px;">
-                            {{#if isGM}}
-                                <div class="vis-btn" data-key="dragonPower"><i class="fas {{#if revealed.dragonPower}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i></div>
-                            {{else}}<div class="vis-icon"></div>{{/if}}
-                            <div class="stat-name rollable" data-key="dragonPower" data-label="Сила Дракона" style="color:#f88;">Сила Дракона</div>
-                            {{#if isGM}}
-                                <input type="number" name="system.dragonPower" value="{{sourceSystem.dragonPower}}"/>
-                                {{#if (ne system.dragonPower sourceSystem.dragonPower)}}
-                                    <span style="font-size:11px; color:#6bf; font-weight:bold;">({{system.dragonPower}})</span>
-                                {{/if}}
-                            {{else}}
-                                <div class="stat-val-display">{{#if revealed.dragonPower}}{{system.dragonPower}}{{else}}?{{/if}}</div>
-                            {{/if}}
-                        </div>
-                        {{/if}}
-                    </div>
-
-                    {{!-- РОДОСЛОВНАЯ (СЛОТ) --}}
-                    <div class="panel">
-                        <h3>
-                            Родословная
-                            {{#if isGM}}<a class="item-create" data-type="lineage" style="font-size:12px; float:right;">+</a>{{/if}}
-                        </h3>
-                        {{#if lineageItem}}
-                            <div class="item-slot filled" data-item-id="{{lineageItem._id}}">
-                                <img src="{{lineageItem.img}}"/>
-                                <div class="slot-info">
-                                    <span class="slot-name">{{lineageItem.name}}</span>
-                                </div>
-                                {{#if isGM}}
-                                <div class="item-controls">
-                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                                {{/if}}
-                            </div>
-                        {{else}}
-                            <div class="item-slot empty"><span>Перетащите Родословную</span></div>
-                        {{/if}}
-                    </div>
-
-                    {{!-- РОЛЬ (СЛОТ) --}}
-                    <div class="panel">
-                        <h3>
-                            Роль (Класс)
-                            {{#if isGM}}<a class="item-create" data-type="role" style="font-size:12px; float:right;">+</a>{{/if}}
-                        </h3>
-                        {{#if roleItem}}
-                            <div class="item-slot filled" data-item-id="{{roleItem._id}}">
-                                <img src="{{roleItem.img}}"/>
-                                <div class="slot-info">
-                                    <span class="slot-name">{{roleItem.name}}</span>
-                                    <span class="slot-meta">Ранг {{roleItem.system.rank}}</span>
-                                </div>
-                                {{#if isGM}}
-                                <div class="item-controls">
-                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                                {{/if}}
-                            </div>
-                        {{else}}
-                            <div class="item-slot empty"><span>Перетащите Класс</span></div>
-                        {{/if}}
-                    </div>
-
-                    {{!-- СОПРОТИВЛЕНИЯ --}}
-                    <div class="panel">
-                        <h3>Сопротивления</h3>
-                        <div style="font-size:11px; text-align:center; padding-bottom:5px; color:#aaa;">
-                            База: Физ <b>{{system.resistances.physBase}}%</b> | Маг <b>{{system.resistances.magBase}}%</b>
-                        </div>
-                        
-                        <div class="resist-grid">
-                             {{#*inline "resistRowDirect"}}
-                            <div class="resist-row">
-                                {{#if isGM}}
-                                    <div class="vis-btn" data-key="{{key}}">
-                                        <i class="fas {{#if visible}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i>
+                        {{!-- ============ ПРАВЫЙ СТОЛБЕЦ ============ --}}
+                        <div class="column">
+                            {{!-- КОМПЛЕКЦИЯ --}}
+                            <div class="panel">
+                                <h3>КОМПЛЕКЦИЯ</h3>
+                                
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.boneDensity" 
+                                    label="Плотность Костей" 
+                                    val=system.subAttributes.boneDensity 
+                                    sourceVal=sourceSystem.subAttributes.boneDensity 
+                                    isGM=isGM}}
+                                
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.height" 
+                                    label="Высота" 
+                                    val=system.subAttributes.height 
+                                    sourceVal=sourceSystem.subAttributes.height 
+                                    isGM=isGM}}
+                                
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.weight" 
+                                    label="Вес" 
+                                    val=system.subAttributes.weight 
+                                    sourceVal=sourceSystem.subAttributes.weight 
+                                    isGM=isGM}}
+                                
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.metabolism" 
+                                    label="Метаболизм" 
+                                    val=system.subAttributes.metabolism 
+                                    sourceVal=sourceSystem.subAttributes.metabolism 
+                                    isGM=isGM}}
+                                
+                                {{!-- РАЗМЕР --}}
+                                <div class="size-selector">
+                                    <label class="size-label">РАЗМЕР</label>
+                                    <select name="system.subAttributes.size" class="size-dropdown">
+                                        {{#each config.sizes as |sizeData sizeKey|}}
+                                            <option value="{{sizeKey}}" {{#if (eq ../system.subAttributes.size sizeKey)}}selected{{/if}}>
+                                                {{sizeData.label}}
+                                            </option>
+                                        {{/each}}
+                                    </select>
+                                    <div class="size-info">
+                                        Модификатор КС: 
+                                        <span class="size-dc-mod">
+                                            {{#with (lookup config.sizes system.subAttributes.size)}}
+                                                {{#if (gt dcMod 0)}}+{{/if}}{{dcMod}}
+                                            {{/with}}
+                                        </span>
                                     </div>
-                                {{else}}
-                                    <div class="vis-icon"></div>
-                                {{/if}}
-                                <span class="{{#unless visible}}dimmed{{/unless}}">{{label}}</span>
-                                {{#if isGM}}
-                                    <input type="number" name="system.resistances.{{stat}}" value="{{val}}"/>
-                                {{else}}
-                                    <span>{{#if visible}}{{val}}{{else}}?{{/if}}</span>
-                                {{/if}}
+                                </div>
                             </div>
-                            {{/inline}}
+                            
+                            {{!-- ВЛАДЕНИЯ --}}
+                            <div class="panel">
+                                <h3>ВЛАДЕНИЯ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="proficiencies.bladed" 
+                                    label="Клинковое" 
+                                    val=system.proficiencies.bladed 
+                                    sourceVal=sourceSystem.proficiencies.bladed 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="proficiencies.blunt" 
+                                    label="Дробящее" 
+                                    val=system.proficiencies.blunt 
+                                    sourceVal=sourceSystem.proficiencies.blunt 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="proficiencies.polearm" 
+                                    label="Древковое" 
+                                    val=system.proficiencies.polearm 
+                                    sourceVal=sourceSystem.proficiencies.polearm 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="proficiencies.unarmed" 
+                                    label="Безоружное" 
+                                    val=system.proficiencies.unarmed 
+                                    sourceVal=sourceSystem.proficiencies.unarmed 
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="proficiencies.throwing" 
+                                    label="Метательное" 
+                                    val=system.proficiencies.throwing 
+                                    sourceVal=sourceSystem.proficiencies.throwing 
+                                    isGM=isGM}}
+                            </div>
 
-                            {{> resistRowDirect key="resist_slashing" stat="slashing" label="Рубящий" val=system.resistances.slashing visible=revealed.resist_slashing isGM=isGM}}
-                            {{> resistRowDirect key="resist_blunt" stat="blunt" label="Дробящий" val=system.resistances.blunt visible=revealed.resist_blunt isGM=isGM}}
-                            {{> resistRowDirect key="resist_piercing" stat="piercing" label="Колющий" val=system.resistances.piercing visible=revealed.resist_piercing isGM=isGM}}
-                            {{> resistRowDirect key="resist_fire" stat="fire" label="Огонь" val=system.resistances.fire visible=revealed.resist_fire isGM=isGM}}
-                            {{> resistRowDirect key="resist_cold" stat="cold" label="Холод" val=system.resistances.cold visible=revealed.resist_cold isGM=isGM}}
-                            {{> resistRowDirect key="resist_lightning" stat="lightning" label="Молния" val=system.resistances.lightning visible=revealed.resist_lightning isGM=isGM}}
-                            {{> resistRowDirect key="resist_poison" stat="poison" label="Яд" val=system.resistances.poison visible=revealed.resist_poison isGM=isGM}}
-                            {{> resistRowDirect key="resist_acid" stat="acid" label="Кислота" val=system.resistances.acid visible=revealed.resist_acid isGM=isGM}}
-                            {{> resistRowDirect key="resist_psychic" stat="psychic" label="Психика" val=system.resistances.psychic visible=revealed.resist_psychic isGM=isGM}}
-                            {{> resistRowDirect key="resist_light" stat="light" label="Свет" val=system.resistances.light visible=revealed.resist_light isGM=isGM}}
-                            {{> resistRowDirect key="resist_dark" stat="dark" label="Тьма" val=system.resistances.dark visible=revealed.resist_dark isGM=isGM}}
-                            {{> resistRowDirect key="resist_pure" stat="pure" label="Чистый" val=system.resistances.pure visible=revealed.resist_pure isGM=isGM}}
+                            {{!-- СОПРОТИВЛЕНИЯ --}}
+                            <div class="panel">
+                                <h3>СОПРОТИВЛЕНИЯ</h3>
+                                <div class="resist-grid base-resists">
+                                    <div class="resist-column">
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.physBase" 
+                                            label="Физическое" 
+                                            val=system.resistances.physBase 
+                                            sourceVal=sourceSystem.resistances.physBase 
+                                            isGM=isGM}}
+                                    </div>
+                                    
+                                    <div class="resist-column">
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.magBase" 
+                                            label="Магическое" 
+                                            val=system.resistances.magBase 
+                                            sourceVal=sourceSystem.resistances.magBase 
+                                            isGM=isGM}}
+                                    </div>
+                                </div>
+                                <div class="resist-separator"></div>
+                                <div class="resist-grid">
+                                    {{!-- Левый столбец --}}
+                                    <div class="resist-column">
+                                        {{!-- Физические --}}
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.slashing" 
+                                            label="Режущий" 
+                                            val=system.resistances.slashing 
+                                            sourceVal=sourceSystem.resistances.slashing 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.blunt" 
+                                            label="Дробящий" 
+                                            val=system.resistances.blunt 
+                                            sourceVal=sourceSystem.resistances.blunt 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.piercing" 
+                                            label="Колющий" 
+                                            val=system.resistances.piercing 
+                                            sourceVal=sourceSystem.resistances.piercing 
+                                            isGM=isGM}}
+                                        
+                                        {{!-- Стихийные --}}
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.fire" 
+                                            label="Огонь" 
+                                            val=system.resistances.fire 
+                                            sourceVal=sourceSystem.resistances.fire 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.cold" 
+                                            label="Холод" 
+                                            val=system.resistances.cold 
+                                            sourceVal=sourceSystem.resistances.cold 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.lightning" 
+                                            label="Молния" 
+                                            val=system.resistances.lightning 
+                                            sourceVal=sourceSystem.resistances.lightning 
+                                            isGM=isGM}}
+                                    </div>
+                                    
+                                    {{!-- Правый столбец --}}
+                                    <div class="resist-column">
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.acid" 
+                                            label="Кислота" 
+                                            val=system.resistances.acid 
+                                            sourceVal=sourceSystem.resistances.acid 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.poison" 
+                                            label="Яд" 
+                                            val=system.resistances.poison 
+                                            sourceVal=sourceSystem.resistances.poison 
+                                            isGM=isGM}}
+                                        
+                                        {{!-- Мистические --}}
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.psychic" 
+                                            label="Психический" 
+                                            val=system.resistances.psychic 
+                                            sourceVal=sourceSystem.resistances.psychic 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.light" 
+                                            label="Свет" 
+                                            val=system.resistances.light 
+                                            sourceVal=sourceSystem.resistances.light 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.dark" 
+                                            label="Тьма" 
+                                            val=system.resistances.dark 
+                                            sourceVal=sourceSystem.resistances.dark 
+                                            isGM=isGM}}
+                                        
+                                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                            key="resistances.pure" 
+                                            label="Чистый" 
+                                            val=system.resistances.pure 
+                                            sourceVal=sourceSystem.resistances.pure 
+                                            isGM=isGM}}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{!-- ПРАВАЯ КОЛОНКА --}}
-                <div class="column">
-                    <div class="panel">
-                        <h3>
-                            Тело
-                            <button class="regen-btn" type="button" style="float:right;">
-                                <i class="fas fa-heart"></i> Отдых
-                            </button>
-                        </h3>
-
-                        {{!-- === СКОРОСТЬ И ИНИЦИАТИВА (НОВОЕ) === --}}
-                        <div style="display: flex; gap: 5px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
+                {{!-- ============ ДУХ ============ --}}
+                <div class="sub-tab-content" data-tab="spirit">
+                    <div class="main-attr-header spirit">
+                        <label class="rollable" data-key="attributes.spirit" data-label="ДУХ">ДУХ</label>
+                        <input type="number" 
+                            name="system.attributes.spirit" 
+                            value="{{system.attributes.spirit}}"
+                            data-dtype="Number"/>
+                    </div>
+                    
+                    <div class="grid-2col">
+                        <div class="column">
+                            {{!-- РАЗУМ --}}
+                            <div class="panel">
+                                <h3>РАЗУМ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.cognition" 
+                                    label="Когнитивность" 
+                                    val=system.subAttributes.cognition 
+                                    sourceVal=sourceSystem.subAttributes.cognition 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.willpower" 
+                                    label="Воля" 
+                                    val=system.subAttributes.willpower 
+                                    sourceVal=sourceSystem.subAttributes.willpower 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.intuition" 
+                                    label="Интуиция" 
+                                    val=system.subAttributes.intuition 
+                                    sourceVal=sourceSystem.subAttributes.intuition 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.consciousness" 
+                                    label="Сознание" 
+                                    val=system.subAttributes.consciousness 
+                                    sourceVal=sourceSystem.subAttributes.consciousness 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                            </div>
                             
-                            {{!-- Инициатива (Кнопка) --}}
-                            <button type="button" class="roll-initiative" style="flex: 1; background: #222; border: 1px solid #444; color: #d4af37; font-size: 12px; cursor: pointer;">
-                                <i class="fas fa-bolt"></i> Инициатива
-                            </button>
-
-                            {{!-- Скорость (Умный инпут) --}}
-                            <div class="stat-row" style="flex: 1; margin: 0; background: transparent; border: none; padding: 0;">
-                                <div class="stat-name" style="text-align: right; margin-right: 5px;" title="Скорость перемещения">
-                                    <i class="fas fa-person-running" style="font-size: 16px;"></i>
-                                </div>
-                                
-                                {{#if isGM}}
-                                    <div style="display: flex; align-items: center; justify-content: flex-end;">
-                                        {{!-- Показываем бонус, если он есть --}}
-                                        {{#if (ne system.attributes.speedBonus 0)}}
-                                            <span class="mod-label">
-                                                {{#if (gt system.attributes.speedBonus 0)}}+{{/if}}{{system.attributes.speedBonus}}
-                                            </span>
-                                        {{/if}}
-
-                                        <div class="smart-input-wrapper">
-                                            {{!-- Редактируем БОНУС --}}
-                                            <input class="direct-edit" type="number" name="system.attributes.speedBonus" value="{{sourceSystem.attributes.speedBonus}}"/>
-                                            {{!-- Видим ИТОГ --}}
-                                            <div class="smart-overlay">{{system.attributes.speed}}</div>
-                                        </div>
-                                    </div>
-                                {{else}}
-                                    <div class="stat-val-display">{{system.attributes.speed}}</div>
-                                {{/if}}
+                            {{!-- МАНА --}}
+                            <div class="panel">
+                                <h3>МАНА</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.soulPower" 
+                                    label="Сила Души" 
+                                    val=system.subAttributes.soulPower 
+                                    sourceVal=sourceSystem.subAttributes.soulPower 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.manaSense" 
+                                    label="Чувствительность к Мане" 
+                                    val=system.subAttributes.manaSense 
+                                    sourceVal=sourceSystem.subAttributes.manaSense 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.magicResistance" 
+                                    label="Магическое Сопротивление" 
+                                    val=system.subAttributes.magicResistance 
+                                    sourceVal=sourceSystem.subAttributes.magicResistance 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.spiritRecovery" 
+                                    label="Восстановление Духа" 
+                                    val=system.subAttributes.spiritRecovery 
+                                    sourceVal=sourceSystem.subAttributes.spiritRecovery 
+                                    revealed=revealed
+                                    isGM=isGM}}
                             </div>
                         </div>
-                        {{!-- ====================================== --}}
-                        {{!-- Обновленные вызовы с sourceVal --}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="strength" label="Сила" val=system.subAttributes.strength sourceVal=sourceSystem.subAttributes.strength visible=revealed.strength isGM=isGM}}
                         
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="agility" label="Ловкость" val=system.subAttributes.agility sourceVal=sourceSystem.subAttributes.agility visible=revealed.agility isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="endurance" label="Выносливость" val=system.subAttributes.endurance sourceVal=sourceSystem.subAttributes.endurance visible=revealed.endurance isGM=isGM}}
-
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="fortitude" label="Стойкость (Иммунитет)" val=system.subAttributes.fortitude sourceVal=sourceSystem.subAttributes.fortitude visible=revealed.fortitude isGM=isGM}}
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="metabolism" label="Метаболизм (Эфф. Еды)" val=system.subAttributes.metabolism sourceVal=sourceSystem.subAttributes.metabolism visible=revealed.metabolism isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="accuracy" label="Точность" val=system.subAttributes.accuracy sourceVal=sourceSystem.subAttributes.accuracy visible=revealed.accuracy isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="throwing" label="Метание" val=system.subAttributes.throwing sourceVal=sourceSystem.subAttributes.throwing visible=revealed.throwing isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="flexibility" label="Гибкость" val=system.subAttributes.flexibility sourceVal=sourceSystem.subAttributes.flexibility visible=revealed.flexibility isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="perception" label="Восприятие" val=system.subAttributes.perception sourceVal=sourceSystem.subAttributes.perception visible=revealed.perception isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="vision" label="Зрение" val=system.subAttributes.vision sourceVal=sourceSystem.subAttributes.vision visible=revealed.vision isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="boneDensity" label="Плотность Костей" val=system.subAttributes.boneDensity sourceVal=sourceSystem.subAttributes.boneDensity visible=revealed.boneDensity isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="naturalRegeneration" label="Ест. Регенерация" val=system.subAttributes.naturalRegeneration sourceVal=sourceSystem.subAttributes.naturalRegeneration visible=revealed.naturalRegeneration isGM=isGM}}
-                        
-                        {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" key="physicalResistance" label="Физ. Сопр. (Бонус)" val=system.subAttributes.physicalResistance sourceVal=sourceSystem.subAttributes.physicalResistance visible=revealed.physicalResistance isGM=isGM}}
-                    </div>
-
-                    {{!-- ВЛАДЕНИЕ ОРУЖИЕМ (Обновленный Inline Helper) --}}
-                    <div class="panel" style="margin-top:10px;">
-                        <h3>Владение Оружием</h3>
-                        
-                        {{#*inline "profRow"}}
-                        <div class="stat-row">
-                            {{#if isGM}}
-                                <div class="vis-btn" data-key="{{key}}">
-                                    <i class="fas {{#if visible}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i>
-                                </div>
-                            {{else}}<div class="vis-icon"></div>{{/if}}
+                        <div class="column">
+                            {{!-- СПЕЦИАЛЬНОЕ --}}
+                            <div class="panel">
+                                <h3>СПЕЦИАЛЬНОЕ</h3>
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.luck" 
+                                    label="Удача" 
+                                    val=system.subAttributes.luck 
+                                    sourceVal=sourceSystem.subAttributes.luck 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                    key="subAttributes.presence" 
+                                    label="Присутствие" 
+                                    val=system.subAttributes.presence 
+                                    sourceVal=sourceSystem.subAttributes.presence 
+                                    revealed=revealed
+                                    isGM=isGM}}
+                                
+                                {{!-- Классовые статы --}}
+                                {{#if (gt system.subAttributes.divinePowerStat 0)}}
+                                    {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                        key="subAttributes.divinePowerStat" 
+                                        label="Божественная Сила" 
+                                        val=system.subAttributes.divinePowerStat 
+                                        sourceVal=sourceSystem.subAttributes.divinePowerStat 
+                                        revealed=revealed
+                                        isGM=isGM}}
+                                {{/if}}
+                                {{#if (gt system.subAttributes.dragonPowerStat 0)}}
+                                    {{> "systems/dungeon-stone/templates/actor/parts/stat-row.hbs" 
+                                        key="subAttributes.dragonPowerStat" 
+                                        label="Сила Дракона" 
+                                        val=system.subAttributes.dragonPowerStat 
+                                        sourceVal=sourceSystem.subAttributes.dragonPowerStat 
+                                        revealed=revealed
+                                        isGM=isGM}}
+                                {{/if}}
+                            </div>
                             
-                            <div class="stat-name {{#unless visible}}dimmed{{/unless}}">{{label}}</div>
-                            
-                            {{#if isGM}}
-                                <div style="display: flex; align-items: center; justify-content: flex-end; width: 100%;">
-                                    {{#if (ne val sourceVal)}}
-                                        <span class="mod-label">
-                                            {{#if (gt val sourceVal)}}+{{/if}}{{sub val sourceVal}}
-                                        </span>
+                            {{!-- ЗНАНИЯ --}}
+                            <div class="panel">
+                                <h3 class="category-header">
+                                    ЗНАНИЯ 
+                                    {{#if isGM}}
+                                        <a class="item-create" data-type="knowledge" title="Добавить знание">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
                                     {{/if}}
-                                    <div class="smart-input-wrapper">
-                                        {{!-- ДОБАВЛЕН КЛАСС: direct-edit --}}
-                                        <input class="direct-edit" type="number" name="system.proficiencies.{{stat}}" value="{{sourceVal}}"/>
-                                        <div class="smart-overlay">{{val}}</div>
-                                    </div>
+                                </h3>
+                                <div class="knowledge-list">
+                                    {{#each knowledges as |item|}}
+                                        <div class="stat-row knowledge-row item" data-item-id="{{item._id}}">
+                                            {{!-- Глазик видимости --}}
+                                            {{#if ../isGM}}
+                                                <div class="vis-btn" data-key="knowledge_{{item._id}}">
+                                                    <i class="fas {{#if (getRevealed (concat "knowledge_" item._id) @root.revealed)}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
+                                                </div>
+                                            {{else}}
+                                                <div class="vis-icon"></div>
+                                            {{/if}}
+                                            
+                                            {{!-- Название (кликабельное для броска) --}}
+                                            <div class="stat-name rollable {{#unless (getRevealed (concat "knowledge_" item._id) @root.revealed)}}dimmed{{/unless}}" 
+                                                data-key="knowledge.{{item._id}}" 
+                                                data-label="{{item.name}}"
+                                                data-value="{{item.system.value}}">
+                                                {{item.name}}
+                                            </div>
+                                            
+                                            {{!-- Значение --}}
+                                            {{#if ../isGM}}
+                                                <div class="input-container">
+                                                    <div class="smart-input-wrapper">
+                                                        <input class="direct-edit" 
+                                                            type="number" 
+                                                            name="items.{{item._id}}.system.value" 
+                                                            value="{{item.system.value}}"
+                                                            step="1"
+                                                            data-dtype="Number"/>
+                                                        <div class="smart-overlay">{{item.system.value}}</div>
+                                                    </div>
+                                                </div>
+                                            {{else}}
+                                                <div class="stat-val-display">
+                                                    {{#if (getRevealed (concat "knowledge_" item._id) @root.revealed)}}{{item.system.value}}{{else}}?{{/if}}
+                                                </div>
+                                            {{/if}}
+                                            
+                                            {{#if ../isGM}}
+                                                <div class="knowledge-controls">
+                                                    <a class="item-edit" title="Открыть лист">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a class="item-delete" title="Удалить">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            {{/if}}
+                                        </div>
+                                    {{/each}}
                                 </div>
-                            {{else}}
-                                <div class="stat-val-display">{{#if visible}}{{val}}{{else}}?{{/if}}</div>
-                            {{/if}}
+                            </div>
                         </div>
-                        {{/inline}}
-
-                        {{!-- ВАЖНО: передаем sourceVal, используя ../sourceSystem --}}
-                        {{> profRow key="prof_bladed" stat="bladed" label="Клинковое" val=system.proficiencies.bladed sourceVal=sourceSystem.proficiencies.bladed visible=revealed.prof_bladed isGM=isGM}}
-                        {{> profRow key="prof_blunt" stat="blunt" label="Дробящее" val=system.proficiencies.blunt sourceVal=sourceSystem.proficiencies.blunt visible=revealed.prof_blunt isGM=isGM}}
-                        {{> profRow key="prof_polearm" stat="polearm" label="Древковое" val=system.proficiencies.polearm sourceVal=sourceSystem.proficiencies.polearm visible=revealed.prof_polearm isGM=isGM}}
-                        {{> profRow key="prof_axes" stat="axes" label="Топоры" val=system.proficiencies.axes sourceVal=sourceSystem.proficiencies.axes visible=revealed.prof_axes isGM=isGM}}
-                        {{> profRow key="prof_unarmed" stat="unarmed" label="Безоружный" val=system.proficiencies.unarmed sourceVal=sourceSystem.proficiencies.unarmed visible=revealed.prof_unarmed isGM=isGM}}
                     </div>
                 </div>
             </div>
         </div>
         
-        {{!-- === ВКЛАДКА: ЗАКЛИНАНИЯ (Динамическая) === --}}
         {{#if showSpellsTab}}
-        <div class="tab spells" data-group="primary" data-tab="spells">
-            <div class="sheet-body">
-                <div class="panel">
-                     <h3>Книга Заклинаний</h3>
-                     {{#if roleItem}}
-                     <p style="font-size:12px; color:#aaa; margin-bottom:10px;">
-                         Класс: <b style="color:#d4af37">{{roleItem.name}}</b> (Ранг {{roleItem.system.rank}})
-                     </p>
-                     <div class="grid-2col">
-                         {{#each spellsByRank as |group|}}
-                            {{#if group.visible}}
-                                 <div class="inventory-section">
-                                    <h4 style="border-bottom:1px solid #444; color:#aaddff; display:flex; justify-content:space-between;">
-                                        Ранг {{group.rank}}
-                                        {{#if ../isGM}}
-                                            <a class="item-create" data-type="spell" data-rank="{{group.rank}}" style="color:#aaddff; cursor:pointer;">+</a>
-                                        {{/if}}
-                                    </h4>
-                                    <ol class="items-list">
-                                        {{#each group.list as |item|}}
-                                        <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                                            <img src="{{item.img}}"/>
-                                            <div class="item-name">{{item.name}}</div>
-                                            <div class="item-controls">
-                                                <button class="ability-use" type="button" style="width:24px; padding:0; color:#aaddff;">
-                                                    <i class="fas fa-magic"></i>
-                                                </button>
-                                                {{#if ../../isGM}}
-                                                <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                                <a class="item-delete"><i class="fas fa-trash"></i></a>
+        <div class="tab spells" data-group="primary" data-tab="spells" style="height: 100%; overflow: hidden;">
+            <div class="magic-layout" style="display: flex; height: 100%;">
+                
+                {{!-- ЛЕВАЯ КОЛОНКА (240px) --}}
+                <aside class="magic-sidebar" style="flex: 0 0 240px; background: rgba(0,0,0,0.3); border-right: 2px solid #8b4513; padding: 15px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                    
+                    {{!-- 1. КЛАСС И СТАТУС --}}
+                    <div class="caster-card" style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold; color: #d4af37; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 0 10px rgba(212,175,55,0.3);">
+                            {{roleItem.name}}
+                        </div>
+                        {{#if roleItem.system.deity}}
+                        <div style="font-size: 13px; color: #aaa; margin-bottom: 10px;">
+                            <i class="fas fa-praying-hands"></i> {{roleItem.system.deity}}
+                        </div>
+                        {{/if}}
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                            <div style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px; border: 1px solid #444;">
+                                <div style="font-size: 10px; color: #888;">РАНГ</div>
+                                <div style="font-size: 18px; font-weight: bold; color: #eee;">{{magicRank}}</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px; border: 1px solid #444;">
+                                <div style="font-size: 10px; color: #888;">ЗАКЛИНАНИЙ</div>
+                                <div style="font-size: 18px; font-weight: bold; color: #eee;">{{spellsLearned}}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{!-- 3. ВОССТАНОВЛЕНИЕ --}}
+                    {{#if recoveryInfo}}
+                    <div class="recovery-box" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; font-size: 12px;">
+                        <div style="color: #aaa; margin-bottom: 5px; text-transform: uppercase; font-size: 10px; text-align: center;">Восстановление</div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 4px;">
+                            <span>Полное:</span> <span style="color: #fff; font-weight: bold;">{{recoveryInfo.fullTime}}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Отдых:</span> <span style="color: #fff; font-weight: bold;">{{recoveryInfo.restTime}}</span>
+                        </div>
+                    </div>
+                    {{/if}}
+
+                    <hr style="border: 0; border-top: 1px solid #444; margin: 0;">
+
+                    {{!-- 4. ФИЛЬТРЫ --}}
+                    <div class="magic-filters">
+                        <h4 style="font-size: 12px; color: #d4af37; text-transform: uppercase; margin-bottom: 10px; text-align: center;">
+                            <i class="fas fa-filter"></i> Фильтрация
+                        </h4>
+                        
+                        {{!-- Слайдер Ранга --}}
+                        <div class="filter-group" style="margin-bottom: 15px;">
+                            <label style="font-size:11px; color:#ccc; display:flex; justify-content:space-between; margin-bottom: 5px;">
+                                <span>Показать ранги до:</span>
+                                <span id="rank-slider-val" style="color:#d4af37; font-weight: bold;">9</span>
+                            </label>
+                            <input type="range" id="rank-slider" min="{{magicRank}}" max="9" value="9" step="1" style="width:100%;">
+                            
+                            <div style="display:flex; justify-content:space-between; font-size:9px; color:#666; margin-top: 2px;">
+                                <span>{{magicRank}} (Высший)</span>
+                                <span>9 (Низший)</span>
+                            </div>
+                        </div>
+
+                        {{!-- Тип (Dropdown) --}}
+                        <div class="filter-group" style="margin-bottom: 10px;">
+                            <select class="spell-type-select" style="width:100%; background:#111; color:#ccc; border:1px solid #555; padding: 4px;">
+                                <option value="all">Все типы</option>
+                                <option value="attack">Атакующие</option>
+                                <option value="support">Поддержка</option>
+                                <option value="utility">Утилиты</option>
+                                <option value="ritual">Ритуалы</option>
+                            </select>
+                        </div>
+
+                        {{!-- Чекбоксы --}}
+                        <label style="font-size:12px; color:#ccc; display:flex; align-items:center; margin-bottom:10px; cursor:pointer;">
+                            <input type="checkbox" id="filter-conc" class="spell-filter-checkbox" style="margin-right:8px;"> Только Концентрация
+                        </label>
+                        
+                        {{!-- Фильтр по компонентам --}}
+                        <div class="filter-group" style="margin-bottom: 10px;">
+                            <div style="font-size:11px; color:#ccc; margin-bottom: 5px;">Компоненты:</div>
+                            <label style="font-size:11px; color:#ccc; display:flex; align-items:center; margin-bottom:5px; cursor:pointer;">
+                                <input type="checkbox" class="component-filter" data-component="verbal" style="margin-right:6px;"> Вербальный
+                            </label>
+                            <label style="font-size:11px; color:#ccc; display:flex; align-items:center; margin-bottom:5px; cursor:pointer;">
+                                <input type="checkbox" class="component-filter" data-component="somatic" style="margin-right:6px;"> Соматический
+                            </label>
+                            <label style="font-size:11px; color:#ccc; display:flex; align-items:center; margin-bottom:5px; cursor:pointer;">
+                                <input type="checkbox" class="component-filter" data-component="material" style="margin-right:6px;"> Материальный
+                            </label>
+                        </div>
+                    </div>
+
+                </aside>
+
+                {{!-- ПРАВАЯ КОЛОНКА (СПИСОК) --}}
+                <main class="magic-content" style="flex: 1; overflow-y: auto; padding-right: 5px; padding-top: 10px;">
+                    
+                    <div class="grimoire-header" style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="font-family: serif; font-size: 26px; color: {{#if isDivine}}#ffd700{{else}}#aaddff{{/if}}; border-bottom: 2px solid {{#if isDivine}}#ffd700{{else}}#aaddff{{/if}}; display: inline-block; padding: 0 40px 5px;">
+                            {{#if isDivine}}БОЖЕСТВЕННАЯ МАГИЯ{{else}}ЗАКЛИНАТЕЛЬНАЯ МАГИЯ{{/if}}
+                        </h2>
+                    </div>
+
+                    {{!-- СПИСОК ЗАКЛИНАНИЙ --}}
+                    {{#each spellsByRank as |group|}}
+                        {{!-- Рендерим группу только если она видима (есть заклинания) и доступна по рангу --}}
+                        <div class="spell-rank-section" style="margin-bottom: 25px; {{#unless group.visible}}display:none;{{/unless}}" data-rank="{{group.rank}}">
+                            
+                            <div class="rank-title" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(90deg, #222 0%, transparent 100%); border-left: 4px solid {{#if ../isDivine}}#ffd700{{else}}#aaddff{{/if}}; padding: 6px 12px; margin-bottom: 8px;">
+                                <span style="font-weight: bold; color: #eee; font-size: 14px;">РАНГ {{group.rank}}</span>
+                                {{#if ../isGM}}
+                                    <a class="item-create" data-type="spell" data-rank="{{group.rank}}" style="color: #888; font-size: 12px; cursor: pointer;"><i class="fas fa-plus"></i></a>
+                                {{/if}}
+                            </div>
+
+                            <div class="spell-list" style="display: flex; flex-direction: column; gap: 6px;">
+                                {{#each group.list as |spell|}}
+                                <div class="spell-item item" 
+                                    data-item-id="{{spell._id}}" 
+                                    data-rank="{{spell.system.rank}}"
+                                    data-type="{{spell.system.spellType}}"
+                                    data-conc="{{spell.system.canConcentrate}}"
+                                    data-verb="{{spell.system.components.verbal}}"
+                                    data-som="{{spell.system.components.somatic}}"
+                                    data-mat="{{spell.system.components.material}}"
+                                    style="background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 4px; padding: 6px;">
+                                    
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <img src="{{spell.img}}" width="36" height="36" style="border: 1px solid #555; border-radius: 4px; background:#000;">
+                                        
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div class="spell-name item-clickable" style="font-weight: bold; color: #e0e0e0; font-size: 14px; cursor: pointer;">
+                                                {{spell.name}}
+                                            </div>
+                                            <div style="font-size: 11px; color: #888;">
+                                                <span style="text-transform: capitalize;">{{spell.system.spellType}}</span>
+                                                <span style="margin: 0 5px;">|</span>
+                                                {{#if spell.system.components.verbal}}<span style="color:#aaa; font-size:10px;">В</span>{{/if}}
+                                                {{#if spell.system.components.somatic}}<span style="color:#aaa; font-size:10px;">С</span>{{/if}}
+                                                {{#if spell.system.components.material}}<span style="color:#aaa; font-size:10px;">М</span>{{/if}}
+                                                {{#if spell.system.canConcentrate}}
+                                                    <span style="color:#d4af37; border:1px solid #d4af37; border-radius:3px; padding:0 3px; font-size:9px; margin-left:5px; font-weight:bold;">K</span>
                                                 {{/if}}
                                             </div>
-                                        </li>
-                                        {{else}}
-                                            <li style="font-style:italic; color:#555; font-size:10px; padding:2px;">Нет заклинаний</li>
-                                        {{/each}}
-                                    </ol>
-                                 </div>
-                             {{/if}}
-                         {{/each}}
-                     </div>
-                     {{else}}
-                        <div style="padding:20px; text-align:center; color:#777;">Нет класса</div>
-                     {{/if}}
-                </div>
+                                        </div>
+
+                                        <div class="spell-actions" style="display: flex; gap: 5px; align-items: center;">
+                                            <a class="item-edit" title="Открыть заклинание" style="color: #888; font-size: 14px; cursor: pointer;"><i class="fas fa-book-open"></i></a>
+                                            <a class="item-delete" title="Удалить заклинание" style="color: #888; font-size: 14px; cursor: pointer;"><i class="fas fa-trash-alt"></i></a>
+                                            <button class="cast-spell" title="Сотворить" style="background: linear-gradient(135deg, #333, #222); border: 1px solid #555; color: #ddd; font-size: 11px; padding: 4px 12px; cursor: pointer; border-radius: 3px;">
+                                                <i class="fas fa-magic"></i> КАСТ
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {{!-- ЗАМЕТКИ ИГРОКА --}}
+                                    <div class="player-notes" style="margin-top: 6px; border-top: 1px dashed #444; padding-top: 4px;">
+                                        <input type="text" 
+                                            class="direct-edit" 
+                                            name="items.{{spell._id}}.system.playerNotes" 
+                                            value="{{spell.system.playerNotes}}" 
+                                            placeholder="Ваши заметки..." 
+                                            style="width: 100%; background: transparent; border: none; color: #aaa; font-style: italic; font-size: 11px; padding: 0;">
+                                    </div>
+
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
+                    {{/each}}
+
+                </main>
             </div>
         </div>
         {{/if}}
 
-                {{!-- === ВКЛАДКА: КОНТРАКТЫ === --}}
         {{#if showContractsTab}}
-        <div class="tab contracts" data-group="primary" data-tab="contracts">
-            <div class="panel">
-                <h3>
-                    Контракты Духов
-                    {{#if isGM}}<a class="item-create" data-type="contract" style="float:right; font-size:12px;">+</a>{{/if}}
-                </h3>
-                <p style="font-size:11px; color:#aaa; margin-bottom:10px;">
-                    Связь с духами природы, предками или стихиями.
-                </p>
+        <div class="tab contracts" data-group="primary" data-tab="contracts" style="height: 100%; overflow: hidden;">
+            <div class="magic-layout" style="display: flex; height: 100%; gap: 15px;">
                 
-                <ol class="items-list">
-                    {{#each contracts as |item|}}
-                    <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                        <img src="{{item.img}}"/>
-                        <div class="item-name">
-                            {{item.name}}
-                            <span style="font-size:10px; color:#aaa;">({{item.system.contractType}})</span>
+                {{!-- ЛЕВАЯ КОЛОНКА --}}
+                <aside class="magic-sidebar" style="flex: 0 0 250px; background: rgba(0,0,0,0.3); border-right: 2px solid #4a9; padding: 15px; display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <div style="text-align: center;">
+                        <div style="font-size: 18px; font-weight: bold; color: #4a9; text-transform: uppercase; margin-bottom: 5px;">
+                            {{contractSourceLabel}}
                         </div>
+                        <div style="font-size: 12px; color: #aaa;">Источник силы</div>
+                    </div>
+
+                    <div class="recovery-box" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 4px; border: 1px solid #254;">
+                        <div style="color: #8b9; margin-bottom: 5px; text-transform: uppercase; font-size: 10px; text-align: center;">Слоты Связи</div>
+                        <div style="text-align: center; font-size: 36px; font-weight: bold; color: #fff;">
+                            {{contractCount}} <span style="font-size:18px; color:#666;">/</span> <span style="color:#4a9;">{{contractMax}}</span>
+                        </div>
+                    </div>
+
+                    {{!-- АКТИВНЫЕ СЛОТЫ --}}
+                    <div class="active-contracts" style="display: flex; flex-direction: column; gap: 10px;">
+                        <h4 style="font-size: 12px; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #444;">Активные Связи</h4>
                         
-                        <div class="item-controls">
-                            {{!-- Кнопка для вывода условий контракта в чат --}}
-                            <button class="ability-use" type="button" style="width:24px; padding:0; color:#aaddff;">
-                                <i class="fas fa-scroll"></i>
-                            </button>
-                            
-                            {{#if ../isGM}}
-                            <a class="item-edit"><i class="fas fa-edit"></i></a>
-                            <a class="item-delete"><i class="fas fa-trash"></i></a>
+                        {{#each contractSlots as |slot|}}
+                        <div class="slot-card" style="background: rgba(0,0,0,0.4); border: 1px solid {{#if slot.item}}#4a9{{else}}#444{{/if}}; border-radius: 4px; padding: 5px; min-height: 50px; display: flex; align-items: center;">
+                            {{#if slot.item}}
+                                <img src="{{slot.item.img}}" width="40" height="40" style="border-radius: 4px; border: 1px solid #4a9; margin-right: 10px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: bold; color: #fff; font-size: 13px;">{{slot.item.name}}</div>
+                                    <div style="font-size: 10px; color: #8b9;">Ур. {{slot.item.system.level}}</div>
+                                </div>
+                                <a class="item-control item-unequip" data-item-id="{{slot.item._id}}" title="Разорвать связь" style="color: #f44; cursor: pointer;">
+                                    <i class="fas fa-unlink"></i>
+                                </a>
+                            {{else}}
+                                <div style="flex: 1; text-align: center; color: #666; font-style: italic; font-size: 11px;">
+                                    Слот свободен
+                                </div>
                             {{/if}}
                         </div>
-                    </li>
-                    {{else}}
-                        <li class="item-slot empty">Нет активных контрактов</li>
-                    {{/each}}
-                </ol>
+                        {{/each}}
+                    </div>
+
+                </aside>
+
+                {{!-- ПРАВАЯ КОЛОНКА (СПИСОК) --}}
+                <main class="magic-content" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4a9; padding-bottom: 5px; margin-bottom: 15px;">
+                        <h2 style="font-family: serif; font-size: 24px; color: #4a9; margin: 0;">ВСЕ КОНТРАКТЫ</h2>
+                        {{#if isGM}}
+                            <a class="item-create" data-type="contract" style="color: #4a9; font-size: 12px; cursor: pointer; border: 1px solid #4a9; padding: 4px 10px; border-radius: 4px;">
+                                <i class="fas fa-plus"></i> Создать
+                            </a>
+                        {{/if}}
+                    </div>
+
+                    <div class="contracts-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        {{#each contracts as |item|}}
+                        <div class="contract-item item {{#if item.isExpanded}}expanded{{/if}}" data-item-id="{{item._id}}">
+                            
+                            {{!-- Хедер Строки --}}
+                            <div class="item-header" style="display: flex; align-items: center; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                                <img src="{{item.img}}" width="40" height="40" style="border-radius: 4px; margin-right: 15px; border: 1px solid #555;">
+                                
+                                <div class="item-name item-clickable" style="flex: 1; font-weight: bold; font-size: 15px; color: #e0e0e0; cursor: pointer;">
+                                    {{item.name}}
+                                    {{#if (eq item.system.equipStatus "equipped")}}
+                                        <span style="font-size: 10px; color: #4a9; border: 1px solid #4a9; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">АКТИВЕН</span>
+                                    {{/if}}
+                                </div>
+
+                                {{!-- Кнопки --}}
+                                <div class="item-controls" style="display: flex; gap: 10px;">
+                                    {{!-- Кнопка "Призвать" (Описание в чат) --}}
+                                    <a class="ability-use" title="Показать в чате" style="color: #aaa;"><i class="fas fa-comment-alt"></i></a>
+                                    
+                                    {{!-- Кнопка Экипировать (Заключить) --}}
+                                    <a class="item-equip" title="{{#if (eq item.system.equipStatus 'equipped')}}Разорвать{{else}}Заключить{{/if}}" 
+                                    style="color: {{#if (eq item.system.equipStatus 'equipped')}}#4a9{{else}}#666{{/if}};">
+                                        <i class="fas fa-link"></i>
+                                    </a>
+
+                                    {{#if ../isGM}}
+                                        <a class="item-edit" style="color: #666;"><i class="fas fa-edit"></i></a>
+                                        <a class="item-delete" style="color: #666;"><i class="fas fa-trash"></i></a>
+                                    {{/if}}
+                                </div>
+                            </div>
+
+                            {{!-- РАСКРЫТОЕ ОПИСАНИЕ --}}
+                            {{#if item.isExpanded}}
+                            <div class="item-summary" style="background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid #444; border-top: none; margin-top: -2px; border-radius: 0 0 4px 4px;">
+                                
+                                {{!-- Прогресс Существа --}}
+                                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px;">
+                                    <div style="font-weight: bold; color: #4a9;">Ур. {{item.system.level}}</div>
+                                    <div style="flex: 1; height: 8px; background: #111; border-radius: 4px; position: relative;">
+                                        <div style="position: absolute; height: 100%; background: #4a9; width: {{#if item.system.xpMax}}{{multiply (min 1 (divide item.system.xp item.system.xpMax)) 100}}{{else}}0{{/if}}%;"></div>
+                                    </div>
+                                    <div style="font-size: 10px; color: #aaa;">{{item.system.xp}} / {{item.system.xpMax}} XP</div>
+                                </div>
+
+                                {{!-- Заметки Игрока --}}
+                                <div style="margin-bottom: 10px;">
+                                    <label style="font-size: 10px; color: #888;">ЗАМЕТКИ О КОНТРАКТЕ:</label>
+                                    <input type="text" class="direct-edit" name="items.{{item._id}}.system.playerNotes" value="{{item.system.playerNotes}}" 
+                                        style="width: 100%; background: #111; border: 1px solid #444; color: #ccc; padding: 4px; font-size: 12px;">
+                                </div>
+
+                                <div style="font-size: 12px; color: #ccc; margin-top: 10px;">
+                                    {{{item.system.description}}}
+                                </div>
+                            </div>
+                            {{/if}}
+
+                        </div>
+                        {{/each}}
+                    </div>
+
+                </main>
             </div>
         </div>
         {{/if}}
 
-        {{!-- === ВКЛАДКА: БОЙ === --}}
         <div class="tab combat" data-group="primary" data-tab="combat">
 
-            <div class="panel" style="margin-bottom:10px; border-color: #555;">
-                <h3>Боевые параметры</h3>
-                <div class="grid-3col">
-                    {{!-- Щит --}}
-                    <div class="form-group" style="text-align:center;">
-                        <label>Щит</label>
-                        <div>
-                            {{!-- Переключатель --}}
-                            <a class="vis-btn" data-key="shieldRaised" title="Поднять щит" style="width:30px; height:30px; line-height:30px;">
-                                <i class="fas {{#if system.combat.shieldRaised}}fa-shield-alt{{else}}fa-shield{{/if}}" style="{{#if system.combat.shieldRaised}}color:#4f4{{else}}color:#555{{/if}}"></i>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    {{!-- Бонус щита (можно редактировать) --}}
-                    <div class="form-group">
-                        <label>Бонус Щита (КС)</label>
-                        <input type="number" name="system.combat.shieldBonus" value="{{system.combat.shieldBonus}}" style="text-align:center;"/>
-                    </div>
-                    
-                    {{!-- Размер --}}
-                    <div class="form-group">
-                        <label>Размер</label>
-                        <select name="system.details.size" style="width:100%; background:#111; color:#fff;">
-                            {{selectOptions config.sizes selected=system.details.size labelAttr="label"}}
-                        </select>
-                    </div>
-                </div>
+            <div class="grid-2col combat-layout">
                 
-                {{!-- Штраф Защиты --}}
-                <div class="form-group" style="margin-top:5px; border-top:1px solid #333; padding-top:5px;">
-                    <label style="color:#f44;">Истощение Защиты (Штраф КУ)</label>
-                    <input type="number" name="system.combat.defensePenalty" value="{{system.combat.defensePenalty}}" style="color:#f44; font-weight:bold;"/>
-                    <p style="font-size:10px; color:#aaa;">Сбрасывается в начале хода.</p>
-                </div>
-            </div>
-            
-            {{!-- ЛЮДИ: АУРА --}}
-            {{#if race.isHuman}}
-            <div class="panel" style="border-color:#aaf; margin-bottom:10px;">
-                <h3>Аура <input type="checkbox" name="system.aura.active" {{checked system.aura.active}} style="float:right"/></h3>
-                <div class="grid-2col">
-                    <div class="form-group">
-                        <label>Уровень Ауры</label>
-                        <input type="number" name="system.aura.level" value="{{system.aura.level}}"/>
-                    </div>
-                </div>
-            </div>
-            {{/if}}
-
-            {{!-- ДРАКОНЫ: СЛОВА --}}
-            {{#if race.isDragon}}
-            <div class="panel" style="border-color:#f44; margin-bottom:10px;">
-                <h3>Слова Дракона</h3>
-                <div class="item-slot empty">Нет изученных Слов</div>
-            </div>
-            {{/if}}
-
-            {{!-- ВАРВАРЫ: ОТПЕЧАТОК --}}
-            {{#if race.isBarbarian}}
-            <div class="panel" style="border-color:#d4af37; margin-bottom:10px;">
-                <h3>Отпечаток</h3>
-                <div class="grid-2col">
-                    <div class="form-group"><label>Уровень</label><input type="number" name="system.imprint.level" value="{{system.imprint.level}}"/></div>
-                    <div class="form-group"><label>Путь</label><input type="text" name="system.imprint.path" value="{{system.imprint.path}}"/></div>
-                </div>
-            </div>
-            {{/if}}
-
-            <div class="panel">
-                <h3>Оружие</h3>
-                <ol class="items-list">
-                    {{#each weapons as |item|}}
-                    <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                        <img src="{{item.img}}"/>
-                        <div class="item-name">
-                            {{item.name}} 
-                            <span style="font-size:10px; color:#777">({{item.system.damage}})</span>
-                        </div>
-                        <div class="item-controls">
-                            <button class="weapon-roll" type="button" style="width:24px; padding:0;">
-                                <i class="fas fa-crosshairs"></i>
-                            </button>
-                            {{#if ../isGM}}
-                            <a class="item-edit"><i class="fas fa-edit"></i></a>
-                            <a class="item-delete"><i class="fas fa-trash"></i></a>
-                            {{/if}}
-                        </div>
-                    </li>
-                    {{/each}}
-                </ol>
-            </div>
-            
-            <div class="panel" style="margin-top:10px;">
-                <h3>Активные Способности (Эссенции)</h3>
-                <ol class="items-list">
-                    {{#each abilities as |item|}}
-                    <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                        <img src="{{item.img}}"/>
-                        <div class="item-name">{{item.name}}</div>
-                        <div class="item-controls">
-                            <button class="ability-use" type="button" style="width:24px; padding:0;">
-                                <i class="fas fa-magic"></i>
-                            </button>
-                            {{#if ../isGM}}
-                            <a class="item-edit"><i class="fas fa-edit"></i></a>
-                            {{/if}}
-                        </div>
-                    </li>
-                    {{/each}}
-                </ol>
-            </div>
-        </div>
-
-        {{!-- === ВКЛАДКА: ИНВЕНТАРЬ === --}}
-        <div class="tab inventory" data-group="primary" data-tab="inventory">
-            <div class="sheet-body grid-2col">
+                {{!-- =================== ЛЕВАЯ КОЛОНКА: ЗАЩИТА =================== --}}
                 <div class="column">
-                    <div class="inventory-section">
-                        <h3>
-                            Оружие
-                            {{#if isGM}}<a class="item-create" data-type="weapon" style="color:#d4af37; cursor:pointer;">+</a>{{/if}}
-                        </h3>
-                        <ol class="items-list">
-                            {{#each weapons as |item|}}
-                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                                <img src="{{item.img}}"/>
-                                <span class="item-name">{{item.name}}</span>
-                                {{#if ../isGM}}
-                                <div class="item-controls">
-                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
-                                </div>
+                    
+                    {{!-- ПАНЕЛЬ ЗАЩИТЫ --}}
+                    <div class="panel">
+                        <h3>ЗАЩИТА</h3>
+                        
+                        <div class="defense-stats">
+                            
+                            {{!-- ЛЕВЫЙ БЛОК: ЩИТ --}}
+                            <div class="stat-box shield-box">
+                                <label>Активный Щит</label>
+                                {{#if equippedShield}}
+                                    <div class="shield-display">
+                                        {{!-- Картинка --}}
+                                        <img src="{{equippedShield.img}}" width="36" height="36"/>
+                                        
+                                        {{!-- Инфо --}}
+                                        <div class="shield-details">
+                                            <span class="name">{{equippedShield.name}}</span>
+                                            <span class="bonus">
+                                                <i class="fas fa-shield-alt"></i> +{{equippedShield.system.armorValue}} КУ
+                                            </span>
+                                        </div>
+                                        
+                                        {{!-- Кнопка --}}
+                                        <a class="shield-toggle" title="{{#if system.combat.shieldRaised}}Опустить щит{{else}}Поднять щит (+{{equippedShield.system.armorValue}} КУ){{/if}}">
+                                            <i class="fas {{#if system.combat.shieldRaised}}fa-check-circle active{{else}}fa-circle{{/if}}"></i>
+                                        </a>
+                                    </div>
+                                {{else}}
+                                    <div class="no-shield">
+                                        <i class="fas fa-times-circle"></i> Нет экипированного щита
+                                    </div>
                                 {{/if}}
-                            </li>
-                            {{/each}}
-                        </ol>
-                    </div>
-
-                    <div class="inventory-section">
-                        <h3>
-                            Снаряжение 
-                            {{#if isGM}}<a class="item-create" data-type="armor" style="color:#d4af37; cursor:pointer;">+</a>{{/if}}
-                        </h3>
-                        <ol class="items-list">
-                            {{#each armor as |item|}}
-                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                                <img src="{{item.img}}"/>
-                                <span class="item-name">{{item.name}}</span>
-                                {{#if ../isGM}}
-                                <div class="item-controls">
-                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                                {{/if}}
-                            </li>
-                            {{/each}}
-                        </ol>
-                    </div>
-
-                    <div class="inventory-section">
-                        <h3>
-                            Расходники 
-                            {{#if isGM}}<a class="item-create" data-type="consumable" style="color:#d4af37; cursor:pointer;">+</a>{{/if}}
-                        </h3>
-                        <ol class="items-list">
-                            {{#each consumables as |item|}}
-                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                                <img src="{{item.img}}"/>
-                                <span class="item-name">{{item.name}}</span>
-                                {{#if ../isGM}}
-                                <div class="item-controls">
-                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                                {{/if}}
-                            </li>
-                            {{/each}}
-                        </ol>
-                    </div>
-                </div>
-                
-                <div class="column">
-                    <div class="inventory-section">
-                        <h3>
-                            Эссенции 
-                            {{#if isGM}}<a class="item-create" data-type="essence" style="color:#d4af37; cursor:pointer;">+</a>{{/if}}
-                        </h3>
-                        {{#each essencesByRank as |rankItems rankNum|}}
-                            {{#if rankItems.length}}
-                            <div style="font-size:11px; color:#d4af37; border-bottom:1px solid #333; margin-top:5px;">
-                                Ранг {{rankNum}}
                             </div>
-                            <ol class="items-list">
-                                {{#each rankItems as |item|}}
-                                <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                                    <img src="{{item.img}}"/>
-                                    <span class="item-name">{{item.name}}</span>
-                                    {{#if ../../isGM}}
-                                    <div class="item-controls">
+
+                            {{!-- ПРАВЫЙ БЛОК: ИСТОЩЕНИЕ --}}
+                            <div class="stat-box depletion">
+                                <label title="Сбрасывается в начале вашего хода">Истощение (Штраф КУ)</label>
+                                <div class="depletion-val">
+                                    <i class="fas fa-heart-broken" title="Разбитая защита"></i>
+                                    <input type="number" name="system.combat.defensePenalty" value="{{system.combat.defensePenalty}}" min="0"/>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    {{!-- СОСТОЯНИЯ --}}
+                    <div class="panel">
+                        <h3>СОСТОЯНИЯ</h3>
+                        <div class="conditions-grid">
+                            <label class="condition-checkbox" title="Штраф к КУ -2">
+                                <input type="checkbox" name="system.combat.conditions.prone" {{checked system.combat.conditions.prone}}/>
+                                <span>Ничком</span>
+                            </label>
+                            
+                            <label class="condition-checkbox" title="+25 к КС атакующего">
+                                <input type="checkbox" name="system.combat.conditions.blinded" {{checked system.combat.conditions.blinded}}/>
+                                <span>Слепота</span>
+                            </label>
+                            
+                            <label class="condition-checkbox" title="+25 к КС цели">
+                                <input type="checkbox" name="system.combat.conditions.invisible" {{checked system.combat.conditions.invisible}}/>
+                                <span>Невидимость</span>
+                            </label>
+                            
+                            <label class="condition-checkbox" title="ЛВК=0, Штраф КУ -2">
+                                <input type="checkbox" name="system.combat.conditions.stunned" {{checked system.combat.conditions.stunned}}/>
+                                <span>Оглушение</span>
+                            </label>
+                            
+                            <label class="condition-checkbox" title="ЛВК=0, Штраф КУ -2">
+                                <input type="checkbox" name="system.combat.conditions.paralyzed" {{checked system.combat.conditions.paralyzed}}/>
+                                <span>Паралич</span>
+                            </label>
+                            
+                            <label class="condition-checkbox" title="Штраф КУ -1">
+                                <input type="checkbox" name="system.combat.conditions.grappled" {{checked system.combat.conditions.grappled}}/>
+                                <span>Схваченность</span>
+                            </label>
+                            
+                            <label class="condition-checkbox" title="Штраф КУ -2 (Авто/Ручное)">
+                                <input type="checkbox" name="system.combat.conditions.flanked" {{checked system.combat.conditions.flanked}}/>
+                                <span>Фланкирование</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {{!-- УКРЫТИЕ --}}
+                    <div class="panel">
+                        <h3>УКРЫТИЕ</h3>
+                        
+                        {{!-- Селектор --}}
+                        <div class="cover-selector">
+                            <select name="system.combat.conditions.cover">
+                                <option value="none" {{#if (eq system.combat.conditions.cover "none")}}selected{{/if}}>
+                                    Нет укрытия
+                                </option>
+                                <option value="partial" {{#if (eq system.combat.conditions.cover "partial")}}selected{{/if}}>
+                                    Частичное (+10 КС)
+                                </option>
+                                <option value="good" {{#if (eq system.combat.conditions.cover "good")}}selected{{/if}}>
+                                    Хорошее (+20 КС)
+                                </option>
+                                <option value="full" {{#if (eq system.combat.conditions.cover "full")}}selected{{/if}}>
+                                    Полное (Двухшаговое)
+                                </option>
+                            </select>
+                        </div>
+                        
+                        {{!-- Статы (только для Полного) --}}
+                        {{#if (eq system.combat.conditions.cover "full")}}
+                        <div class="cover-stats">
+                            <div class="cover-field">
+                                <label>КУ Укрытия</label>
+                                <input type="number" name="system.combat.coverKU" value="{{system.combat.coverKU}}" min="0"/>
+                            </div>
+                            <div class="cover-field">
+                                <label>HP Укрытия</label>
+                                <input type="number" name="system.combat.coverHP" value="{{system.combat.coverHP}}" min="0"/>
+                            </div>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    {{!-- МОДИФИКАТОРЫ --}}
+                    <div class="panel">
+                        <h3>МОДИФИКАТОРЫ (РУЧНЫЕ)</h3>
+                        <div class="modifiers-grid">
+                            <div class="mod-box">
+                                <label title="Изменяет Класс Сложности попадания по вам">КС</label>
+                                <input type="number" name="system.combat.dcModifier" value="{{system.combat.dcModifier}}" placeholder="+/-"/>
+                            </div>
+                            <div class="mod-box">
+                                <label title="Изменяет Класс Урона (порог пробития)">КУ</label>
+                                <input type="number" name="system.combat.kuModifier" value="{{system.combat.kuModifier}}" placeholder="+/-"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{!-- =================== ПРАВАЯ КОЛОНКА: АТАКА И РАСОВЫЕ =================== --}}
+                <div class="column">
+                    
+                    {{!-- ОРУЖИЕ --}}
+                    <div class="panel">
+                        <h3 class="category-header">
+                            ОРУЖИЕ
+                            {{#if isGM}}<a class="item-create" data-type="weapon" title="Добавить оружие"><i class="fas fa-plus"></i></a>{{/if}}
+                        </h3>
+                        <div class="weapons-list">
+                            {{#each weapons as |item|}}
+                            <div class="weapon-card item" data-item-id="{{item._id}}" draggable="true">
+                                <img src="{{item.img}}" class="weapon-img"/>
+                                
+                                <div class="weapon-info">
+                                    <span class="weapon-name">{{item.name}}</span>
+                                    <span class="weapon-stats">
+                                        {{item.system.damage}} 
+                                        {{#if item.system.tags.light}}<span class="tag">Легкое</span>{{/if}}
+                                        {{#if item.system.tags.twoHanded}}<span class="tag">Двуручное</span>{{/if}}
+                                    </span>
+                                </div>
+
+                                <div class="weapon-actions">
+                                    {{!-- Кнопка атаки --}}
+                                    <a class="roll-control weapon-roll" title="Атаковать">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </a>
+                                    
+                                    {{!-- Управление (только редактирование) --}}
+                                    <a class="item-control item-edit" title="Изменить">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+
+                    {{!-- АКТИВНЫЕ СПОСОБНОСТИ --}}
+                    <div class="panel">
+                        <h3 class="category-header">
+                            СПОСОБНОСТИ (ЭССЕНЦИИ)
+                            {{#if isGM}}
+                            <a class="item-create" data-type="essence" title="Добавить эссенцию">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                            {{/if}}
+                        </h3>
+                        <div class="abilities-list">
+                            {{#each abilities as |item|}}
+                            <div class="ability-card item" data-item-id="{{item._id}}">
+                                <img src="{{item.img}}"/>
+                                <span class="ability-name">{{item.name}}</span>
+                                <button class="ability-use" title="Использовать">
+                                    <i class="fas fa-magic"></i>
+                                </button>
+                                {{#if ../isGM}}
+                                <a class="item-edit"><i class="fas fa-edit"></i></a>
+                                {{/if}}
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+
+                    {{!-- РАСОВЫЕ МЕХАНИКИ --}}
+                    
+                    {{!-- ЛЮДИ: АУРА --}}
+                    {{#if race.isHuman}}
+                    <div class="panel human-panel">
+                        <h3 class="flexrow">
+                            АУРА 
+                            <label class="toggle-label">
+                                <input type="checkbox" name="system.aura.active" {{checked system.aura.active}}/> 
+                                ВКЛ
+                            </label>
+                        </h3>
+                        <div class="race-content">
+                            <div class="form-group">
+                                <label>Уровень Ауры</label>
+                                <input type="number" name="system.aura.level" value="{{system.aura.level}}"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Запас</label>
+                                <input type="number" name="system.aura.pool" value="{{system.aura.pool}}"/>
+                            </div>
+                        </div>
+                    </div>
+                    {{/if}}
+
+                    {{!-- ДРАКОНЫ: СЛОВА И DP --}}
+                    {{#if race.isDragon}}
+                    <div class="panel dragon-panel">
+                        {{!-- Заголовок --}}
+                        <h3 style="display:flex; justify-content:space-between; align-items:center;">
+                            СЛОВА ДРАКОНА
+                            {{#if isGM}}
+                                <a class="item-create" data-type="feature" title="Добавить Слово" style="font-size:12px;">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            {{/if}}
+                        </h3>
+
+                        {{!-- ШКАЛА DP (Dragon Points) --}}
+                        <div class="res-bar" style="height: 14px; margin-bottom: 8px; border-radius: 7px; background: rgba(0,0,0,0.5);">
+                            {{!-- Фиолетовая заливка --}}
+                            <div class="bar-fill" style="width: {{dpPercent}}%; background: linear-gradient(90deg, #8e44ad, #9b59b6);"></div>
+                            
+                            <div class="bar-text" style="font-size: 10px; line-height: 14px;">
+                                <span style="margin-right: 4px;">DP:</span>
+                                <input type="number" 
+                                    name="system.resources.dp.value" 
+                                    value="{{system.resources.dp.value}}" 
+                                    style="width: 30px; height: 100%; border: none; background: transparent; color: white; text-align: center; font-weight: bold;"
+                                    data-dtype="Number"/>
+                                <span style="color: rgba(255,255,255,0.7);">/ {{system.resources.dp.max}}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dragon-words">
+                            {{#if dragonWords}}
+                                {{#each dragonWords as |word|}}
+                                <div class="word-card item" data-item-id="{{word._id}}">
+                                    <span class="word-name">{{word.name}}</span>
+                                    <span class="word-cost" style="color: #dcbfff;">{{word.system.cost}} DP</span>
+                                    
+                                    {{#if ../isGM}}
+                                    <div class="item-controls item-controls-mini" style="margin-left:auto;">
                                         <a class="item-edit"><i class="fas fa-edit"></i></a>
                                         <a class="item-delete"><i class="fas fa-trash"></i></a>
                                     </div>
                                     {{/if}}
-                                </li>
-                                {{/each}}
-                            </ol>
-                            {{/if}}
-                        {{/each}}
-                    </div>
-
-                    <div class="inventory-section">
-                        <h3>
-                            Лут 
-                            {{#if isGM}}<a class="item-create" data-type="loot" style="color:#d4af37; cursor:pointer;">+</a>{{/if}}
-                        </h3>
-                        <ol class="items-list">
-                            {{#each loot as |item|}}
-                            <li class="item item-entry" data-item-id="{{item._id}}" draggable="true">
-                                <img src="{{item.img}}"/>
-                                <span class="item-name">{{item.name}}</span>
-                                {{#if ../isGM}}
-                                <div class="item-controls">
-                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
                                 </div>
-                                {{/if}}
-                            </li>
-                            {{/each}}
-                        </ol>
+                                {{/each}}
+                            {{else}}
+                                <div class="empty-text">Нет изученных Слов</div>
+                            {{/if}}
+                        </div>
                     </div>
+                    {{/if}}
+
+                    {{!-- ВАРВАРЫ: ОТПЕЧАТОК --}}
+                    {{#if race.isBarbarian}}
+                    <div class="panel barb-panel">
+                        <h3>ОТПЕЧАТОК</h3>
+                        <div class="imprint-grid">
+                            <div class="form-group">
+                                <label>Уровень</label>
+                                <input type="number" name="system.imprint.level" value="{{system.imprint.level}}"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Путь</label>
+                                <input type="text" name="system.imprint.path" value="{{system.imprint.path}}"/>
+                            </div>
+                        </div>
+                    </div>
+                    {{/if}}
+
                 </div>
             </div>
         </div>
+
+        {{!-- ВКЛАДКА: ИНВЕНТАРЬ --}}
+        {{> "systems/dungeon-stone/templates/actor/parts/inventory.hbs"}}
 
         {{!-- === ВКЛАДКА: БЛАГОСЛОВЕНИЯ === --}}
         <div class="tab blessings" data-group="primary" data-tab="blessings">
@@ -767,31 +1407,63 @@
         </div>
 
         {{!-- === ВКЛАДКА: БИОГРАФИЯ === --}}
-        <div class="tab biography" data-group="primary" data-tab="biography">
-            <div class="sheet-body grid-2col">
-                <div class="panel">
-                    <h3>Внешность</h3>
-                    <div class="editor-box small">
-                        {{editor system.details.appearance target="system.details.appearance" button=true owner=owner editable=editable}}
+        <div class="tab biography" data-group="primary" data-tab="biography" style="height: 100%; overflow-y: auto; padding: 15px;">
+    
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 20px;">
+                
+                {{!-- ЛЕВАЯ КОЛОНКА: ЛИЧНОЕ --}}
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="panel" style="background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; padding: 10px;">
+                        <h3 style="color: #d4af37; border-bottom: 1px solid #d4af37; margin-bottom: 10px;">Личные Данные</h3>
+                        <div class="form-group">
+                            <label>Пол</label>
+                            <input type="text" name="system.details.gender" value="{{system.details.gender}}" style="width: 100%; background: #111; color: #fff; border: 1px solid #555;">
+                        </div>
+                        <div class="form-group">
+                            <label>Рост / Вес</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="text" name="system.details.height" value="{{system.details.height}}" placeholder="Рост" style="background: #111; color: #fff; border: 1px solid #555;">
+                                <input type="text" name="system.details.weight" value="{{system.details.weight}}" placeholder="Вес" style="background: #111; color: #fff; border: 1px solid #555;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Мировоззрение</label>
+                            <input type="text" name="system.details.alignment" value="{{system.details.alignment}}" style="width: 100%; background: #111; color: #fff; border: 1px solid #555;">
+                        </div>
+                    </div>
+
+                    <div class="panel" style="background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; padding: 10px; flex: 1; display: flex; flex-direction: column;">
+                        <h3 style="color: #aaddff; border-bottom: 1px solid #aaddff; margin-bottom: 10px;">Внешность</h3>
+                        <div class="editor-box" style="flex: 1; min-height: 200px;">
+                            {{editor enrichedAppearance target="system.details.appearance" button=true owner=owner editable=editable engine="prosemirror"}}
+                        </div>
                     </div>
                 </div>
-                <div class="panel">
-                    <h3>Характер</h3>
-                    <div class="editor-box small">
-                        {{editor system.details.personality target="system.details.personality" button=true owner=owner editable=editable}}
+
+                {{!-- ПРАВАЯ КОЛОНКА: ПСИХОЛОГИЯ И ИСТОРИЯ --}}
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    
+                    <div class="panel" style="background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; padding: 10px;">
+                        <h3 style="color: #f88; border-bottom: 1px solid #f88; margin-bottom: 10px;">Характер и Идеалы</h3>
+                        <div class="editor-box" style="min-height: 150px;">
+                            {{editor enrichedPersonality target="system.details.personality" button=true owner=owner editable=editable engine="prosemirror"}}
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="panel" style="margin-top:10px;">
-                <h3>Цели</h3>
-                <div class="editor-box small">
-                    {{editor system.details.goals target="system.details.goals" button=true owner=owner editable=editable}}
-                </div>
-            </div>
-            <div class="panel" style="margin-top:10px;">
-                <h3>Полная История</h3>
-                <div class="editor-box">
-                    {{editor system.biography target="system.biography" button=true owner=true editable=true}}
+
+                    <div class="panel" style="background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; padding: 10px;">
+                        <h3 style="color: #da0; border-bottom: 1px solid #da0; margin-bottom: 10px;">Цели и Амбиции</h3>
+                        <div class="editor-box" style="min-height: 100px;">
+                            {{editor enrichedGoals target="system.details.goals" button=true owner=owner editable=editable engine="prosemirror"}}
+                        </div>
+                    </div>
+
+                    <div class="panel" style="background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; padding: 10px; flex: 1; display: flex; flex-direction: column;">
+                        <h3 style="color: #ccc; border-bottom: 1px solid #ccc; margin-bottom: 10px;">История Жизни</h3>
+                        <div class="editor-box" style="flex: 1; min-height: 300px;">
+                            {{editor enrichedBiography target="system.biography" button=true owner=owner editable=editable engine="prosemirror"}}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

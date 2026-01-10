@@ -1,35 +1,60 @@
+{{!-- templates/item/item-contract-sheet.hbs --}}
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Контракта"/></h1>
-            <div class="grid-2col">
-                <div class="res-box">
-                    <label>Тип Духа</label>
-                    <input type="text" name="system.contractType" value="{{system.contractType}}"/>
-                </div>
-                <div class="res-box">
-                    <label>Цена Духа</label>
-                    <input type="number" name="system.spiritCost" value="{{system.spiritCost}}"/>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="description">Условия</a>
-        <a class="item" data-tab="effects">Эффекты</a>
-    </nav>
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
 
-    <section class="sheet-body">
-        <div class="tab description" data-group="primary" data-tab="description">
-            <div class="panel">
-                <h3>Условия и Описание</h3>
-                <div class="editor-box">
-                    {{editor system.description target="system.description" button=true owner=owner editable=editable}}
-                </div>
-            </div>
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="abilities">Способности</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="abilities">
+      
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-file-contract"></i> <h3>Контракт</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group"><label>Тип</label>
+            <select name="system.contractType" style="width:100%">
+              <option value="spirit" {{#if (eq system.contractType "spirit")}}selected{{/if}}>Дух</option>
+              <option value="elemental" {{#if (eq system.contractType "elemental")}}selected{{/if}}>Элементаль</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Стоимость (Дух)</label><input type="number" name="system.spiritCost" value="{{system.spiritCost}}" min="0"/></div>
+          <div class="form-group full-row"><label>Имя Сущности</label><input type="text" name="system.entityName" value="{{system.entityName}}"/></div>
         </div>
-        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
-    </section>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-shield-alt"></i> <h3>Пассивные способности</h3></div>
+        <div class="editor-container" style="min-height:100px;">
+          {{editor system.passiveAbilities target="system.passiveAbilities" button=true editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-bolt"></i> <h3>Активная способность</h3></div>
+        <div class="editor-container" style="min-height:100px;">
+          {{editor system.activeAbility target="system.activeAbility" button=true editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+        <div class="rigid-grid mt-1">
+          <div class="form-group"><label>Мана</label><input type="number" name="system.activeAbilityParams.manaCost" value="{{system.activeAbilityParams.manaCost}}"/></div>
+          <div class="form-group"><label>Кулдаун</label><input type="number" name="system.activeAbilityParams.cooldown" value="{{system.activeAbilityParams.cooldown}}"/></div>
+          <div class="form-group inline"><label>На перезарядке</label><input type="checkbox" name="system.activeAbilityParams.isOnCooldown" {{checked system.activeAbilityParams.isOnCooldown}}/></div>
+        </div>
+      </div>
+
+    </div>
+
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
 </form>

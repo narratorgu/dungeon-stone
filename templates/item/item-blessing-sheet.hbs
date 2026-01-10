@@ -1,32 +1,66 @@
+{{!-- templates/item/item-blessing-sheet.hbs --}}
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Благословения"/></h1>
-            <div class="grid-2col">
-                <div class="res-box">
-                    <label>Источник</label>
-                    <input type="text" name="system.source" value="{{system.source}}"/>
-                </div>
-                <div class="res-box">
-                    <label>Активно?</label>
-                    <input type="checkbox" name="system.active" {{checked system.active}}/>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="description">Описание</a>
-        <a class="item" data-tab="effects">Эффекты</a>
-    </nav>
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
 
-    <section class="sheet-body">
-        <div class="tab description" data-group="primary" data-tab="description">
-            <div class="editor-box">
-                {{editor system.description target="system.description" button=true owner=owner editable=editable}}
-            </div>
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="properties">Свойства</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    {{!-- ОПИСАНИЕ --}}
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    {{!-- СВОЙСТВА --}}
+    <div class="tab" data-group="primary" data-tab="properties">
+      
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-praying-hands"></i> <h3>Источник</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group full-row">
+            <label>Божество / Источник</label>
+            <input type="text" name="system.deity" value="{{system.deity}}" placeholder="Имя божества"/>
+          </div>
+          <div class="form-group full-row">
+            <label>Происхождение силы</label>
+            <input type="text" name="system.source" value="{{system.source}}" placeholder="Божественное, Арканное..."/>
+          </div>
         </div>
-        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
-    </section>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-cog"></i> <h3>Параметры</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Тип</label>
+            <select name="system.blessingType" style="width:100%">
+              <option value="passive" {{#if (eq system.blessingType "passive")}}selected{{/if}}>Пассивное</option>
+              <option value="active" {{#if (eq system.blessingType "active")}}selected{{/if}}>Активное</option>
+              <option value="triggered" {{#if (eq system.blessingType "triggered")}}selected{{/if}}>Триггерное</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Длительность</label>
+            <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Постоянно"/>
+          </div>
+          <div class="form-group inline full-row">
+            <label>Активно</label>
+            <input type="checkbox" name="system.active" {{checked system.active}}/>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {{!-- ЭФФЕКТЫ --}}
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
 </form>

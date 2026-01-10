@@ -1,0 +1,82 @@
+<form class="dungeon-dialog attack-dialog">
+    {{!-- ХЕДЕР: Атакующий vs Цель --}}
+    <div class="dialog-header">
+        <div class="actor-box attacker">
+            <img src="{{attacker.img}}" title="{{attacker.name}}"/>
+            <div class="name">{{attacker.name}}</div>
+        </div>
+        
+        <div class="vs-badge">VS</div>
+        
+        <div class="actor-box target">
+            {{#if target}}
+                <img src="{{target.img}}" title="{{target.name}}"/>
+                <div class="name">{{target.name}}</div>
+            {{else}}
+                <div class="no-target" style="color:#777; font-size:10px;">Нет цели</div>
+            {{/if}}
+        </div>
+    </div>
+
+    {{!-- ОРУЖИЕ --}}
+    <div class="weapon-info">
+        <img class="weapon-img" src="{{itemImg}}"/>
+        <div class="weapon-details">
+            <span class="weapon-name">{{itemName}}</span>
+            
+            {{!-- Если можно и бить и метать --}}
+            {{#if isThrowable}}
+                <select name="attackMode" class="attack-mode-select">
+                    <option value="melee" {{#if isMelee}}selected{{/if}}>Ближний бой</option>
+                    <option value="thrown">Метательное</option>
+                </select>
+            {{else}}
+                <span class="attack-type-label">
+                    {{#if (eq weapon.attackType "ranged")}}Стрелковое{{else}}Ближний бой{{/if}}
+                </span>
+            {{/if}}
+        </div>
+        <div class="pool-box">
+            <span class="pool-val pool-display">{{attackPool}}</span>
+            <span class="pool-label">кубов</span>
+        </div>
+    </div>
+
+    {{!-- НАСТРОЙКИ --}}
+    <div class="dialog-section">
+        {{#if target}}
+            <label>Тип защиты</label>
+            <select name="defenseType">
+                <option value="passive">Пассивная (Против КУ)</option>
+                <option value="active">Активная (Встречный)</option>
+                <option value="fullcover">Полное укрытие</option>
+            </select>
+            
+            <div class="info-text passive-info">
+                <i class="fas fa-shield-alt"></i> Цель использует Броню и Выносливость.
+            </div>
+            <div class="info-text active-info" style="display:none">
+                <i class="fas fa-running"></i> Встречный бросок (Атака vs Ловкость).
+            </div>
+            <div class="info-text fullcover-info" style="display:none">
+                <i class="fas fa-dungeon"></i> Пробитие укрытия перед уроном.
+            </div>
+        {{else}}
+            <div class="info-text" style="color:#d4af37;">
+                <i class="fas fa-exclamation-circle"></i> Бросок без цели (Только атака)
+            </div>
+        {{/if}}
+    </div>
+
+    {{!-- МОДИФИКАТОРЫ --}}
+    <div class="dialog-section modifiers">
+        <div class="mod-group">
+            <label>Мод. КС (+Сложн)</label>
+            <input type="number" name="dcModifier" value="0"/>
+        </div>
+        <div class="mod-group">
+            <label>Мод. КУ (+Броня)</label>
+            <input type="number" name="kuModifier" value="0"/>
+        </div>
+    </div>
+</form>

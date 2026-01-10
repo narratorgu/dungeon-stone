@@ -109,3 +109,16 @@
     color: #fff;
     border-radius: 3px;
 }
+.dungeon-stone input[type="text"], 
+.dungeon-stone input[type="number"] {
+    background: rgba(0, 0, 0, 0.5) !important; /* Полупрозрачный черный */
+    border: 1px solid #444 !important;
+    color: #e0e0e0 !important;
+}
+
+/* styles/actor.css */
+.editor-box {
+    min-height: 200px; /* Обязательно! */
+    background: rgba(0,0,0,0.2);
+    border: 1px solid #444;
+}

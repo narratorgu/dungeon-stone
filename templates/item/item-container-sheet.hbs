@@ -1,0 +1,52 @@
+<form class="{{cssClass}}" autocomplete="off">
+    {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item" data-tab="description">Описание</a>
+        <a class="item" data-tab="contents">Содержимое</a>
+    </nav>
+
+    <section class="sheet-body">
+        <div class="tab description" data-group="primary" data-tab="description">
+            <div class="grid-2col">
+                <div class="form-group">
+                    <label>Вместимость (ед)</label>
+                    <input type="number" name="system.capacity" value="{{system.capacity}}"/>
+                </div>
+                <div class="form-group">
+                    <label>Снижение Веса (%)</label>
+                    <input type="number" name="system.weightReduction" value="{{system.weightReduction}}"/>
+                </div>
+                <div class="form-group">
+                    <label>Вес (самого контейнера)</label>
+                    <input type="number" name="system.weight" value="{{system.weight}}" step="0.1"/>
+                </div>
+            </div>
+            {{editor enrichedDescription target="system.description" button=true owner=owner editable=editable}}
+        </div>
+
+        <div class="tab contents" data-group="primary" data-tab="contents">
+            <div class="container-contents">
+                <div class="container-contents-header">
+                    <h4>Предметы внутри</h4>
+                    <span class="container-capacity">
+                        <span class="current">{{containerContents.length}}</span> / <span class="max">{{system.capacity}}</span>
+                    </span>
+                </div>
+                
+                <div class="items-list">
+                    {{#each containerContents as |item|}}
+                    <div class="container-item item" data-item-id="{{item.id}}">
+                        <img src="{{item.img}}" width="24" height="24"/>
+                        <span class="item-info">{{item.name}} (x{{item.quantity}})</span>
+                        <span class="item-weight">{{item.weight}} кг</span>
+                        <a class="remove-from-container" data-item-id="{{item.id}}" title="Вынуть"><i class="fas fa-sign-out-alt"></i></a>
+                    </div>
+                    {{else}}
+                    <div class="container-empty">Перетащите сюда предметы из инвентаря</div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </section>
+</form>

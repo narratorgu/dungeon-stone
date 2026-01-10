@@ -1,0 +1,181 @@
+/* ============================================
+   ДИАЛОГИ (Атака, Проверки)
+   ============================================ */
+
+   .dungeon-dialog {
+    font-family: "Signika", sans-serif;
+    color: #e0e0e0;
+}
+
+/* Шапка: Атакующий VS Цель */
+.dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    margin-bottom: 10px;
+}
+
+.attacker-block, .defender-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 45%;
+}
+
+.defender-block {
+    justify-content: flex-end;
+    text-align: right;
+    flex-direction: row-reverse;
+}
+
+.dialog-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 1px solid #d4af37;
+    object-fit: cover;
+}
+
+.dialog-header .info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.role {
+    font-size: 10px;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.name {
+    font-weight: bold;
+    font-size: 13px;
+    color: #fff;
+}
+
+.vs-icon {
+    font-weight: bold;
+    font-style: italic;
+    color: #d4af37;
+    font-size: 14px;
+}
+
+.no-target {
+    color: #666;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Оружие */
+.weapon-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    margin-bottom: 10px;
+}
+
+.weapon-info img {
+    width: 32px;
+    height: 32px;
+    border: none;
+}
+
+.weapon-info .details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.weapon-name {
+    font-weight: bold;
+    color: #d4af37;
+}
+
+.weapon-type {
+    font-size: 11px;
+    color: #aaa;
+}
+
+.pool-badge {
+    background: #8b4513;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid #a0522d;
+}
+
+.pool-val {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.pool-label {
+    font-size: 10px;
+    color: #ffd700;
+    display: block;
+}
+
+/* Настройки */
+.settings-section {
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.form-group select {
+    width: 100%;
+    background: #222;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.defense-info {
+    font-size: 11px;
+    color: #888;
+    background: rgba(0,0,0,0.2);
+    padding: 6px;
+    border-left: 2px solid #666;
+    margin-bottom: 10px;
+}
+
+/* Модификаторы */
+.modifiers-row {
+    display: flex;
+    gap: 10px;
+}
+
+.mod-group {
+    flex: 1;
+}
+
+.mod-group input {
+    width: 100%;
+    text-align: center;
+    background: #111;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 4px;
+}

@@ -1,37 +1,58 @@
+{{!-- templates/item/item-role-sheet.hbs --}}
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Класса"/></h1>
-            <div class="resources-grid">
-                <div class="res-box">
-                    <label>Ранг Класса</label>
-                    {{!-- 9 - Слабый (Новичок), 1 - Сильный (Легенда) --}}
-                    <select name="system.rank" style="background:#000; color:#fff; width:100%;">
-                        {{selectOptions config.ranks selected=system.rank}}
-                    </select>
-                </div>
-            </div>
+
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+  <div class="role-rank-display">
+    <span class="rank-label">Ранг:</span>
+    <input type="number" name="system.rank" value="{{system.rank}}" min="1" max="9"/>
+  </div>
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="properties">Свойства</a>
+    <a class="item" data-tab="requirements">Требования</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    <div class="tab requirements" data-group="primary" data-tab="requirements">
+      <div class="editor-container">
+        {{editor system.requirements target="system.requirements" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="properties">
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-user-tag"></i> <h3>Параметры</h3></div>
+        <div class="form-group">
+          <label>Тип роли</label>
+          <select name="system.roleType" style="width:100%">
+            <option value="combat" {{#if (eq system.roleType "combat")}}selected{{/if}}>Боевой</option>
+            <option value="magic" {{#if (eq system.roleType "magic")}}selected{{/if}}>Магический</option>
+            <option value="skill" {{#if (eq system.roleType "skill")}}selected{{/if}}>Навыковый</option>
+            <option value="hybrid" {{#if (eq system.roleType "hybrid")}}selected{{/if}}>Гибридный</option>
+          </select>
         </div>
-    </header>
+      </div>
 
-    <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="description">Описание</a>
-        <a class="item" data-tab="effects">Эффекты</a>
-    </nav>
-
-    <section class="sheet-body">
-        {{!-- Вкладка Описание --}}
-        <div class="tab description" data-group="primary" data-tab="description">
-            <div class="panel">
-                <h3>Описание Класса</h3>
-                <div class="editor-box">
-                    {{editor system.description target="system.description" button=true owner=owner editable=editable}}
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-graduation-cap"></i> <h3>Умения</h3></div>
+        <div class="form-group">
+          <label>Даруемые умения (через запятую)</label>
+          <textarea name="system.grantedProficiencies" rows="4" style="width:100%; background:rgba(0,0,0,0.3); color:#fff; border:1px solid #555; border-radius:4px; padding:5px;">{{system.grantedProficiencies}}</textarea>
         </div>
+      </div>
+    </div>
 
-        {{!-- Вкладка Эффекты --}}
-        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
-    </section>
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
 </form>

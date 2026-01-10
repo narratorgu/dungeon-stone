@@ -1,37 +1,39 @@
 <div class="stat-row">
     {{#if isGM}}
         <div class="vis-btn" data-key="{{key}}">
-            <i class="fas {{#if visible}}fa-eye{{else}}fa-eye-slash hidden{{/if}}"></i>
+            <i class="fas {{#if (getRevealed key revealed)}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
         </div>
     {{else}}
         <div class="vis-icon"></div>
     {{/if}}
     
-    <div class="stat-name rollable {{#unless visible}}dimmed{{/unless}}" data-key="{{key}}" data-label="{{label}}">
+    <div class="stat-name rollable {{#unless (getRevealed key revealed)}}dimmed{{/unless}}" 
+         data-key="{{key}}" 
+         data-label="{{label}}">
         {{label}}
     </div>
     
     {{#if isGM}}
-        <div style="display: flex; align-items: center; justify-content: flex-end; width: 100%;">
-            
-            {{!-- МОДИФИКАТОР СЛЕВА --}}
+        <div class="input-container">
             {{#if (ne val sourceVal)}}
-                <span class="mod-label">
+                <div class="mod-badge {{#if (gt val sourceVal)}}pos{{else}}neg{{/if}}">
                     {{#if (gt val sourceVal)}}+{{/if}}{{sub val sourceVal}}
-                </span>
+                </div>
             {{/if}}
 
-            {{!-- УМНЫЙ ИНПУТ --}}
             <div class="smart-input-wrapper">
-                {{!-- ДОБАВЛЕН КЛАСС: direct-edit --}}
-                <input class="direct-edit" type="number" name="system.subAttributes.{{key}}" value="{{sourceVal}}"/>
+                <input class="direct-edit" 
+                       type="number" 
+                       name="system.{{key}}" 
+                       value="{{sourceVal}}"
+                       step="1"
+                       data-dtype="Number"/>
                 <div class="smart-overlay">{{val}}</div>
             </div>
-            
         </div>
     {{else}}
         <div class="stat-val-display">
-            {{#if visible}}{{val}}{{else}}?{{/if}}
+            {{#if (getRevealed key revealed)}}{{val}}{{else}}?{{/if}}
         </div>
     {{/if}}
 </div>

@@ -1,0 +1,117 @@
+<form class="{{cssClass}}" autocomplete="off">
+    {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item" data-tab="description">Описание</a>
+        <a class="item" data-tab="details">Параметры</a>
+        <a class="item" data-tab="slots">Слоты</a>
+        <a class="item" data-tab="effects">Эффекты</a>
+    </nav>
+
+    <section class="sheet-body">
+        
+        <div class="tab description" data-group="primary" data-tab="description">
+            {{editor enrichedDescription target="system.description" button=true owner=owner editable=editable}}
+        </div>
+
+        <div class="tab details" data-group="primary" data-tab="details">
+            <div style="background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid #444; border-radius: 4px;">
+                <div class="grid-2col">
+                    <div class="form-group">
+                        <label>Защита (КУ)</label>
+                        <input type="number" name="system.armorValue" value="{{system.armorValue}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Штраф ЛВК</label>
+                        <input type="number" name="system.armorPenalty" value="{{system.armorPenalty}}"/>
+                    </div>
+                </div>
+
+                <hr style="border-top:1px solid #444; margin: 10px 0;">
+
+                {{!-- ТИП --}}
+                <div class="form-group">
+                    <label>Тип</label>
+                    <div style="display: flex; gap: 15px;">
+                        {{#unless system.isSet}}
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="system.isShield" id="chk_shield" {{checked system.isShield}}/>
+                            <label for="chk_shield">Щит</label>
+                        </div>
+                        {{/unless}}
+
+                        {{#unless system.isShield}}
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="system.isSet" id="chk_set" {{checked system.isSet}}/>
+                            <label for="chk_set">Комплект</label>
+                        </div>
+                        {{/unless}}
+                    </div>
+                </div>
+
+                {{!-- СЛОТ (Только если не Щит и не Комплект) --}}
+                {{#unless (or system.isShield system.isSet)}}
+                <div class="form-group">
+                    <label>Слот</label>
+                    <select name="system.slot" style="background:#111; color:#fff;">
+                        {{selectOptions config.armorSlots selected=system.slot localize=true}}
+                        <option value="ears" {{#if (eq system.slot "ears")}}selected{{/if}}>Серьги</option>
+                    </select>
+                </div>
+                {{/unless}}
+
+                <hr style="border-top:1px solid #444; margin: 10px 0;">
+            </div>
+        </div>
+
+        {{!-- СЛОТЫ --}}
+        <div class="tab slots" data-group="primary" data-tab="slots">
+            {{#if system.isShield}}
+                <div style="text-align: center; color: #888; margin-top: 40px;">
+                    <i class="fas fa-shield-alt" style="font-size: 48px; margin-bottom: 10px;"></i><br>
+                    Щиты занимают только слот левой руки (Off-Hand).
+                </div>
+            {{else}}
+                
+                {{!-- КОМПЛЕКТ --}}
+                {{#if system.isSet}}
+                <div class="panel" style="margin-bottom: 15px;">
+                    <h3 style="color: #d4af37; border-bottom: 1px solid #d4af37; margin-bottom: 10px;">
+                        <i class="fas fa-tshirt"></i> Занимает слоты (Комплект)
+                    </h3>
+                    <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                        {{#each system.coversSlots as |checked key|}}
+                        <div class="checkbox-cell" style="background: rgba(0,0,0,0.3); padding: 4px; border: 1px solid #444; border-radius: 3px; display: flex; align-items: center;">
+                            {{!-- ПРАВИЛЬНЫЙ NAME для авто-сохранения --}}
+                            <input type="checkbox" name="system.coversSlots.{{key}}" id="cover_{{key}}" {{checked checked}} style="margin-right: 5px;"/>
+                            <label for="cover_{{key}}" style="font-size: 11px; cursor: pointer;">{{lookup ../config.armorSlots key}}</label>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+                {{/if}}
+
+                {{!-- БЛОКИРОВКА --}}
+                <div class="panel">
+                    <h3 style="color: #f44; border-bottom: 1px solid #f44; margin-bottom: 10px;">
+                        <i class="fas fa-ban"></i> Блокирует слоты
+                    </h3>
+                    <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                        {{#each system.blockedSlots as |checked key|}}
+                        <div class="checkbox-cell" style="background: rgba(0,0,0,0.3); padding: 4px; border: 1px solid #444; border-radius: 3px; display: flex; align-items: center;">
+                            {{!-- ПРАВИЛЬНЫЙ NAME --}}
+                            <input type="checkbox" name="system.blockedSlots.{{key}}" id="block_{{key}}" {{checked checked}} style="margin-right: 5px;"/>
+                            <label for="block_{{key}}" style="font-size: 11px; cursor: pointer;">{{lookup ../config.armorSlots key}}</label>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+
+            {{/if}}
+        </div>
+
+        <div class="tab effects" data-group="primary" data-tab="effects">
+            {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+        </div>
+    </section>
+</form>

@@ -1,88 +1,201 @@
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название оружия"/></h1>
-            <div class="resources-grid">
-                <div class="res-box">
-                    <label>Вес</label>
-                    <input type="number" name="system.weight" value="{{system.weight}}"/>
-                </div>
-                <div class="res-box">
-                    <label>Цена</label>
-                    <input type="number" name="system.price" value="{{system.price}}"/>
-                </div>
-                <div class="res-box">
-                    <label>Дистанция</label>
-                    <input type="number" name="system.range" value="{{system.range}}"/>
-                </div>
-            </div>
-        </div>
-    </header>
+    {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
 
     <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="attributes">Параметры</a>
         <a class="item" data-tab="description">Описание</a>
+        <a class="item" data-tab="attributes">Параметры</a>
         <a class="item" data-tab="effects">Эффекты</a>
     </nav>
 
     <section class="sheet-body">
-                <div class="tab attributes" data-group="primary" data-tab="attributes">
+        <div class="tab description" data-group="primary" data-tab="description">
+            <div class="editor-container">
+                {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+            </div>
+        </div>
+
+        <div class="tab attributes" data-group="primary" data-tab="attributes">
+            
+            {{!-- === УРОН === --}}
             <div class="panel">
-                <div class="form-group">
-                    <label>Урон (Формула)</label>
-                    <input type="text" name="system.damage" value="{{system.damage}}" placeholder="1d8"/>
-                </div>
+                <div class="panel-header"><i class="fas fa-skull-crossbones"></i> <h3>Урон</h3></div>
                 
-                {{!-- СКАЛИРОВАНИЕ --}}
-                <div class="form-group">
-                    <label>Скалирование Атаки (Пул кубов)</label>
-                    <select name="system.scaling" style="width:100%">
-                        <option value="strength" {{#if (eq system.scaling "strength")}}selected{{/if}}>Сила</option>
-                        <option value="agility" {{#if (eq system.scaling "agility")}}selected{{/if}}>Ловкость</option>
-                        <option value="endurance" {{#if (eq system.scaling "endurance")}}selected{{/if}}>Выносливость</option>
-                        <option value="proficiency" {{#if (eq system.scaling "proficiency")}}selected{{/if}}>Только Владение</option>
-                    </select>
+                {{!-- Ряд 1: Уроны --}}
+                <div class="grid-row-2">
+                    <div class="form-group">
+                        <label>Базовый урон</label>
+                        <input type="text" name="system.damage" value="{{system.damage}}" placeholder="1d8"/>
+                    </div>
+                    
+                    {{#if system.tags.versatile}}
+                    <div class="form-group">
+                        <label>Урон (2 руки)</label>
+                        <input type="text" name="system.damageVersatile" value="{{system.damageVersatile}}" placeholder="1d10"/>
+                    </div>
+                    {{else}}
+                    <div class="placeholder-cell"></div>
+                    {{/if}}
                 </div>
 
-                {{!-- ТИП АТАКИ --}}
-                <div class="form-group">
-                    <label>Тип Атаки</label>
-                    <select name="system.attackType" style="width:100%">
-                        {{selectOptions config.attackTypes selected=system.attackType}}
-                    </select>
+                {{!-- Ряд 2: Тип урона --}}
+                <div class="grid-row-2">
+                    <div class="form-group">
+                        <label>Тип урона</label>
+                        <select name="system.damageType">
+                            {{selectOptions config.damageTypes selected=system.damageType}}
+                        </select>
+                    </div>
+
+                    {{#if (eq system.attackType "melee")}}
+                    <div class="form-group" style="align-items: flex-end; padding-bottom: 5px;">
+                        <span style="font-size:10px; color:#666;">(Доп. типы см. ниже)</span>
+                    </div>
+                    {{else}}
+                    <div class="placeholder-cell"></div>
+                    {{/if}}
                 </div>
 
-                {{!-- ВЛАДЕНИЕ --}}
+                {{!-- Чекбоксы доп урона --}}
                 {{#if (eq system.attackType "melee")}}
-                <div class="form-group">
-                    <label>Категория Владения</label>
-                    <select name="system.proficiency" style="width:100%">
-                        {{selectOptions config.proficiencies selected=system.proficiency}}
-                    </select>
+                <div class="checkbox-grid" style="margin-top:5px; border-top:1px dashed #333; padding-top:5px;">
+                    {{#each config.damageTypes as |label type|}}
+                    <label class="checkbox-item {{#if (lookup ../system.availableTypes type)}}checked{{/if}}">
+                        <input type="checkbox" class="damage-type-checkbox" data-type="{{type}}"
+                               name="system.availableTypes.{{type}}" {{checked (lookup ../system.availableTypes type)}}/>
+                        {{label}}
+                    </label>
+                    {{/each}}
                 </div>
                 {{/if}}
             </div>
 
-            {{!-- ВЫБОР ТИПОВ УРОНА --}}
-            <div class="panel" style="margin-top:10px;">
-                <h3>Типы Урона (Опции)</h3>
-                <p style="font-size:10px; color:#aaa; margin-bottom:5px;">Отметьте все типы, которыми можно нанести удар этим оружием.</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    {{#each config.damageTypes as |label type|}}
-                        <label style="display:flex; align-items:center; gap:5px; font-size:11px;">
-                            {{!-- lookup ищет значение переменной type внутри объекта system.availableTypes --}}
-                            <input type="checkbox" name="system.availableTypes.{{type}}" {{checked (lookup ../system.availableTypes type)}}/>
-                            {{label}}
-                        </label>
-                    {{/each}}
+                        {{!-- === МЕХАНИКА === --}}
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-cogs"></i> <h3>Механика</h3></div>
+                
+                {{!-- Ряд 1: Тип и Скалирование --}}
+                <div class="grid-row-2">
+                    <div class="form-group">
+                        <label>Тип атаки</label>
+                        <select name="system.attackType">
+                            {{selectOptions config.attackTypes selected=system.attackType}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Скалирование</label>
+                        <select name="system.scaling">
+                            {{selectOptions config.subAttributes selected=system.scaling}}
+                        </select>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="tab description" data-group="primary" data-tab="description">
-            <div class="editor-box">
-                {{editor system.description target="system.description" button=true owner=owner editable=editable}}
+                {{!-- Ряд 2: Зависит от типа атаки --}}
+                <div class="grid-row-2">
+                    {{#if (eq system.attackType "melee")}}
+                        {{!-- БЛИЖНИЙ БОЙ: Владение | Дистанция --}}
+                        <div class="form-group">
+                            <label>Владение</label>
+                            <select name="system.proficiency">
+                                {{selectOptions config.proficiencies selected=system.proficiency}}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Дистанция</label>
+                            <input type="number" name="system.range" value="{{system.range}}" min="1"/>
+                        </div>
+                    {{else}}
+                        {{!-- ДАЛЬНИЙ/МЕТАТЕЛЬНЫЙ: Дистанция | Макс. Дальность --}}
+                        <div class="form-group">
+                            <label>Дистанция</label>
+                            <input type="number" name="system.range" value="{{system.range}}" min="1"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Макс. дальность</label>
+                            <input type="number" name="system.maxRange" value="{{system.maxRange}}" min="1"/>
+                        </div>
+                    {{/if}}
+                </div>
+
+                {{!-- Ряд 3: Доп. поле для Ближнего боя, если есть тег Метательное --}}
+                {{#if (and (eq system.attackType "melee") system.tags.throwable)}}
+                <div class="grid-row-2">
+                    <div class="form-group">
+                        <label>Макс. дальность (Бросок)</label>
+                        <input type="number" name="system.maxRange" value="{{system.maxRange}}" min="1"/>
+                    </div>
+                    <div class="placeholder-cell"></div>
+                </div>
+                {{/if}}
+            </div>
+
+            {{!-- === СВОЙСТВА === --}}
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-tags"></i> <h3>Свойства</h3></div>
+
+                <div class="weapon-tags">
+                    
+                    {{!-- 1. ЛЁГКОЕ --}}
+                    {{#unless (or (eq system.attackType "ranged") system.tags.twoHanded system.tags.versatile)}}
+                    <div class="tag-item">
+                        <label class="tag-label">Лёгкое</label>
+                        <label class="tag-switch">
+                            <input type="checkbox" class="tag-checkbox" data-tag="light" name="system.tags.light" {{checked system.tags.light}}/>
+                            <span class="tag-slider"></span>
+                        </label>
+                    </div>
+                    {{/unless}}
+
+                    {{!-- 2. УНИВЕРСАЛЬНОЕ --}}
+                    {{#unless (or (eq system.attackType "ranged") system.tags.twoHanded system.tags.light)}}
+                    <div class="tag-item">
+                        <label class="tag-label">Универсальное</label>
+                        <label class="tag-switch">
+                            <input type="checkbox" class="tag-checkbox" data-tag="versatile" name="system.tags.versatile" {{checked system.tags.versatile}}/>
+                            <span class="tag-slider"></span>
+                        </label>
+                    </div>
+                    {{/unless}}
+
+                    {{!-- 3. ДВУРУЧНОЕ --}}
+                    {{#unless (or (eq system.attackType "ranged") (eq system.attackType "thrown") system.tags.throwable system.tags.light system.tags.versatile)}}
+                    <div class="tag-item">
+                        <label class="tag-label">Двуручное</label>
+                        <label class="tag-switch">
+                            <input type="checkbox" class="tag-checkbox" data-tag="twoHanded" name="system.tags.twoHanded" {{checked system.tags.twoHanded}}/>
+                            <span class="tag-slider"></span>
+                        </label>
+                    </div>
+                    {{/unless}}
+                    
+                    {{!-- 4. МЕТАТЕЛЬНОЕ --}}
+                    {{#unless (or (eq system.attackType "ranged") system.tags.twoHanded)}}
+                    <div class="tag-item">
+                        <label class="tag-label">Метательное</label>
+                        <label class="tag-switch">
+                            <input type="checkbox" class="tag-checkbox" data-tag="throwable" name="system.tags.throwable" {{checked system.tags.throwable}}/>
+                            <span class="tag-slider"></span>
+                        </label>
+                    </div>
+                    {{/unless}}
+                </div>
+                
+                {{!-- ХВАТ --}}
+                {{#if (eq system.equipStatus "equipped")}}
+                <div class="form-group" style="margin-top: 15px; border-top: 1px dashed #444; padding-top: 10px;">
+                    <label style="color: #d4af37;">Текущий хват</label>
+                    <select name="system.grip">
+                        {{#if system.tags.twoHanded}}
+                            <option value="2h">Две руки (Обязательно)</option>
+                        {{else}}
+                            <option value="1h" {{#if (eq system.grip "1h")}}selected{{/if}}>Основная рука</option>
+                            <option value="offhand" {{#if (eq system.grip "offhand")}}selected{{/if}}>Вторая рука</option>
+                            {{#if system.tags.versatile}}
+                            <option value="2h" {{#if (eq system.grip "2h")}}selected{{/if}}>Две руки (Универсал)</option>
+                            {{/if}}
+                        {{/if}}
+                    </select>
+                </div>
+                {{/if}}
             </div>
         </div>
         

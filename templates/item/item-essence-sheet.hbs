@@ -1,96 +1,87 @@
+{{!-- templates/item/item-essence-sheet.hbs --}}
 <form class="{{cssClass}}" autocomplete="off">
-    <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Название Эссенции"/></h1>
-                        <div class="grid-3col">
-                {{!-- ... Ранг, Мана ... --}}
-                <div class="res-box" style="min-width: 50px;"> {{!-- Добавили min-width --}}
-                    <label>Ранг</label>
-                    <select name="system.rank">
-                        {{selectOptions config.ranks selected=system.rank}}
-                    </select>
-                </div>
-                <div class="res-box"><label>MP</label><input type="number" name="system.manaCost" value="{{system.manaCost}}"/></div>
-                <div class="res-box">
-                    <label>Цена</label>
-                    <input type="number" name="system.price" value="{{system.price}}"/>
-                </div>
-                
-                <div class="res-box">
-                    <label>Скалирование</label>
-                    <select name="system.scaling" style="width:100%">
-                        <option value="spirit" {{#if (eq system.scaling "spirit")}}selected{{/if}}>Дух</option>
-                        <option value="accuracy" {{#if (eq system.scaling "accuracy")}}selected{{/if}}>Точность</option>
-                        <option value="cognition" {{#if (eq system.scaling "cognition")}}selected{{/if}}>Когнитивность</option>
-                        <option value="none" {{#if (eq system.scaling "none")}}selected{{/if}}>Нет броска</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="grid-2col" style="margin-top:5px;">
-                <div class="form-group">
-                    <label>Урон (Формула)</label>
-                    <input type="text" name="system.damage" value="{{system.damage}}" placeholder="3d6"/>
-                </div>
-                <div class="form-group">
-                    <label>Тип Урона</label>
-                    <select name="system.damageType">
-                        {{selectOptions config.damageTypes selected=system.damageType}}
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-group" style="margin-top:5px;">
-                <div style="flex:1;">
-                    <label>Спасбросок Цели</label>
-                    <select name="system.saveAttribute" style="width:100%">
-                        <option value="">-- Нет --</option>
-                        <option value="physique" {{#if (eq system.saveAttribute "physique")}}selected{{/if}}>Телосложение</option>
-                        <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость (Рефлекс)</option>
-                        <option value="spirit" {{#if (eq system.saveAttribute "spirit")}}selected{{/if}}>Дух (Воля)</option>
-                        <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля (Спец)</option>
-                    </select>
-                </div>
-                <div style="width: 80px;">
-                    <label title="Кол-во успехов для спаса">Треб. КУ</label>
-                    <input type="number" name="system.saveKU" value="{{system.saveKU}}" placeholder="1"/>
-                </div>
-                <div style="width: 80px;">
-                    <label title="0 = Авторасчет">DC (Слож)</label>
-                    <input type="number" name="system.saveDC" value="{{system.saveDC}}" placeholder="Авто"/>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="details">Способности</a>
-        <a class="item" data-tab="description">Лор</a>
-        <a class="item" data-tab="effects">Эффекты</a>
-    </nav>
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
 
-    <section class="sheet-body">
+  {{!-- Ранг --}}
+  <div class="essence-rank-display">{{system.rank}}</div>
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="properties">Свойства</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="properties">
+      
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-star"></i> <h3>Активная способность</h3></div>
         
-        {{!-- Вкладка Способности --}}
-        <div class="tab details" data-group="primary" data-tab="details">
-            <div class="panel">
-                <h3>Активная Способность</h3>
-                {{!-- Для активной способности делаем редактор поменьше --}}
-                <div class="editor-box small">
-                    {{editor system.activeAbility target="system.activeAbility" button=true owner=owner editable=editable}}
-                </div>
-            </div>
-        </div>
+        <div class="rigid-grid">
+          <div class="form-group full-row">
+            <label>Название способности</label>
+            <input type="text" name="system.abilityName" value="{{system.abilityName}}"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Тип</label>
+            <select name="system.abilityType" style="width:100%">
+              <option value="damage" {{#if (eq system.abilityType "damage")}}selected{{/if}}>Урон</option>
+              <option value="buff" {{#if (eq system.abilityType "buff")}}selected{{/if}}>Баф</option>
+              <option value="utility" {{#if (eq system.abilityType "utility")}}selected{{/if}}>Утилита</option>
+              <option value="transform" {{#if (eq system.abilityType "transform")}}selected{{/if}}>Трансформация</option>
+            </select>
+          </div>
 
-        {{!-- Вкладка Лор/Описание --}}
-        <div class="tab description" data-group="primary" data-tab="description">
-            <div class="editor-box">
-                {{editor system.description target="system.description" button=true owner=owner editable=editable}}
-            </div>
+          <div class="form-group">
+            <label>Действие</label>
+            <select name="system.activationAction" style="width:100%">
+              <option value="action" {{#if (eq system.activationAction "action")}}selected{{/if}}>Действие</option>
+              <option value="bonus" {{#if (eq system.activationAction "bonus")}}selected{{/if}}>Бонус</option>
+              <option value="reaction" {{#if (eq system.activationAction "reaction")}}selected{{/if}}>Реакция</option>
+              <option value="passive" {{#if (eq system.activationAction "passive")}}selected{{/if}}>Пассив</option>
+            </select>
+          </div>
         </div>
-        
-        {{!-- Вкладка Эффекты --}}
-        {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
-    </section>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-coins"></i> <h3>Стоимость</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group"><label>Мана</label><input type="number" name="system.manaCost" value="{{system.manaCost}}"/></div>
+          <div class="form-group"><label>Дух</label><input type="number" name="system.spiritCost" value="{{system.spiritCost}}"/></div>
+          <div class="form-group"><label>Кулдаун</label><input type="number" name="system.cooldown" value="{{system.cooldown}}"/></div>
+          <div class="form-group inline"><label>На перезарядке</label><input type="checkbox" name="system.isOnCooldown" {{checked system.isOnCooldown}}/></div>
+        </div>
+      </div>
+
+      {{#if (eq system.abilityType "damage")}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-burst"></i> <h3>Урон</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group"><label>Формула</label><input type="text" name="system.damage" value="{{system.damage}}"/></div>
+          <div class="form-group"><label>Тип</label><select name="system.damageType">{{selectOptions config.damageTypes selected=system.damageType}}</select></div>
+        </div>
+      </div>
+      {{/if}}
+
+    </div>
+
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
+  
+  {{#if isOwned}}
+  <footer class="item-sheet-footer">
+    <button type="button" class="essence-use-btn use-essence"><i class="fas fa-star"></i> Использовать</button>
+  </footer>
+  {{/if}}
 </form>

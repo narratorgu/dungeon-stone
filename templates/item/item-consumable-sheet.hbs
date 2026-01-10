@@ -1,0 +1,266 @@
+<form class="{{cssClass}}" autocomplete="off">
+
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="properties">Свойства</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    {{!-- === TAB: ОПИСАНИЕ === --}}
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    {{!-- === TAB: СВОЙСТВА === --}}
+    <div class="tab" data-group="primary" data-tab="properties">
+      
+      {{!-- Основное --}}
+      <div class="panel">
+        <div class="panel-header">
+          <i class="fas fa-cog"></i>
+          <h3>Основное</h3>
+        </div>
+
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Тип расходника</label>
+            <select name="system.consumableType" style="width: 100%;">
+              <option value="potion" {{#if (eq system.consumableType "potion")}}selected{{/if}}>Зелье</option>
+              <option value="poison" {{#if (eq system.consumableType "poison")}}selected{{/if}}>Яд</option>
+              <option value="bomb" {{#if (eq system.consumableType "bomb")}}selected{{/if}}>Бомба</option>
+              <option value="ammo" {{#if (eq system.consumableType "ammo")}}selected{{/if}}>Боеприпасы</option>
+              <option value="food" {{#if (eq system.consumableType "food")}}selected{{/if}}>Еда/Питьё</option>
+              <option value="tool" {{#if (eq system.consumableType "tool")}}selected{{/if}}>Инструмент</option>
+              <option value="reagent" {{#if (eq system.consumableType "reagent")}}selected{{/if}}>Реагент</option>
+              <option value="other" {{#if (eq system.consumableType "other")}}selected{{/if}}>Прочее</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Макс. стак</label>
+            <input type="number" name="system.maxStack" value="{{system.maxStack}}" min="1"/>
+          </div>
+
+          {{!-- Действие - ТОЛЬКО для зелий, ядов, бомб, еды --}}
+          {{#if (or (eq system.consumableType "potion") (eq system.consumableType "poison") (eq system.consumableType "bomb") (eq system.consumableType "food"))}}
+          <div class="form-group full-row">
+            <label>Действие для использования</label>
+            <select name="system.useAction" style="width: 100%;">
+              <option value="action" {{#if (eq system.useAction "action")}}selected{{/if}}>Действие</option>
+              <option value="bonus" {{#if (eq system.useAction "bonus")}}selected{{/if}}>Часть действия</option>
+              <option value="reaction" {{#if (eq system.useAction "reaction")}}selected{{/if}}>Реакция</option>
+              <option value="free" {{#if (eq system.useAction "free")}}selected{{/if}}>Свободное действие</option>
+            </select>
+          </div>
+          {{/if}}
+
+          {{!-- Дальность - ТОЛЬКО для бомб и метательных ядов --}}
+          {{#if (or (eq system.consumableType "bomb") (and (eq system.consumableType "poison") (eq system.poisonDelivery "contact")))}}
+          <div class="form-group">
+            <label>Дальность (клетки)</label>
+            <input type="number" name="system.range" value="{{system.range}}" min="0"/>
+          </div>
+          {{/if}}
+
+          {{!-- Длительность - ТОЛЬКО для зелий и ядов --}}
+          {{#if (or (eq system.consumableType "potion") (eq system.consumableType "poison"))}}
+          <div class="form-group">
+            <label>Длительность (раунды)</label>
+            <input type="number" name="system.duration" value="{{system.duration}}" min="0"/>
+          </div>
+          {{/if}}
+        </div>
+
+        {{!-- Для боеприпасов --}}
+        {{#if (eq system.consumableType "ammo")}}
+        <div class="subsection">
+          <span class="subsection-label">Параметры боеприпасов</span>
+          <div class="rigid-grid">
+            <div class="form-group">
+              <label>Тип</label>
+              <select name="system.ammoType" style="width: 100%;">
+                <option value="">-- Не выбрано --</option>
+                <option value="arrow" {{#if (eq system.ammoType "arrow")}}selected{{/if}}>Стрелы</option>
+                <option value="bolt" {{#if (eq system.ammoType "bolt")}}selected{{/if}}>Болты</option>
+                <option value="bullet" {{#if (eq system.ammoType "bullet")}}selected{{/if}}>Пули</option>
+                <option value="dart" {{#if (eq system.ammoType "dart")}}selected{{/if}}>Дротики</option>
+                <option value="stone" {{#if (eq system.ammoType "stone")}}selected{{/if}}>Камни</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Бонус к атаке</label>
+              <input type="number" name="system.attackBonus" value="{{system.attackBonus}}"/>
+            </div>
+
+            <div class="form-group full-row">
+              <label>Бонус к урону</label>
+              <input type="number" name="system.damageBonus" value="{{system.damageBonus}}"/>
+            </div>
+          </div>
+        </div>
+        {{/if}}
+
+        {{!-- Для ядов --}}
+        {{#if (eq system.consumableType "poison")}}
+        <div class="subsection">
+          <span class="subsection-label">Параметры яда</span>
+          <div class="rigid-grid">
+            <div class="form-group">
+              <label>Способ применения</label>
+              <select name="system.poisonDelivery" style="width: 100%;">
+                <option value="injury" {{#if (eq system.poisonDelivery "injury")}}selected{{/if}}>При ранении</option>
+                <option value="contact" {{#if (eq system.poisonDelivery "contact")}}selected{{/if}}>Контактный</option>
+                <option value="inhaled" {{#if (eq system.poisonDelivery "inhaled")}}selected{{/if}}>Вдыхаемый</option>
+                <option value="ingested" {{#if (eq system.poisonDelivery "ingested")}}selected{{/if}}>Проглатываемый</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Количество применений</label>
+              <input type="number" name="system.poisonCharges" value="{{system.poisonCharges}}" min="1"/>
+            </div>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+
+      {{!-- Область эффекта - ТОЛЬКО для бомб --}}
+      {{#if (eq system.consumableType "bomb")}}
+      <div class="panel">
+        <div class="panel-header">
+          <i class="fas fa-bullseye"></i>
+          <h3>Область эффекта</h3>
+        </div>
+
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Тип области</label>
+            <select name="system.areaType" style="width: 100%;">
+              <option value="none" {{#if (eq system.areaType "none")}}selected{{/if}}>Нет</option>
+              <option value="sphere" {{#if (eq system.areaType "sphere")}}selected{{/if}}>Сфера</option>
+              <option value="cone" {{#if (eq system.areaType "cone")}}selected{{/if}}>Конус</option>
+              <option value="line" {{#if (eq system.areaType "line")}}selected{{/if}}>Линия</option>
+            </select>
+          </div>
+
+          {{#unless (eq system.areaType "none")}}
+          <div class="form-group">
+            <label>Размер (клетки)</label>
+            <input type="number" name="system.areaSize" value="{{system.areaSize}}" min="0"/>
+          </div>
+          {{else}}
+          <div class="empty-cell"></div>
+          {{/unless}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{!-- Эффекты --}}
+      <div class="panel">
+        <div class="panel-header">
+          <i class="fas fa-flask"></i>
+          <h3>Эффекты</h3>
+        </div>
+
+        <div class="rigid-grid">
+          {{!-- HP - для зелий и еды --}}
+          {{#if (or (eq system.consumableType "potion") (eq system.consumableType "food"))}}
+          <div class="form-group">
+            <label>Восстановление HP</label>
+            <input type="text" name="system.healing" value="{{system.healing}}" placeholder="2d4+2"/>
+          </div>
+          {{/if}}
+
+          {{!-- Мана - ТОЛЬКО для зелий --}}
+          {{#if (eq system.consumableType "potion")}}
+          <div class="form-group">
+            <label>Восстановление маны</label>
+            <input type="text" name="system.manaRestore" value="{{system.manaRestore}}" placeholder="1d6"/>
+          </div>
+
+          {{!-- GP --}}
+          <div class="form-group">
+            <label>Восстановление GP</label>
+            <input type="text" name="system.gpRestore" value="{{system.gpRestore}}" placeholder="1d4"/>
+          </div>
+
+          {{!-- DP --}}
+          <div class="form-group">
+            <label>Восстановление DP</label>
+            <input type="text" name="system.dpRestore" value="{{system.dpRestore}}" placeholder="1d4"/>
+          </div>
+          {{/if}}
+
+          {{!-- Урон - для бомб и ядов --}}
+          {{#if (or (eq system.consumableType "bomb") (eq system.consumableType "poison"))}}
+          <div class="form-group">
+            <label>Урон</label>
+            <input type="text" name="system.damage" value="{{system.damage}}" placeholder="3d6"/>
+          </div>
+
+          <div class="form-group">
+            <label>Тип урона</label>
+            <select name="system.damageType" style="width: 100%;">
+              {{selectOptions config.damageTypes selected=system.damageType}}
+            </select>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Спасбросок - для бомб и ядов --}}
+      {{#if (or (eq system.consumableType "bomb") (eq system.consumableType "poison"))}}
+      <div class="panel">
+        <div class="panel-header">
+          <i class="fas fa-dice-d20"></i>
+          <h3>Спасбросок</h3>
+        </div>
+
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Атрибут спасброска</label>
+            <select name="system.saveAttribute" style="width: 100%;">
+              <option value="">-- Нет спасброска --</option>
+              <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость</option>
+              <option value="fortitude" {{#if (eq system.saveAttribute "fortitude")}}selected{{/if}}>Стойкость</option>
+              <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля</option>
+            </select>
+          </div>
+
+          {{#if system.saveAttribute}}
+          <div class="form-group">
+            <label>КС</label>
+            <input type="number" name="system.saveDC" value="{{system.saveDC}}" min="0"/>
+          </div>
+          {{else}}
+          <div class="empty-cell"></div>
+          {{/if}}
+        </div>
+      </div>
+      {{/if}}
+
+    </div>
+
+    {{!-- === TAB: ЭФФЕКТЫ === --}}
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
+
+  {{!-- Футер --}}
+  {{#if isOwned}}
+  <footer class="item-sheet-footer">
+    <button type="button" class="consumable-use-btn consume-item">
+      <i class="fas fa-flask-potion"></i>
+      <span>Использовать</span>
+    </button>
+  </footer>
+  {{/if}}
+
+</form>

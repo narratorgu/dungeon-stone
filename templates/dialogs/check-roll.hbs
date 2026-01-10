@@ -1,0 +1,97 @@
+<div class="dungeon-dialog-content" style="background: #151515; color: #e0e0e0; font-family: 'Signika', sans-serif; padding: 10px; border-radius: 4px;">
+    
+    <!-- ЗАГОЛОВОК -->
+    <div style="background: #000; padding: 10px; text-align: center; border: 1px solid #d4af37; border-radius: 4px; margin-bottom: 15px;">
+        <span style="font-size: 18px; font-weight: bold; text-transform: uppercase; color: #d4af37; display: block; line-height: 1.2;">{{label}}</span>
+        <span style="font-size: 12px; color: #888;">База: {{basePool}}d100</span>
+    </div>
+
+    <!-- ФОРМА -->
+    <form>
+        <!-- 1. СЛОЖНОСТЬ КС -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="color: #bbb; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 4px;">Сложность КС (Шанс)</label>
+            <div style="display: flex; gap: 5px;">
+                <select name="dcPreset" id="dc-preset" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; height: 30px; padding: 0 5px; border-radius: 3px;">
+                    <option value="0">Без КС (0)</option>
+                    <option value="10">Легко (10)</option>
+                    <option value="25">Средне (25)</option>
+                    <option value="50" selected>Обычный (50)</option>
+                    <option value="75">Трудно (75)</option>
+                    <option value="90">Очень трудно (90)</option>
+                    <option value="custom">Другое...</option>
+                </select>
+                <div id="dc-custom-container" style="display: none; width: 70px;">
+                    <input type="number" name="dcCustom" value="0" placeholder="КС" style="width: 100%; height: 30px; background: #000; color: #d4af37; border: 1px solid #d4af37; text-align: center; border-radius: 3px; font-weight: bold;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. СЛОЖНОСТЬ КУ -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="color: #bbb; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 4px;">Сложность КУ (Порог)</label>
+            <div style="display: flex; gap: 5px;">
+                <select name="kuPreset" id="ku-preset" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; height: 30px; padding: 0 5px; border-radius: 3px;">
+                    <option value="1" selected>Стандартное (1 КУ)</option>
+                    <option value="3">Продвинутый (3 КУ)</option>
+                    <option value="5">Экспертный (5 КУ)</option>
+                    <option value="7">Профессиональный (7 КУ)</option>
+                    <option value="10">Невероятный (10 КУ)</option>
+                    <option value="custom">Другое...</option>
+                </select>
+                <div id="ku-custom-container" style="display: none; width: 70px;">
+                    <input type="number" name="kuCustom" value="1" placeholder="КУ" style="width: 100%; height: 30px; background: #000; color: #d4af37; border: 1px solid #d4af37; text-align: center; border-radius: 3px; font-weight: bold;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ВТОРИЧНЫЙ АТРИБУТ -->
+        {{#unless isKnowledgeRoll}}
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="color: #bbb; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 4px;">Доп. Податрибут</label>
+            <select name="secondaryStat" style="width: 100%; background: #222; color: #fff; border: 1px solid #444; height: 30px; padding: 0 5px; border-radius: 3px;">
+                <option value="none" selected>[НЕТ]</option>
+                {{#each subAttributes}}
+                    <option value="{{this.key}}">{{this.label}}</option>
+                {{/each}}
+            </select>
+        </div>
+        {{else}}
+            <input type="hidden" name="secondaryStat" value="none">
+        {{/unless}}
+
+        <!-- 4. ЗНАНИЕ -->
+        {{#if knowledges.length}}
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="color: #bbb; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 4px;">Использовать Знание</label>
+            <select name="knowledgeStat" style="width: 100%; background: #222; color: #fff; border: 1px solid #444; height: 30px; padding: 0 5px; border-radius: 3px;">
+                <option value="none" selected>[НЕТ]</option>
+                {{#each knowledges}}
+                    <option value="{{this.id}}">{{this.name}} ({{this.val}})</option>
+                {{/each}}
+            </select>
+        </div>
+        {{else}}
+            <input type="hidden" name="knowledgeStat" value="none">
+        {{/if}}
+
+        <!-- 5. МОДИФИКАТОРЫ -->
+        <div style="font-size: 10px; color: #888; border-top: 1px solid #444; margin: 15px 0 8px 0; padding-top: 5px; text-transform: uppercase;">
+            Модификаторы обстоятельств
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label style="font-size: 9px; display: block; text-align: center; color: #aaa; margin-bottom: 2px;">Пул</label>
+                <input type="number" name="modPool" value="0" style="width: 100%; height: 26px; background: #000; color: #fff; border: 1px solid #444; text-align: center; border-radius: 3px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 9px; display: block; text-align: center; color: #aaa; margin-bottom: 2px;">КС</label>
+                <input type="number" name="modDC" value="0" style="width: 100%; height: 26px; background: #000; color: #fff; border: 1px solid #444; text-align: center; border-radius: 3px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 9px; display: block; text-align: center; color: #aaa; margin-bottom: 2px;">КУ</label>
+                <input type="number" name="modKU" value="0" style="width: 100%; height: 26px; background: #000; color: #fff; border: 1px solid #444; text-align: center; border-radius: 3px;">
+            </div>
+        </div>
+    </form>
+</div>

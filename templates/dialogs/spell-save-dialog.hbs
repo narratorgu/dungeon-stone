@@ -1,0 +1,57 @@
+<div class="dungeon-dialog-content" style="background: #151515; color: #e0e0e0; font-family: 'Signika', sans-serif; padding: 10px; border-radius: 4px;">
+    
+    <div style="background: #000; padding: 10px; text-align: center; border: 1px solid #a0f; border-radius: 4px; margin-bottom: 15px;">
+        <span style="font-size: 16px; font-weight: bold; text-transform: uppercase; color: #d0f;">{{item.name}}</span>
+        <span style="font-size: 12px; color: #888;">Спасбросок</span>
+    </div>
+
+    <form>
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label style="color: #bbb; font-size: 11px;">Атрибут Спаса</label>
+            <select name="saveAttr" style="width: 100%; background: #222; color: #fff; border: 1px solid #444; height: 30px;">
+                {{#each subAttributes}}<option value="{{@key}}" {{#if (eq @key ../saveAttr)}}selected{{/if}}>{{this}}</option>{{/each}}
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="flex: 1;">
+                <label style="font-size:10px; color:#aaa;">КС (DC)</label>
+                <input type="number" name="dc" value="{{saveDC}}" style="width:100%; background:#000; color:#fff; text-align:center;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size:10px; color:#aaa;">Мод КС</label>
+                <input type="number" name="modDC" value="0" style="width:100%; background:#000; color:#fff; text-align:center;">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="flex: 1;">
+                <label style="font-size:10px; color:#aaa;">КУ (Порог)</label>
+                <input type="number" name="ku" value="{{saveKU}}" style="width:100%; background:#000; color:#fff; text-align:center;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size:10px; color:#aaa;">Мод КУ</label>
+                <input type="number" name="modKU" value="0" style="width:100%; background:#000; color:#fff; text-align:center;">
+            </div>
+        </div>
+
+        <hr style="border-top:1px solid #444;">
+
+        <div style="margin-bottom: 10px;">
+            <label style="font-size:10px; color:#aaa;">Урон</label>
+            <div style="display:flex; gap:5px;">
+                <input type="text" name="damage" value="{{damage}}" style="flex:2; background:#222; color:#fff;">
+                <select name="damageType" style="flex:1; background:#222; color:#fff;">
+                    {{#each damageTypes}}<option value="{{@key}}" {{#if (eq @key ../damageType)}}selected{{/if}}>{{this}}</option>{{/each}}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="background:#221; padding:5px; border:1px dashed #663;">
+            <label style="display:flex; align-items:center; cursor:pointer; color:#ffd700; font-size:11px;">
+                <input type="checkbox" name="canAvoid" checked style="margin-right:5px;"> 
+                Возможность избежать урона (Уклонение)
+            </label>
+        </div>
+    </form>
+</div>

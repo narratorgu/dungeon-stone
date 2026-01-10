@@ -2,7 +2,7 @@
     "id": "dungeon-stone",
     "title": "Dungeon & Stone TTRPG",
     "description": "System based on Dungeon & Stone mechanics.",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "compatibility": {
       "minimum": "13",
       "verified": "13"
@@ -20,6 +20,7 @@
         "styles/layout.css",
         "styles/actor.css",
         "styles/item.css",
+        "styles/dialogs.css",
         "styles/chat.css"
     ],
     "documentTypes": {
@@ -35,10 +36,12 @@
       "essence": {},
       "feature": {},
       "lineage": {},
+      "container": {},
       "contract": {},
       "blessing": {},
       "spell": {}, 
-      "role": {}
+      "role": {},
+      "knowledge": {}
     }
   },
   "grid": {

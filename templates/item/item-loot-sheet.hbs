@@ -1,0 +1,49 @@
+{{!-- templates/item/item-loot-sheet.hbs --}}
+<form class="{{cssClass}} loot-rarity-border" autocomplete="off">
+
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="properties">Свойства</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="properties">
+      
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-gem"></i> <h3>Параметры</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Тип</label>
+            <select name="system.lootType" style="width:100%">
+              <option value="treasure" {{#if (eq system.lootType "treasure")}}selected{{/if}}>Ценность</option>
+              <option value="material" {{#if (eq system.lootType "material")}}selected{{/if}}>Материал</option>
+              <option value="manastone" {{#if (eq system.lootType "manastone")}}selected{{/if}}>Камень маны</option>
+              <option value="other" {{#if (eq system.lootType "other")}}selected{{/if}}>Прочее</option>
+            </select>
+          </div>
+
+          {{#if (eq system.lootType "material")}}
+          <div class="form-group full-row">
+            <label>Название материала</label>
+            <input type="text" name="system.materialName" value="{{system.materialName}}"/>
+          </div>
+          <div class="form-group inline full-row">
+            <label>Крафтовый</label>
+            <input type="checkbox" name="system.craftable" {{checked system.craftable}}/>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+
+    </div>
+  </section>
+</form>

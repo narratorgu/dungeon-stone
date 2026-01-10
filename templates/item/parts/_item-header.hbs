@@ -1,0 +1,57 @@
+<header class="item-header">
+    <div class="item-img-wrapper">
+        <img class="item-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+    </div>
+    
+    <div class="item-header-info">
+        <div class="header-top">
+            <input class="item-name" type="text" name="name" value="{{item.name}}" placeholder="Название"/>
+        </div>
+        
+        <div class="header-bottom">
+            <div class="item-type-badge">
+                <i class="{{itemIcon}}"></i>
+                {{itemTypeLabel}}
+            </div>
+            
+            {{#if hasEquipStatus}}
+            <select class="equip-status-select" name="system.equipStatus">
+                <option value="stored" {{#if (eq system.equipStatus "stored")}}selected{{/if}}>В рюкзаке</option>
+                <option value="carried" {{#if (eq system.equipStatus "carried")}}selected{{/if}}>Быстрый доступ</option>
+                <option value="equipped" {{#if (eq system.equipStatus "equipped")}}selected{{/if}}>Экипировано</option>
+            </select>
+            {{/if}}
+        </div>
+    </div>
+</header>
+
+{{!-- КАРТОЧКИ СТАТИСТИКИ --}}
+<div class="stats-header-row">
+    {{#if hasWeight}}
+    <div class="stat-card">
+        <label>Вес</label>
+        <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1"/>
+    </div>
+    {{/if}}
+    
+    {{#if hasPrice}}
+    <div class="stat-card">
+        <label>Цена</label>
+        <input type="number" name="system.price" value="{{system.price}}" min="0"/>
+    </div>
+    {{/if}}
+    
+    {{#if hasQuantity}}
+    <div class="stat-card">
+        <label>Кол-во</label>
+        <input type="number" name="system.quantity" value="{{system.quantity}}" min="1"/>
+    </div>
+    {{/if}}
+
+    {{#if hasItemLevel}}
+    <div class="stat-card">
+        <label>Уровень</label>
+        <input type="number" name="system.itemLevel" value="{{system.itemLevel}}" min="1" max="20"/>
+    </div>
+    {{/if}}
+</div>

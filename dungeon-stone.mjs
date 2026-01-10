@@ -5,34 +5,61 @@ import { DungeonActorSheet } from "./module/actor/sheets.mjs";
 import { CharacterData, MonsterData } from "./module/actor/data.mjs";
 import { DungeonItem } from "./module/item/document.mjs";
 import { DungeonItemSheet } from "./module/item/sheets.mjs";
-import { WeaponData, EssenceData, LineageData, SimpleItemData, RoleData, SpellData, ContractData } from "./module/item/data.mjs";
-
-// Глобальный объект для вызова из макросов
-game.dungeon = {
-  rollItemMacro: (itemName) => {
-    const speaker = ChatMessage.getSpeaker();
-    let actor;
-    if (speaker.token) actor = game.actors.tokens[speaker.token];
-    if (!actor) actor = game.actors.get(speaker.actor);
-    
-    if (!actor) return ui.notifications.warn("Нужно выделить токен персонажа.");
-    
-    // Ищем предмет по имени
-    const item = actor.items.find(i => i.name === itemName);
-    if (!item) return ui.notifications.warn(`У вас нет предмета "${itemName}".`);
-    
-    // Запускаем логику в зависимости от типа
-    if (item.type === "weapon") return actor.rollWeaponAttack(item.id);
-    if (["spell", "essence", "contract", "feature"].includes(item.type)) {
-      return actor.useItem(item.id);
-    }
-    
-    return item.sheet.render(true); // Для остальных просто открываем лист
-  }
-};
+import { AbilityTemplate } from "./module/helpers/template.mjs";
+import { 
+  WeaponData, 
+  ArmorData,
+  ConsumableData,
+  ContainerData,
+  LootData,
+  EssenceData, 
+  SpellData,
+  BlessingData,
+  LineageData, 
+  RoleData, 
+  ContractData, 
+  KnowledgeData,
+  SimpleItemData 
+} from "./module/item/data.mjs";
+import { MigrationManager } from "./module/migrations.mjs";
 
 Hooks.once("init", async function() {
   console.log("Dungeon & Stone | Initializing System");
+
+  game.dungeon = {
+    rollItemMacro: (itemName) => {
+      const speaker = ChatMessage.getSpeaker();
+      let actor;
+
+      if (speaker.token) {
+        const token = canvas.tokens.get(speaker.token);
+        actor = token?.actor;
+      }
+      if (!actor) actor = game.actors.get(speaker.actor);
+      
+      if (!actor) return ui.notifications.warn("Нужно выделить токен персонажа.");
+      
+      const item = actor.items.find(i => i.name === itemName);
+      if (!item) return ui.notifications.warn(`У вас нет предмета "${itemName}".`);
+      
+      if (item.type === "weapon") return actor.rollWeaponAttack(item.id);
+      if (["spell", "essence", "contract", "feature", "knowledge"].includes(item.type)) {
+        return actor.useItem(item.id);
+      }
+      
+      return item.sheet.render(true);
+    },
+    
+    MigrationManager: MigrationManager
+  };
+
+  game.settings.register("dungeon-stone", "systemMigrationVersion", {
+    name: "System Migration Version",
+    scope: "world",
+    config: false,
+    type: String,
+    default: "0.0.0"
+  });
 
   CONFIG.DUNGEON = DUNGEON;
 
@@ -43,92 +70,174 @@ Hooks.once("init", async function() {
     character: CharacterData,
     monster: MonsterData
   };
+
   CONFIG.Item.dataModels = {
     weapon: WeaponData,
+    armor: ArmorData,
+    consumable: ConsumableData,
+    container: ContainerData,
+    loot: LootData,
     essence: EssenceData,
-    lineage: LineageData,
-    armor: SimpleItemData,
-    consumable: SimpleItemData,
-    loot: SimpleItemData,
-    feature: SimpleItemData,
-    role: RoleData,
     spell: SpellData,
-    contract: ContractData
+    blessing: BlessingData,
+    lineage: LineageData,
+    role: RoleData,
+    contract: ContractData,
+    knowledge: KnowledgeData,
+    feature: SimpleItemData
   };
 
   CONFIG.Combat.initiative = {
+    formula: "1d20",
     decimals: 2
   };
 
-  Hooks.on("hotbarDrop", (bar, data, slot) => createItemMacro(data, slot));
-  const Actors = foundry.documents.collections.Actors;
-  const Items = foundry.documents.collections.Items;
-  const ActorSheet = foundry.appv1 ? foundry.appv1.sheets.ActorSheet : foundry.applications.sheets.ActorSheet;
-  const ItemSheet = foundry.appv1 ? foundry.appv1.sheets.ItemSheet : foundry.applications.sheets.ItemSheet;
-
-  Actors.unregisterSheet("core", ActorSheet);
-  Actors.registerSheet("dungeon-stone", DungeonActorSheet, { 
-    types: ["character", "monster"], 
-    makeDefault: true 
-  });
-
-  Items.unregisterSheet("core", ItemSheet);
-  Items.registerSheet("dungeon-stone", DungeonItemSheet, { 
-      makeDefault: true 
-  });
-
   CONFIG.Actor.trackableAttributes = {
     character: {
-      bar: ["resources.hp", "resources.mana"],
+      bar: ["resources.hp", "resources.mana", "resources.fate"],
       value: []
     },
     monster: {
-      bar: ["resources.hp"],
+      bar: ["resources.hp", "resources.mana"],
       value: []
     }
   };
 
+  const ActorsCollection = foundry.documents?.collections?.Actors || Actors;
+  const ItemsCollection = foundry.documents?.collections?.Items || Items;
+  const BaseActorSheet = foundry.appv1?.sheets?.ActorSheet || ActorSheet;
+  const BaseItemSheet = foundry.appv1?.sheets?.ItemSheet || ItemSheet;
+
+  ActorsCollection.unregisterSheet("core", BaseActorSheet);
+  ActorsCollection.registerSheet("dungeon-stone", DungeonActorSheet, { 
+    types: ["character", "monster"], 
+    makeDefault: true 
+  });
+
+  ItemsCollection.unregisterSheet("core", BaseItemSheet);
+  ItemsCollection.registerSheet("dungeon-stone", DungeonItemSheet, { 
+    makeDefault: true 
+  });
+
+  Handlebars.registerHelper("formatNumber", function(value) {
+    return Number(value).toLocaleString('ru-RU');
+  });
+
   Handlebars.registerHelper({
-    "sub": (a, b) => a - b,
-    "add": (a, b) => a + b,
-    "gt": (a, b) => a > b,
-    "lt": (a, b) => a < b,
-    "eq": (a, b) => a == b,
-    "ne": (a, b) => a != b,
-    "gte": (a, b) => a >= b,
-    "lte": (a, b) => a <= b,
-    "and": (a, b) => a && b,
-    "or": (a, b) => a || b
-});
+    sub: (a, b) => a - b,
+    add: (a, b) => a + b,
+    multiply: (a, b) => a * b,
+    gt: (a, b) => a > b,
+    lt: (a, b) => a < b,
+    eq: (a, b) => a == b,
+    ne: (a, b) => a != b,
+    gte: (a, b) => a >= b,
+    lte: (a, b) => a <= b,
+    and: (a, b) => a && b,
+    or: (a, b) => a || b,
+
+    default: (value, defaultValue) => {
+      if (value === null || value === undefined || value === "") {
+        return defaultValue;
+      }
+      return value;
+    },
+
+    getItem: function(itemId, options) {
+      const actor = options.data.root.actor;
+      return actor.items.get(itemId);
+    },
+
+    getRevealed: function(key, revealed) {
+      const cleanKey = key
+        .replace(/^system\./, '')
+        .replace(/^subAttributes\./, '')
+        .replace(/^proficiencies\./, '');
+      
+      return revealed[cleanKey] === true;
+    },
+
+    concat: function(...args) {
+      args.pop();
+      return args.join('');
+    },
+
+    join: (array, separator) => {
+      if (!array || !Array.isArray(array)) return "";
+      return array.join(separator || ", ");
+    }
+  });
+  game.dungeon.AbilityTemplate = AbilityTemplate;
 
   await foundry.applications.handlebars.loadTemplates([
     "systems/dungeon-stone/templates/actor/parts/stat-row.hbs",
-    "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"
+    "systems/dungeon-stone/templates/item/parts/effects-tab.hbs",
+    "systems/dungeon-stone/templates/actor/parts/inventory.hbs",
+    "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs",
+    "systems/dungeon-stone/templates/item/parts/_item-header.hbs",
+    "systems/dungeon-stone/templates/actor/parts/item-row.hbs",
+    "systems/dungeon-stone/templates/dialogs/attack-dialog.hbs"
   ]);
   
   registerHooks();
 });
 
-async function createItemMacro(data, slot) {
+Hooks.on("hotbarDrop", async (bar, data, slot) => {
   if (data.type !== "Item") return;
-  if (!("uuid" in data)) return ui.notifications.warn("Можно создавать макросы только для предметов, принадлежащих Актеру.");
+  if (!data.uuid) return ui.notifications.warn("Можно создавать макросы только для предметов актера.");
   
   const item = await fromUuid(data.uuid);
-  
-  // Создаем макрос
   const command = `game.dungeon.rollItemMacro("${item.name}");`;
   
-  let macro = game.macros.find(m => (m.name === item.name) && (m.command === command));
+  let macro = game.macros.find(m => m.name === item.name && m.command === command);
   if (!macro) {
     macro = await Macro.create({
       name: item.name,
       type: "script",
       img: item.img,
       command: command,
-      flags: { "dungeon.itemMacro": true }
+      flags: { "dungeon-stone.itemMacro": true }
     });
   }
   
-  game.user.assignHotbarMacro(macro, slot);
+  await game.user.assignHotbarMacro(macro, slot);
   return false;
-}
+});
+
+Hooks.once("ready", async () => {
+  await MigrationManager.migrateWorld();
+
+  game.socket.on("system.dungeon-stone", async (data) => {
+    if (!game.user.isGM) return;
+    if (game.users.activeGM?.id !== game.user.id) return;
+  
+    if (data.type === "applyDamage") {
+      const actor = game.actors.get(data.actorId);
+      if (!actor) return;
+      const currentHP = actor.system.resources.hp.value;
+      const newHP = Math.max(0, currentHP - data.damage);
+      await actor.update({ "system.resources.hp.value": newHP });
+      return;
+    }
+  
+    if (data.type === "syncArmorPenaltyAE") {
+      const actor = game.actors.get(data.actorId);
+      console.log("SYNC REQUEST", {
+        actorFound: !!actor,
+        actorName: actor?.name,
+        actorClass: actor?.constructor?.name,
+        hasMethod: typeof actor?._syncAllArmorPenaltyEffects === "function"
+      });
+    }
+  
+    if (data.type === "proxyAttack") {
+      const attacker = game.actors.get(data.attackerId);
+      const target = game.actors.get(data.targetId);
+      if (attacker && target) {
+        attacker.rollWeaponAttack(data.itemId);
+        ui.notifications.info(`Игрок ${data.userId} запрашивает атаку.`);
+      }
+      return;
+    }
+  });
+});

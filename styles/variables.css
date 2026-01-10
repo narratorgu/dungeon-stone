@@ -6,3 +6,25 @@
     --color-text: #e0e0e0;
     --font-primary: "Signika", sans-serif;
 }
+
+/* Цвет иконок в редакторе */
+.ProseMirror-menubar .pm-icon {
+    fill: #ccc !important; /* Светло-серый */
+}
+
+/* При наведении */
+.ProseMirror-menuitem:hover .pm-icon {
+    fill: #fff !important; /* Белый */
+}
+
+/* Фон кнопок */
+.ProseMirror-menuitem {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+}
+
+.ProseMirror-menuitem:hover {
+    background: #444 !important;
+    border-color: #666 !important;
+}
+

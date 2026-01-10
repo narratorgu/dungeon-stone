@@ -2,9 +2,6 @@ import { DUNGEON } from "../config.mjs";
 
 /**
  * Расчет максимального HP
- * @param {number} endurance - Выносливость (или Телосложение * 2)
- * @param {number} boneDensity - Плотность костей
- * @returns {number}
  */
 export function calculateMaxHP(endurance, boneDensity) {
     const mult = 1 + (boneDensity / 100);
@@ -12,45 +9,98 @@ export function calculateMaxHP(endurance, boneDensity) {
 }
 
 /**
- * Расчет максимальной Маны (Духа)
- * @param {number} spirit - Атрибут Дух
- * @returns {number}
+ * Расчет максимальной Маны
+ * @param {number} soulPower - Сила Души
  */
-export function calculateMaxMana(spirit) {
-    return Math.floor(spirit * 1.5);
+export function calculateMaxMana(soulPower) {
+    return Math.floor(soulPower * 1.5); 
 }
 
 /**
  * Расчет Физического Сопротивления (%)
  * Формула: 20 * ln(1 + (Плотность + ФизСопр) / 10)
+ * Кап: 90% (чтобы не было иммунитета)
  */
 export function calculatePhysRes(boneDensity, flatResist) {
-    const val = 20 * Math.log(1 + ((boneDensity + flatResist) / 10));
-    return Math.floor(val);
+    const totalStat = Math.max(0, boneDensity + flatResist);
+    // Логарифм натуральный
+    const val = 20 * Math.log(1 + (totalStat / 10));
+    // Округляем и ставим лимит 90%
+    return Math.min(90, Math.floor(val));
 }
 
 /**
  * Расчет Магического Сопротивления (%)
  * Формула: 15 * ln(1 + МагСопр / 10)
+ * Кап: 90%
  */
 export function calculateMagRes(magicResist) {
-    const val = 15 * Math.log(1 + (magicResist / 10));
-    return Math.floor(val);
+    const stat = Math.max(0, magicResist);
+    const val = 15 * Math.log(1 + (stat / 10));
+    return Math.min(90, Math.floor(val));
 }
 
-/**
- * Получить порог опыта для следующего уровня
- * @param {number} level 
- * @returns {number}
- */
 export function getXPThreshold(level) {
     return DUNGEON.XP_TABLE[level] || 999999;
 }
 
 /**
- * Расчет количества кубов для броска
- * @param {number} statValue 
- * @returns {number} минимум 1
+ * Расчет сложности заклинания (Spell DC)
+ * spiritSum = cognition + manaSense + (soulPower ИЛИ divinePower)
+ */
+export function calculateMagicStats(cognition, manaSense, powerStat) {
+    // Сумма характеристик
+    const spiritSum = cognition + manaSense + powerStat;
+    
+    // Формула DC
+    const term1 = 15 * Math.log(1 + spiritSum / 100);
+    const term2 = 12 * Math.log(1 + Math.log(1 + spiritSum / 400));
+    const dc = Math.floor(Math.min(90, 50 + term1 + term2));
+    
+    // Формула КУ
+    const ku = Math.max(1, Math.floor(spiritSum / 53));
+    
+    return { dc, ku };
+}
+
+/**
+ * Расчет времени восстановления
+ * rateStat: spiritRecovery (для маны/GP)
+ * current: текущее значение
+ * max: максимальное значение
+ */
+export function calculateRecoveryTime(rateStat, current, max) {
+    // Преобразуем в числа для безопасности
+    rateStat = Number(rateStat) || 0;
+    current = Number(current) || 0;
+    max = Number(max) || 0;
+    
+    if (rateStat <= 0 || max <= 0) return { fullTime: "∞", restTime: "∞" };
+    
+    const ratePerMinute = rateStat * 0.5; // 50% от стата в минуту
+    if (ratePerMinute <= 0) return { fullTime: "∞", restTime: "∞" };
+
+    const minutesToFull = max / ratePerMinute;
+    const minutesToRest = Math.max(0, (max - current) / ratePerMinute);
+
+    const formatTime = (mins) => {
+        if (mins === 0) return "0 мин";
+        if (mins === Infinity || isNaN(mins)) return "Никогда";
+        const totalMinutes = Math.ceil(mins); // Округляем вверх до целых минут
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        if (h > 0) return `${h} ч. ${m > 0 ? m + " мин." : ""}`;
+        return `${m} мин.`;
+    };
+
+    return {
+        fullTime: formatTime(minutesToFull),
+        restTime: formatTime(minutesToRest)
+    };
+}
+
+/**
+ * Расчет Dice Pool (Количества кубов)
  */
 export function getDicePool(statValue) {
     let pool = Math.floor(statValue / 13);
@@ -58,65 +108,138 @@ export function getDicePool(statValue) {
 }
 
 /**
- * Мультипликативная формула сопротивления
- * Resist = 1 - (1 - Phys) * (1 - Specific)
+ * Расчет Максимума Пула Защиты (Defense Pool Max)
+ * Используется ТОЛЬКО для отображения на листе персонажа.
+ * В бою КУ считается динамически.
  */
-export function calculateTotalResist(physResistPercent, specificResistPercent) {
-    const p = physResistPercent / 100;
-    const s = specificResistPercent / 100;
-    const result = 1 - (1 - p) * (1 - s);
-    return Math.round(result * 100);
-}
-
-/**
- * Расчет КС (Класса Сложности) для защиты
- */
-export function calculateDC(actorData, attackerAgility = null) {
-    // 1. Безопасное получение размера
-    // Если details нет или size нет, используем 'medium'
-    const sizeKey = actorData?.details?.size || "medium";
-    const sizeConf = DUNGEON.sizes[sizeKey] || DUNGEON.sizes.medium;
-    
-    // 2. База: 50 * Множитель
-    let dc = 50 * sizeConf.dcMult;
-    
-    // 3. Доспех и Щит (с проверкой существования combat)
-    if (actorData?.combat) {
-        dc += (actorData.combat.armorBonus || 0);
-        if (actorData.combat.shieldRaised) {
-            dc += (actorData.combat.shieldBonus || 0);
-        }
-    }
-    
-    // 4. Сравнение Ловкости
-    if (attackerAgility !== null && actorData?.subAttributes?.agility !== undefined) {
-        const defenderAgility = actorData.subAttributes.agility;
-        const diff = defenderAgility - attackerAgility;
-        
-        if (diff > 5) dc += 15;
-        if (defenderAgility > (attackerAgility * 3)) dc += 30;
-        
-        const atkDiff = attackerAgility - defenderAgility;
-        if (atkDiff > 5) dc -= 15;
-        if (attackerAgility > (defenderAgility * 3)) dc -= 30;
-    }
-    
-    return Math.round(dc);
-}
-
 export function calculateKU(agility, size) {
     const sizeConf = DUNGEON.sizes[size] || DUNGEON.sizes.medium;
+    // Примерная формула для "потенциала" защиты
     const base = agility / 13;
-    const ku = Math.floor(base * sizeConf.poolMult);
-    return Math.max(1, ku);
+    // Если в конфиге нет poolMult, считаем его равным 1
+    const mult = sizeConf.poolMult || 1; 
+    return Math.max(1, Math.floor(base * mult));
 }
 
 /**
- * Расчет Скорости перемещения (м)
- * База 10м + (Ловкость / 5) + Бонусы
+ * Расчет Скорости
  */
 export function calculateSpeed(agility, bonus = 0) {
     const base = 10;
     const agiBonus = Math.floor(agility / 5);
     return base + agiBonus + bonus;
+}
+
+/**
+ * Расчёт пассивного КУ от Плотности Костей
+ * Используется и в display, и в combat logic
+ */
+export function calculateBoneKU(boneDensity) {
+    if (boneDensity <= 20) return 2;
+    if (boneDensity < 35) return 3;
+    if (boneDensity < 55) return 4;
+    if (boneDensity < 80) return 5;
+    return Math.floor(5 + (boneDensity - 70) / 30);
+}
+  
+/**
+ * Расчёт критического порога
+ */
+export function getCritThreshold(flexibility) {
+    const bonus = Math.floor(flexibility / 50);
+    return Math.max(65, 95 - bonus);
+}
+  
+/**
+ * Проверка фланкирования
+ */
+export function isFlanked(target, attacker) {
+    if (target.system.combat?.conditions?.flanked === true) return true;
+    if (!canvas.grid || !target.token) return false;
+    
+    // Получаем токен атакующего
+    let attackerToken = attacker.token; // Может быть Token или TokenDocument
+    
+    // Если токена нет в актере, ищем через getActiveTokens (возвращает TokenDocument[])
+    if (!attackerToken && attacker.getActiveTokens) {
+        const tokens = attacker.getActiveTokens();
+        if (tokens.length > 0) attackerToken = tokens[0];
+    }
+    
+    if (!attackerToken) return false;
+
+    // Унифицируем доступ к disposition
+    // Если это Token (canvas), берем .document.disposition
+    // Если это TokenDocument, берем .disposition
+    const getDisposition = (t) => {
+        if (t.document) return t.document.disposition; // Это Token (canvas object)
+        return t.disposition; // Это TokenDocument
+    };
+
+    const attackerDisp = getDisposition(attackerToken);
+    const gridDist = canvas.scene.grid.distance; 
+
+    const allies = canvas.tokens.placeables.filter(t => {
+      // Игнорируем самого атакующего (сравниваем ID)
+      const tId = t.id || t.document?.id;
+      const aId = attackerToken.id || attackerToken.document?.id;
+      if (tId === aId) return false;
+      
+      // Проверка диспозиции (союзник)
+      if (getDisposition(t) !== attackerDisp) return false;
+      
+      // Живой?
+      if (t.actor?.system?.resources?.hp?.value <= 0) return false;
+      
+      // Дистанция
+      // Для measureDistance нужны объекты Token (не документы)
+      // canvas.tokens.placeables - это Token[].
+      // target.token - может быть Document. Если Document, берем .object
+      const targetObject = target.token.object || target.token;
+      
+      const start = { x: t.x, y: t.y };
+      const end = { x: targetObject.x, y: targetObject.y };
+      const measurement = canvas.grid.measurePath([start, end]);
+      const distMeters = measurement.distance; // Дистанция в единицах сцены
+      const reachCells = getActorReach(t.actor); 
+      const reachMeters = reachCells * gridDist;
+      
+      return distMeters <= reachMeters + 0.5;
+    });
+    
+    if (allies.length === 0) return false;
+    
+    // Углы (нужны координаты x, y)
+    const targetX = target.token.x || target.token.object?.x;
+    const targetY = target.token.y || target.token.object?.y;
+    const attackerX = attackerToken.x || attackerToken.object?.x;
+    const attackerY = attackerToken.y || attackerToken.object?.y;
+
+    const atkAngle = Math.atan2(targetY - attackerY, targetX - attackerX);
+    
+    for (let ally of allies) {
+      const allyAngle = Math.atan2(targetY - ally.y, targetX - ally.x);
+      let diff = Math.abs(atkAngle - allyAngle);
+      if (diff > Math.PI) diff = 2 * Math.PI - diff;
+      
+      if (diff >= 2.35 && diff <= 3.93) return true;
+    }
+    
+    return false;
+}
+  
+/**
+ * Вспомогательная: Досягаемость в клетках
+ */
+function getActorReach(actor) {
+    if (!actor) return 1;
+    let maxReach = 1;
+    
+    for (let item of actor.items) {
+      if (item.type === "weapon" && item.system.equipStatus === "equipped" && item.system.attackType === "melee") {
+        const range = item.system.range || 1;
+        if (range > maxReach) maxReach = range;
+      }
+    }
+    return maxReach;
 }

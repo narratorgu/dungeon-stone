@@ -78,3 +78,180 @@
     font-size: 11px;
     color: #ebb;
 }
+
+/* --- ATTACK DIALOG STYLES --- */
+
+/* Контейнер диалога (нужно убедиться, что класс вешается правильно) */
+.dungeon-dialog {
+    padding: 5px;
+    color: #e0e0e0;
+}
+
+/* Хедер VS */
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1a1a1a;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+}
+
+.actor-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+}
+
+.actor-box img {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #000;
+}
+
+.actor-box .name {
+    font-size: 11px;
+    text-align: center;
+    margin-top: 4px;
+    line-height: 1.1;
+    color: #ccc;
+}
+
+.vs-badge {
+    font-size: 24px;
+    font-weight: bold;
+    color: #d4af37;
+    font-family: serif;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* Инфо об оружии */
+.weapon-info {
+    display: flex;
+    align-items: center;
+    background: #252525;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border: 1px solid #444;
+}
+
+.weapon-img {
+    width: 40px;
+    height: 40px;
+    border: none;
+    margin-right: 10px;
+}
+
+.weapon-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.weapon-name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #fff;
+}
+
+.attack-type-label {
+    font-size: 11px;
+    color: #888;
+}
+
+.attack-mode-select {
+    background: #111;
+    color: #ddd;
+    border: 1px solid #555;
+    font-size: 11px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+/* Пул кубов (Коричневый квадрат) */
+.pool-box {
+    background: #5a3a2a; /* Коричневый/Бронзовый */
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid #8a5a3a;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.pool-val {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.pool-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+/* Секции и Инпуты */
+.dialog-section {
+    margin-bottom: 10px;
+}
+
+.dialog-section label {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 3px;
+}
+
+.dialog-section select,
+.dialog-section input {
+    width: 100%;
+    background: #111 !important;
+    color: #fff !important;
+    border: 1px solid #444 !important;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.info-text {
+    font-size: 10px;
+    color: #777;
+    margin-top: 4px;
+    font-style: italic;
+    background: rgba(0,0,0,0.2);
+    padding: 4px;
+    border-left: 2px solid #555;
+}
+
+/* Модификаторы в ряд */
+.modifiers {
+    display: flex;
+    gap: 10px;
+}
+
+.mod-group {
+    flex: 1;
+}
+
+.mod-group input {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Перекрашиваем иконки ProseMirror в белый */
+.ProseMirror-menubar svg {
+    fill: #ccc !important;
+}
+.ProseMirror-menuitem:hover svg {
+    fill: #fff !important;
+}
+.ProseMirror-menuitem {
+    cursor: pointer;
+}

@@ -1,0 +1,89 @@
+<div class="item-row item {{#if item.isExpanded}}expanded{{/if}}" data-item-id="{{item._id}}" draggable="true">
+    
+    <div class="item-header">
+        {{!-- Картинка --}}
+        <div class="item-img-container">
+            <img src="{{item.img}}"/>
+        </div>
+        
+        {{!-- Имя --}}
+        <div class="item-name item-clickable" title="Нажмите для описания">
+            {{item.name}}
+        </div>
+
+        {{!-- Правая часть --}}
+        <div class="item-controls-group">
+            {{!-- Вес --}}
+            {{#if item.system.weight}}
+                <div style="font-size: 11px; color: #888; margin-right: 5px;">
+                    <i class="fas fa-weight-hanging"></i> {{item.system.weight}}
+                </div>
+            {{/if}}
+
+            <div class="item-controls">
+                {{!-- Экипировка --}}
+                {{#if (or (eq item.type "weapon") (eq item.type "armor") (eq item.type "shield") (eq item.type "essence") (eq item.type "container"))}}
+                    <a class="item-control item-equip" title="{{#if (eq item.system.equipStatus 'equipped')}}Снять{{else}}Надеть{{/if}}">
+                        <i class="fas {{#if (eq item.system.equipStatus 'equipped')}}fa-check-circle{{else}}fa-tshirt{{/if}}" 
+                           style="color: {{#if (eq item.system.equipStatus 'equipped')}}#d4af37{{else}}#666{{/if}};"></i>
+                    </a>
+                {{/if}}
+                
+                {{!-- Редактирование / Удаление (ДЛЯ ВЛАДЕЛЬЦА) --}}
+                {{#if @root.owner}}
+                    <a class="item-control item-edit" title="Изменить"><i class="fas fa-edit"></i></a>
+                    <a class="item-control item-delete" title="Удалить"><i class="fas fa-trash"></i></a>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    {{!-- ОПИСАНИЕ --}}
+    {{#if item.isExpanded}}
+    <div class="item-summary">
+        {{!-- Кнопка Использовать --}}
+        {{#if (eq item.type "consumable")}}
+            <button class="consume-item" data-item-id="{{item._id}}" style="width: 100%; background: #2d4a2d; color: #fff; margin-bottom: 5px;">
+                <i class="fas fa-flask"></i> Использовать
+            </button>
+        {{/if}}
+
+        {{!-- Содержимое контейнера --}}
+        {{#if (eq item.type "container")}}
+            <div class="container-box">
+                <div style="font-size:10px; color:#888; margin-bottom:2px;">ВНУТРИ:</div>
+                {{#if item.containedItems.length}}
+                    <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                        {{#each item.containedItems as |cItem|}}
+                        <div class="chip">
+                            <img src="{{cItem.img}}">
+                            <span>{{cItem.name}} (x{{cItem.system.quantity}})</span>
+                            {{!-- Кнопка вынуть (для владельца) --}}
+                            {{#if @root.owner}}
+                            <a class="remove-from-container" data-container-id="{{../item._id}}" data-item-id="{{cItem._id}}">
+                                <i class="fas fa-times"></i>
+                            </a>
+                            {{/if}}
+                        </div>
+                        {{/each}}
+                    </div>
+                {{else}}
+                    <div style="font-style:italic; color:#666;">Пусто</div>
+                {{/if}}
+            </div>
+        {{/if}}
+
+        {{!-- Текст описания --}}
+        <div class="description-text">
+            {{{item.system.description}}}
+        </div>
+
+        {{!-- Свойства (Тэги) --}}
+        <div class="item-tags" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
+            {{#if item.system.damage}}<span class="tag" style="background:#311; padding:2px 4px; border-radius:3px;">Урон: {{item.system.damage}}</span>{{/if}}
+            {{#if item.system.armorValue}}<span class="tag" style="background:#113; padding:2px 4px; border-radius:3px;">КУ: {{item.system.armorValue}}</span>{{/if}}
+            {{#if item.system.range}}<span class="tag" style="background:#222; padding:2px 4px; border-radius:3px;">Дальность: {{item.system.range}}</span>{{/if}}
+        </div>
+    </div>
+    {{/if}}
+</div>

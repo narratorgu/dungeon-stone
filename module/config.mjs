@@ -14,54 +14,6 @@ DUNGEON.XP_TABLE = {
   11: 999999
 };
 
-DUNGEON.damageTypes = {
-  slashing: "Режущий",
-  blunt: "Дробящий",
-  piercing: "Колющий",
-  poison: "Яд",
-  acid: "Кислота",
-  fire: "Огонь",
-  cold: "Холод",
-  lightning: "Молния",
-  light: "Свет",
-  dark: "Тьма",
-  psychic: "Психический",
-  pure: "Чистый"
-};
-
-DUNGEON.damageSeverity = {
-    none: "Нет урона",
-    scratch: "Царапина",
-    light: "Легкая рана",
-    moderate: "Средняя рана",
-    heavy: "Тяжелая рана",
-    critical: "Критическая рана",
-    fatal: "Смертельная рана"
-};
-
-DUNGEON.attackTypes = {
-  melee: "Ближний бой",
-  ranged: "Стрелковое",
-  thrown: "Метательное"
-};
-
-DUNGEON.proficiencies = {
-  bladed: "Клинковое",
-  blunt: "Дробящее",
-  polearm: "Древковое",
-  axes: "Топоры",
-  unarmed: "Безоружный"
-};
-
-DUNGEON.sizes = {
-  tiny: { label: "Крохотный", dcMult: 1.5, poolMult: 0.5 },
-  small: { label: "Маленький", dcMult: 1.25, poolMult: 0.75 },
-  medium: { label: "Средний", dcMult: 1.0, poolMult: 1.0 },
-  large: { label: "Большой", dcMult: 0.8, poolMult: 1.25 },
-  giant: { label: "Гигантский", dcMult: 0.66, poolMult: 1.5 },
-  monstrous: { label: "Чудовищный", dcMult: 0.5, poolMult: 2.0 }
-};
-
 DUNGEON.ranks = {
   9: "Ранг 9",
   8: "Ранг 8",
@@ -71,5 +23,114 @@ DUNGEON.ranks = {
   4: "Ранг 4",
   3: "Ранг 3",
   2: "Ранг 2",
-  1: "Ранг 1",
+  1: "Ранг 1"
+};
+
+// dcMod = модификатор КС попадания по цели данного размера
+DUNGEON.sizes = {
+  tiny:      { label: "Крохотный",   dcMod: 20 },
+  small:     { label: "Маленький",   dcMod: 10 },
+  medium:    { label: "Средний",     dcMod: 0 },
+  large:     { label: "Большой",     dcMod: -10 },
+  giant:     { label: "Гигантский",  dcMod: -20 },
+  colossal:  { label: "Чудовищный",  dcMod: -30 }
+};
+
+DUNGEON.damageTypes = {
+  slashing:  "Режущий",
+  blunt:     "Дробящий",
+  piercing:  "Колющий",
+  fire:      "Огонь",
+  cold:      "Холод",
+  lightning: "Молния",
+  acid:      "Кислота",
+  poison:    "Яд",
+  psychic:   "Психический",
+  light:     "Свет",
+  dark:      "Тьма",
+  pure:      "Чистый"
+};
+
+DUNGEON.damageSeverity = {
+  none:     "Нет урона",
+  scratch:  "Царапина",
+  light:    "Лёгкая рана",
+  moderate: "Средняя рана",
+  heavy:    "Тяжёлая рана",
+  critical: "Критическая рана",
+  fatal:    "Смертельная рана"
+};
+
+DUNGEON.attackTypes = {
+  melee:  "Ближний бой",
+  ranged: "Стрелковое",
+  thrown: "Метательное"
+};
+
+DUNGEON.armorSlots = {
+  head: "Голова",
+  shoulders: "Плечи",
+  body: "Корпус",
+  arms: "Руки (наручи)",
+  hands: "Кисти (перчатки)",
+  legs: "Ноги",
+  feet: "Ступни",
+  neck: "Шея",
+  ring: "Палец",
+  cloak: "Плащ",
+  shield: "Щит"
+};
+
+DUNGEON.equipStatus = {
+  stored: "В рюкзаке",
+  carried: "Носимое (быстрый доступ)",
+  equipped: "Экипировано"
+};
+
+DUNGEON.proficiencies = {
+  bladed:   "Клинковое",
+  blunt:    "Дробящее",
+  polearm:  "Древковое",
+  unarmed:  "Безоружный",
+  throwing: "Метательное"
+};
+
+DUNGEON.subAttributes = {
+  strength:    "Сила",
+  agility:     "Ловкость",
+  precision:   "Точность",
+  flexibility: "Гибкость",
+  
+  stamina:             "Выносливость",
+  fortitude:           "Стойкость",
+  naturalRegeneration: "Ест. регенерация",
+  
+  boneDensity: "Плотность костей",
+  height:      "Рост",
+  weight:      "Вес",
+  metabolism:  "Метаболизм",
+  
+  vision:  "Зрение",
+  hearing: "Слух",
+  touch:   "Осязание",
+  smell:   "Обоняние",
+  
+  cuttingForce:  "Режущая сила",
+  crushingForce: "Дробящая сила",
+  piercingForce: "Колющая сила",
+  
+  cognition:     "Когнитивность",
+  willpower:     "Воля",
+  intuition:     "Интуиция",
+  consciousness: "Сознание",
+  
+  soulPower:       "Сила души",
+  manaSense:       "Чувство маны",
+  spiritRecovery:  "Восст. духа",
+  magicResistance: "Маг. сопротивление",
+  
+  luck:            "Удача",
+  presence:        "Присутствие",
+  divinePowerStat: "Божественная сила",
+  dragonPowerStat: "Драконья сила"
 };
