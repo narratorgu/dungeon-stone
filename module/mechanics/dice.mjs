@@ -108,7 +108,7 @@ export async function rollDungeonCheck(actor, pool, dc, label, options = {}) {
       speaker: ChatMessage.getSpeaker({ actor: actor }),
       content: content,
       rolls: [roll], // Чтобы Foundry понимал что это бросок (для звука и логов)
-      type: CONST.CHAT_MESSAGE_TYPES.ROLL,
+      style: CONST.CHAT_MESSAGE_STYLES.ROLL,
       sound: CONFIG.sounds.dice
     });
 

@@ -19,7 +19,8 @@ import {
   RoleData, 
   ContractData, 
   KnowledgeData,
-  SimpleItemData 
+  SimpleItemData, 
+  DragonWordData
 } from "./module/item/data.mjs";
 import { MigrationManager } from "./module/migrations.mjs";
 
@@ -84,12 +85,45 @@ Hooks.once("init", async function() {
     role: RoleData,
     contract: ContractData,
     knowledge: KnowledgeData,
+    dragonword: DragonWordData,
     feature: SimpleItemData
   };
 
   CONFIG.Combat.initiative = {
     formula: "1d20",
     decimals: 2
+  };
+
+  // Переопределяем метод rollInitiative в Combat для использования кастомной формулы
+  const originalRollInitiative = Combat.prototype.rollInitiative;
+  Combat.prototype.rollInitiative = async function(ids, options = {}) {
+    // Если передан массив ID комбатантов, обрабатываем каждого
+    if (Array.isArray(ids)) {
+      for (const id of ids) {
+        const combatant = this.combatants.get(id);
+        if (!combatant?.actor) continue;
+        
+        const actor = combatant.actor;
+        // Проверяем, что это наш актер
+        if (actor instanceof CONFIG.Actor.documentClass) {
+          await actor.rollInitiative({ createCombatants: false });
+        } else {
+          // Для других систем используем стандартный метод
+          await originalRollInitiative.call(this, [id], options);
+        }
+      }
+      return this;
+    }
+    
+    // Если передан один ID
+    const combatant = this.combatants.get(ids);
+    if (combatant?.actor instanceof CONFIG.Actor.documentClass) {
+      await combatant.actor.rollInitiative({ createCombatants: false });
+      return this;
+    }
+    
+    // Для других систем используем стандартный метод
+    return originalRollInitiative.call(this, ids, options);
   };
 
   CONFIG.Actor.trackableAttributes = {
@@ -128,9 +162,11 @@ Hooks.once("init", async function() {
     add: (a, b) => a + b,
     multiply: (a, b) => a * b,
     gt: (a, b) => a > b,
+    divide: (a, b) => b !== 0 ? a / b : 0,
     lt: (a, b) => a < b,
     eq: (a, b) => a == b,
     ne: (a, b) => a != b,
+    neq: (a, b) => a != b, // Алиас для ne
     gte: (a, b) => a >= b,
     lte: (a, b) => a <= b,
     and: (a, b) => a && b,
@@ -176,6 +212,9 @@ Hooks.once("init", async function() {
     "systems/dungeon-stone/templates/actor/parts/item-card-mini.hbs",
     "systems/dungeon-stone/templates/item/parts/_item-header.hbs",
     "systems/dungeon-stone/templates/actor/parts/item-row.hbs",
+    "systems/dungeon-stone/templates/dialogs/essence-attack-dialog.hbs",
+    "systems/dungeon-stone/templates/dialogs/essence-save-dialog.hbs",
+    "systems/dungeon-stone/templates/dialogs/essence-ability-edit-dialog.hbs",
     "systems/dungeon-stone/templates/dialogs/attack-dialog.hbs"
   ]);
   

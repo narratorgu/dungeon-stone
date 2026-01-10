@@ -21,6 +21,20 @@ export class DungeonActorSheet extends BaseActorSheet {
   async getData() {
     const context = await super.getData();
     const actorData = context.data;
+    if (this.actor.type === "monster") {
+      // Эссенции (активные способности)
+      context.essences = this.actor.items.filter(i => i.type === "essence");
+      
+      // Заклинания
+      context.spells = this.actor.items.filter(i => i.type === "spell");
+      
+      // Оружие
+      context.weapons = this.actor.items.filter(i => i.type === "weapon");
+      
+      // Лут
+      context.loot = this.actor.items.filter(i => i.type === "loot");
+      context.consumables = this.actor.items.filter(i => i.type === "consumable");
+    }
     
     context.system = actorData.system;
     context.sourceSystem = this.actor._source.system;
@@ -38,6 +52,69 @@ export class DungeonActorSheet extends BaseActorSheet {
     // Подготовка предметов
     this._prepareItems(context);
 
+    // Подготовка способностей эссенций для вкладки Бой
+    context.essenceAbilities = [];
+    const equippedEssences = this.actor.items.filter(i => 
+        i.type === "essence" && i.system.equipStatus === "equipped"
+    );
+
+    for (const essence of equippedEssences) {
+        const abilities = essence.system.abilities || [];
+        for (const ability of abilities) {
+            // Пропускаем пассивные способности
+            if (ability.activationAction === "passive") continue;
+            
+            context.essenceAbilities.push({
+                essenceId: essence.id,
+                essenceName: essence.name,
+                essenceImg: essence.img || "icons/svg/mystery-man.svg",
+                essenceColor: essence.system.colorHex || "#808080",
+                img: ability.img || essence.img || "icons/svg/aura.svg",
+                abilityId: ability.id,
+                name: ability.name,
+                description: ability.description,
+                activationAction: ability.activationAction,
+                abilityType: ability.abilityType,
+                manaCost: ability.manaCost || 0,
+                cooldown: ability.cooldown || 0,
+                currentCooldown: ability.currentCooldown || 0,
+                isOnCooldown: (ability.currentCooldown || 0) > 0,
+                damage: ability.damage,
+                damageType: ability.damageType,
+                range: ability.range,
+                areaType: ability.areaType,
+                areaSize: ability.areaSize
+            });
+        }
+    }
+
+    // Для монстров: все эссенции (не только экипированные)
+    if (this.actor.type === "monster") {
+        context.monsterEssenceAbilities = [];
+        for (const essence of context.essences) {
+            const abilities = essence.system?.abilities || [];
+            for (const ability of abilities) {
+                if (ability.activationAction === "passive") continue;
+                
+                context.monsterEssenceAbilities.push({
+                    essenceId: essence._id || essence.id,
+                    essenceName: essence.name,
+                    essenceImg: essence.img,
+                    essenceColor: essence.system?.colorHex || "#808080",
+                    abilityId: ability.id,
+                    name: ability.name,
+                    manaCost: ability.manaCost || 0,
+                    img: ability.img || essence.img || "icons/svg/aura.svg",
+                    cooldown: ability.cooldown || 0,
+                    currentCooldown: ability.currentCooldown || 0,
+                    isOnCooldown: (ability.currentCooldown || 0) > 0,
+                    damage: ability.damage,
+                    damageType: ability.damageType
+                });
+            }
+        }
+    }
+
     // Расчет эссенций
     context.essenceCount = sys.equipment.essences.length;
     context.essenceMax = sys.equipment.essenceSlotsMax || 0;
@@ -45,7 +122,23 @@ export class DungeonActorSheet extends BaseActorSheet {
     for (let i = 0; i < context.essenceMax; i++) {
         const itemId = sys.equipment.essences[i];
         const item = itemId ? this.actor.items.get(itemId) : null;
-        context.essenceSlots.push({ index: i, item: item, isEmpty: !item });
+        let abilitiesWithId = [];
+        if (item && item.system.abilities) {
+            abilitiesWithId = item.system.abilities
+                .filter(ab => ab.activationAction !== "passive")  // Только активные
+                .map(ab => ({
+                    ...ab,
+                    essenceId: item.id,
+                    essenceImg: item.img
+                }));
+        }
+        
+        context.essenceSlots.push({ 
+            index: i, 
+            item: item, 
+            isEmpty: !item,
+            abilities: abilitiesWithId
+        });
     }
 
     context.isDivine = this.actor.isDivine;
@@ -173,6 +266,14 @@ export class DungeonActorSheet extends BaseActorSheet {
 
     // Роли и Расы
     const roleItem = context.roles.length > 0 ? context.roles[0] : null;
+    if (!roleItem) {
+      context.currentRoleRank = 99;
+      context.showSpellsTab = false;
+      context.isDivine = false;
+      context.isArcane = false;
+      context.magicRank = 9;
+      context.magicStats = { dc: 50, ku: 1 };
+    }
     const lineageItem = context.lineages.length > 0 ? context.lineages[0] : null;
     
     context.roleItem = roleItem;
@@ -191,40 +292,67 @@ export class DungeonActorSheet extends BaseActorSheet {
       else if (name.includes("эльф") || name.includes("elf")) context.race.isElf = true;
     }
 
-    // --- РАСЧЕТ СЛОТОВ КОНТРАКТОВ ---
-    let contractSlots = 0;
-    const spirit = (attr.spirit || 0) + s.soulPower;
-
     const isBeastkin = lineageItem && lineageItem.name.toLowerCase().match(/зверо|beast/);
     const isElf = lineageItem && lineageItem.name.toLowerCase().match(/эльф|elf/);
     const isElementalist = roleItem && roleItem.name.toLowerCase().match(/элементалист|elementalist/);
+    
+    // Контракты и слоты
+    const allContracts = this.actor.items.filter(i => i.type === "contract");
+    const equippedContracts = allContracts.filter(c => {
+      const status = String(c.system?.equipStatus || "").trim().toLowerCase();
+      return status === "equipped";
+    });
 
+    context.contracts = allContracts.map(c => {
+      const itemData = c.toObject();
+      itemData._id = c.id;
+      itemData.isExpanded = this._expandedItems?.has(c.id);
+      
+      // Подсчёт способностей
+      let abilitiesCount = 0;
+      if (c.system.activeAbility) abilitiesCount++;
+      if (c.system.passiveAbilities) abilitiesCount++;
+      if (c.system.canSummon) abilitiesCount++;
+      itemData.abilitiesCount = abilitiesCount;
+      
+      return itemData;
+    });
+    const maxContracts = sys.equipment.contractSlotsMax || 0;
+    context.contractMax = maxContracts;
+    context.contractCount = equippedContracts.length;
+    
+    // Показываем вкладку
+    context.showContractsTab = (context.isGM || isBeastkin || isElf || isElementalist) && maxContracts > 0;
+    
     if (isBeastkin) {
-        contractSlots = 1; 
+        context.contractSourceLabel = "Звериная Кровь";
+        context.contractsTitle = "КОНТРАКТ СО ЗВЕРЕМ";
+    } else if (isElf || isElementalist) {
+        context.contractSourceLabel = "Эльфийская Кровь";
+        context.contractsTitle = "КОНТРАКТЫ С ЭЛЕМЕНТАЛЯМИ";
+    } else if (isElementalist) {
+        context.contractSourceLabel = "Элементалист";
+        context.contractsTitle = "КОНТРАКТЫ С ЭЛЕМЕНТАЛЯМИ";
+    } else {
+        context.contractSourceLabel = "Неизвестно";
+        context.contractsTitle = "ДУХОВНЫЕ КОНТРАКТЫ";
     }
-    else if (isElf || isElementalist) {
-        // База 1 + (Дух / 20)
-        const spirit = attr.spirit || 0;
-        contractSlots = 1 + Math.floor(Math.sqrt(spirit / 50));
+    
+    // Слоты для отображения
+    context.contractSlots = [];
+    const equippedForSlots = context.contracts.filter(c => c.system.equipStatus === "equipped");
+    for (let i = 0; i < maxContracts; i++) {
+        context.contractSlots.push({ 
+            item: equippedForSlots[i] || null, 
+            index: i 
+        });
     }
-    sys.equipment.contractSlotsMax = contractSlots;
-
-    context.contractCount = context.contracts.length;
-    context.contractMax = context.system.equipment.contractSlotsMax || 0;
-
-    context.showContractsTab = (
-        context.isGM || 
-        context.race.isBeastkin || 
-        context.race.isElf || 
-        isElementalist
-    );
 
     let isMagicUser = false;
     if (roleItem) {
       const rName = roleItem.name.toLowerCase();
       isMagicUser = ["маг", "жрец", "паладин", "некромант", "mage", "priest", "paladin"].some(k => rName.includes(k));
     }
-    context.showContractsTab = (context.isGM || context.race.isBeastkin || context.race.isElf);
     context.showSpellsTab = (context.isGM || isMagicUser) && context.hasRole;
 
     // Раскрытие предметов
@@ -249,31 +377,11 @@ export class DungeonActorSheet extends BaseActorSheet {
         context.headerResourceLabel = "MP";
         context.headerResourceClass = "mp-fill";
     }
-    
-    context.showContractsTab = context.isGM || isBeastkin || isElf || isElementalist;
-    
-    // Текстовка источника
-    if (isBeastkin) context.contractSourceLabel = "Зверина Кровь";
-    else if (isElf) context.contractSourceLabel = "Эльфийская Кровь";
-    else if (isElementalist) context.contractSourceLabel = "Элементалист";
-    else context.contractSourceLabel = "Неизвестно";
 
-    // --- Слоты Контрактов ---
-    const maxContracts = context.system.equipment.contractSlotsMax || 0;
-    const activeContracts = context.items.filter(i => i.type === "contract" && i.system.equipStatus === "equipped");
-    
-    context.contractSlots = [];
-    for (let i = 0; i < maxContracts; i++) {
-        context.contractSlots.push({ 
-            item: activeContracts[i] || null, 
-            index: i 
-        });
-    }
-
-    context.enrichedBiography = await TextEditor.enrichHTML(context.system.biography, {async: true});
-    context.enrichedAppearance = await TextEditor.enrichHTML(context.system.details.appearance, {async: true});
-    context.enrichedPersonality = await TextEditor.enrichHTML(context.system.details.personality, {async: true});
-    context.enrichedGoals = await TextEditor.enrichHTML(context.system.details.goals, {async: true});
+    context.enrichedBiography = await foundry.applications.ux.TextEditor.implementation.enrichHTML(context.system.details.biography || "", {async: true});
+    context.enrichedAppearance = await foundry.applications.ux.TextEditor.implementation.enrichHTML(context.system.details.appearance, {async: true});
+    context.enrichedPersonality = await foundry.applications.ux.TextEditor.implementation.enrichHTML(context.system.details.personality, {async: true});
+    context.enrichedGoals = await foundry.applications.ux.TextEditor.implementation.enrichHTML(context.system.details.goals, {async: true});
 
     context.spellsLearned = context.items.filter(i => i.type === "spell").length;
     
@@ -336,10 +444,12 @@ export class DungeonActorSheet extends BaseActorSheet {
             }
         }
       }
-      else if (i.type === 'contract') categories.contracts.push(i);
       else if (i.type === 'blessing') categories.blessings.push(i);
       else if (i.type === 'knowledge') categories.knowledges.push(i);
       else if (i.type === 'lineage') categories.lineages.push(i);
+      else if (i.type === 'dragonword') {
+        categories.dragonWords.push(i);
+      }
       else if (i.type === 'role') categories.roles.push(i);
       else if (i.type === "feature") {
         const isWord = i.getFlag("dungeon-stone", "isDragonWord");
@@ -441,7 +551,46 @@ export class DungeonActorSheet extends BaseActorSheet {
       }
     });
 
-    html.find('.item-equip, .item-unequip').click(this._onToggleEquip.bind(this));
+    html.find('.essence-ability-use').click(async ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      
+      const btn = ev.currentTarget;
+      const essenceId = btn.dataset.essenceId || btn.getAttribute('data-essence-id');
+      const abilityId = btn.dataset.abilityId || btn.getAttribute('data-ability-id');
+      
+      if (!essenceId || !abilityId) {
+          console.error("❌ Нет essenceId или abilityId!", { essenceId, abilityId });
+          return;
+      }
+      
+      await this.actor.useEssenceAbility(essenceId, abilityId);
+    });
+
+    html.find('.contracts .item-clickable').click(ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const li = $(ev.currentTarget).closest(".item");
+      const itemId = li.data("itemId");
+      if (!this._expandedItems) this._expandedItems = new Set();
+      if (this._expandedItems.has(itemId)) this._expandedItems.delete(itemId);
+      else this._expandedItems.add(itemId);
+      this.render(false);
+    });
+
+    html.find('.item-equip').click(async ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      
+      const itemId = ev.currentTarget.dataset.itemId;
+      
+      if (!itemId) {
+          console.error("Нет itemId на кнопке экипировки");
+          return;
+      }
+      
+      await this.actor.toggleEquip(itemId);
+    });
     
     // Drag & Drop
     html.find(".slot").on("drop", this._onDropItemOnSlot.bind(this));
@@ -480,16 +629,31 @@ export class DungeonActorSheet extends BaseActorSheet {
     });
 
     // Редактирование
-    html.find('input[name^="items."], select[name^="items."]').change(async ev => {
-        ev.preventDefault(); ev.stopPropagation();
-        const input = ev.currentTarget;
-        const match = input.name.match(/^items\.([^.]+)\.(.+)$/);
-        if (!match) return;
-        const itemId = match[1]; const path = match[2];
-        const item = this.actor.items.get(itemId);
-        if (!item) return;
-        let value = input.type === "checkbox" ? input.checked : Number(input.value);
-        await item.update({ [path]: value });
+    html.find('input[name^="items."], select[name^="items."], textarea[name^="items."]').change(async ev => {
+      ev.preventDefault(); 
+      ev.stopPropagation();
+      const input = ev.currentTarget;
+      const match = input.name.match(/^items\.([^.]+)\.(.+)$/);
+      if (!match) return;
+      
+      const itemId = match[1]; 
+      const path = match[2];
+      const item = this.actor.items.get(itemId);
+      // Проверяем, что предмет существует и не был удален
+      if (!item || item.isDeleted) return;
+      
+      // Определяем тип значения
+      let value;
+      if (input.type === "checkbox") {
+          value = input.checked;
+      } else if (input.type === "number") {
+          value = Number(input.value);
+      } else {
+          // Для text и textarea — строка
+          value = input.value;
+      }
+      
+      await item.update({ [path]: value });
     });
 
     html.find('.direct-edit').change(async ev => {
@@ -498,7 +662,6 @@ export class DungeonActorSheet extends BaseActorSheet {
       await this.actor.update({ [input.name]: value });
     });
 
-    /* Внутри activateListeners в sheets.mjs */
     html.find('.remove-from-container').click(async ev => {
       ev.preventDefault();
       ev.stopPropagation(); // Чтобы не раскрылось описание
@@ -532,17 +695,107 @@ export class DungeonActorSheet extends BaseActorSheet {
         amountInput.value = ''; amountInput.blur();
     });
 
+    const hasSpellUI = html.find('#rank-slider').length > 0;
+    if (hasSpellUI) {
+      this._initSpellFilters(html);
+
+      html.find('#rank-slider').on('input change', this._applySpellFilters.bind(this));
+      html.find('.spell-filter-checkbox').change(this._applySpellFilters.bind(this));
+      html.find('.spell-type-select').change(this._applySpellFilters.bind(this));
+      html.find('.component-filter').change(this._applySpellFilters.bind(this));
+    }
+
     // Инициализация фильтров заклинаний
     this._initSpellFilters(html);
-    
-    html.find('#rank-slider').on('input change', this._applySpellFilters.bind(this));
-    html.find('.spell-filter-checkbox').change(this._applySpellFilters.bind(this));
-    html.find('.spell-type-select').change(this._applySpellFilters.bind(this));
-    html.find('.component-filter').change(this._applySpellFilters.bind(this));
 
-    html.find(".effect-toggle").click(async ev => { ev.preventDefault(); const effectId = ev.currentTarget.closest(".effect-item").dataset.effectId; const effect = this.item.effects.get(effectId); if (effect) await effect.update({disabled: !effect.disabled}); });
+    html.find(".effect-toggle").click(async ev => { ev.preventDefault(); const effectId = ev.currentTarget.closest(".effect-item").dataset.effectId; if (this.item) { const effect = this.item.effects.get(effectId); if (effect) await effect.update({disabled: !effect.disabled}); } });
     html.find('.tag-toggle').click(function(ev) { const checkbox = ev.currentTarget.querySelector('input[type="checkbox"]'); checkbox.checked = !checkbox.checked; $(checkbox).trigger('change'); ev.currentTarget.classList.toggle('active', checkbox.checked); });
     html.find('input[type="checkbox"]').change(ev => { const input = ev.currentTarget; const label = input.closest('.checkbox-item'); if (label) { if (input.checked) label.classList.add('checked'); else label.classList.remove('checked'); } });
+
+    // === КОНТРАКТЫ ===
+    html.find('.contract-item .item-clickable').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const li = $(ev.currentTarget).closest(".contract-item");
+        const itemId = li.data("itemId");
+        if (!this._expandedItems) this._expandedItems = new Set();
+        if (this._expandedItems.has(itemId)) {
+            this._expandedItems.delete(itemId);
+        } else {
+            this._expandedItems.add(itemId);
+        }
+        this.render(false);
+    });
+
+    // === БРОСОК ДРОПА ===
+    html.find('.roll-drop').click(async ev => {
+        ev.preventDefault();
+        const chance = this.actor.system.dropChance || 0;
+        const roll = new Roll("1d100");
+        await roll.evaluate();
+        
+        const threshold = Math.floor(chance * 100);
+        const success = roll.total <= threshold;
+        const color = success ? "#44ff44" : "#ff4444";
+        const text = success ? "🎁 ЛУТ ВЫПАЛ!" : "Пусто...";
+        
+        ChatMessage.create({
+            content: `<div class="dungeon-chat-card" style="border-left: 4px solid ${color};">
+                <div style="font-size: 24px; font-weight: bold; color: ${color};">${text}</div>
+                <div>Бросок: ${roll.total} | Порог: ≤${threshold}</div>
+            </div>`,
+            speaker: ChatMessage.getSpeaker({actor: this.actor}),
+            rolls: [roll]
+        });
+    });
+    
+    // === КАСТ ЗАКЛИНАНИЙ ===
+    html.find('.cast-spell').click(ev => {
+        ev.preventDefault();
+        const itemId = $(ev.currentTarget).closest("[data-item-id]").data("itemId");
+        if (itemId) this._onCastSpell(ev, itemId);
+    });
+
+    // === СЛОВО ДРАКОНА ===
+    html.find('.use-dragon-word').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const itemId = ev.currentTarget.dataset.itemId;
+        await this.actor.useDragonWord(itemId);
+    });
+
+    // === КАСТОМНАЯ АТАКА ===
+    html.find('.btn-custom-damage').click(ev => {
+        ev.preventDefault();
+        this.actor.rollCustomDamage();
+    });
+
+    // === СУДЬБА ===
+    html.find('.fate-pip').click(async ev => {
+        ev.preventDefault();
+        const clickedValue = Number(ev.currentTarget.dataset.value);
+        const currentValue = this.actor.system.resources.fate.value;
+        
+        let newValue = (clickedValue <= currentValue) 
+            ? clickedValue - 1 
+            : clickedValue;
+        
+        newValue = Math.max(0, Math.min(3, newValue));
+        await this.actor.update({"system.resources.fate.value": newValue});
+    });
+
+    // === СПОСОБНОСТИ ЭССЕНЦИЙ ===
+    html.find('.essence-ability-use').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const btn = ev.currentTarget;
+        const essenceId = btn.dataset.essenceId;
+        const abilityId = btn.dataset.abilityId;
+        
+        if (essenceId && abilityId) {
+            await this.actor.useEssenceAbility(essenceId, abilityId);
+        }
+    });
   }
 
   // === МЕТОДЫ ===
@@ -595,13 +848,11 @@ export class DungeonActorSheet extends BaseActorSheet {
 
   _applySpellFilters(event) {
     const html = $(this.element);
+    if (html.find('#rank-slider').length === 0) return; 
     
     // 1. Ранг (Ползунок)
-    // Значение слайдера (например 7).
-    // Показываем ранги >= 7 (т.е. 7, 8, 9 - слабые).
-    // Скрываем ранги < 7 (т.е. 6, 5... - сильные).
     const sliderVal = parseInt(html.find('#rank-slider').val()) || 9;
-    html.find('#rank-slider-val').text(sliderVal); // Обновляем цифру
+    html.find('#rank-slider-val').text(sliderVal);
 
     // 2. Тип
     const typeFilter = html.find('.spell-type-select').val();
@@ -612,69 +863,28 @@ export class DungeonActorSheet extends BaseActorSheet {
     // 4. Компоненты
     const componentFilters = {};
     html.find('.component-filter').each((_, el) => {
-      const checkbox = $(el);
-      const component = checkbox.data('component');
-      componentFilters[component] = checkbox.is(':checked');
-    });
-    
-    // Сохраняем состояние фильтров
-    this.actor.setFlag("dungeon-stone", "spellFilters", {
-      rankSlider: sliderVal,
-      typeFilter: typeFilter,
-      concFilter: concFilter,
-      componentFilters: componentFilters
+        const checkbox = $(el);
+        const component = checkbox.data('component');
+        componentFilters[component] = checkbox.is(':checked');
     });
 
-    // ПРИМЕНЯЕМ ФИЛЬТР К ГРУППАМ РАНГОВ (Скрываем целые категории)
+    // Сохраняем состояние фильтров
+    this.actor.setFlag("dungeon-stone", "spellFilters", {
+        rankSlider: sliderVal,
+        typeFilter: typeFilter,
+        concFilter: concFilter,
+        componentFilters: componentFilters
+    });
+
+    // ПРИМЕНЯЕМ ФИЛЬТР К ГРУППАМ РАНГОВ
     html.find('.spell-rank-section').each((_, el) => {
         const section = $(el);
         const rank = parseInt(section.data('rank'));
-        
-        // Логика слайдера: "Показать ранги до X" (где X - это число на слайдере, а Ранг 9 - это минимум силы)
-        // Если слайдер = 7, мы хотим видеть 7, 8, 9.
-        // Условие: rank >= sliderVal
         if (rank >= sliderVal) section.show();
         else section.hide();
     });
 
-    html.find('.roll-drop').click(async ev => {
-        ev.preventDefault();
-        const chance = this.actor.system.dropChance || 0;
-        const roll = new Roll("1d100");
-        await roll.evaluate();
-        
-        // Шанс 0.22 = 22%. Значит, успех если 1d100 <= 22 ?
-        // Или как ты писал: КС = 78 (100 - 22). Если >= 78, то успех.
-        // Давай сделаем по твоей формуле: >= (100 - (chance * 100))
-        const threshold = 100 - Math.floor(chance * 100);
-        const success = roll.total >= threshold;
-        
-        const color = success ? "#44ff44" : "#ff4444";
-        const text = success ? "ЛУТ ВЫПАЛ!" : "Пусто";
-        
-        ChatMessage.create({
-            content: `
-            <div class="dungeon-chat-card" style="border-left: 4px solid ${color}; background: #1a1a1a; padding: 10px;">
-                <h3 style="margin:0; color:#d4af37; border-bottom:1px solid #444; padding-bottom:5px;">Бросок Дропа</h3>
-                <div style="text-align:center; font-size:18px; font-weight:bold; color:${color}; margin:10px 0;">
-                    ${text}
-                </div>
-                <div class="gm-only" style="font-size:11px; color:#888;">
-                    Roll: ${roll.total} vs Threshold: ${threshold} (Chance: ${chance})
-                </div>
-            </div>`,
-            speaker: ChatMessage.getSpeaker({actor: this.actor})
-        });
-    });
-    
-    html.find('.cast-spell').click(ev => {
-      ev.preventDefault();
-      // Ищем ближайший родительский элемент с data-item-id (это .spell-item)
-      const itemId = $(ev.currentTarget).closest("[data-item-id]").data("itemId");
-      if (itemId) this._onCastSpell(ev, itemId); // Передаем ID
-    });
-
-    // ПРИМЕНЯЕМ ФИЛЬТР К ОТДЕЛЬНЫМ ЗАКЛИНАНИЯМ (Внутри видимых категорий)
+    // ПРИМЕНЯЕМ ФИЛЬТР К ОТДЕЛЬНЫМ ЗАКЛИНАНИЯМ
     html.find('.spell-item').each((_, el) => {
         const item = $(el);
         const iType = item.data('type');
@@ -687,8 +897,6 @@ export class DungeonActorSheet extends BaseActorSheet {
 
         if (typeFilter !== "all" && iType !== typeFilter) show = false;
         if (concFilter && !iConc) show = false;
-        
-        // Фильтр по компонентам: показываем только если выбранный компонент присутствует
         if (componentFilters.verbal && !iVerb) show = false;
         if (componentFilters.somatic && !iSom) show = false;
         if (componentFilters.material && !iMat) show = false;
@@ -744,25 +952,56 @@ export class DungeonActorSheet extends BaseActorSheet {
   }
 
   async _onItemCreate(event) {
-      event.preventDefault();
-      const header = event.currentTarget;
-      const type = header.dataset.type;
-      const itemData = { name: `Новый ${type}`, type: type, system: {} };
-      
-      // Логика рангов
-      if (type === 'spell') {
-          const rank = Number(header.dataset.rank) || 9;
-          itemData.system.rank = rank;
-          itemData.name = `Заклинание ${rank} ранга`;
-      }
-      // Слова Дракона
-      if (header.dataset.isDragonWord) {
+    event.preventDefault();
+    const header = event.currentTarget;
+    const type = header.dataset.type;
+    
+    // Проверка лимита контрактов
+    if (type === 'contract') {
+        const currentContracts = this.actor.items.filter(i => i.type === "contract").length;
+        const maxSlots = this.actor.system.equipment?.contractSlotsMax || 0;
+        
+        if (maxSlots > 0 && currentContracts >= maxSlots) {
+            return ui.notifications.warn(`Достигнут лимит контрактов (${maxSlots}). Нельзя добавить больше!`);
+        }
+    }
+    
+    const itemData = { 
+        name: `Новый ${type}`, 
+        type: type, 
+        system: {} 
+    };
+    
+    if (type === 'spell') {
+        const rank = Number(header.dataset.rank) || 9;
+        itemData.system.rank = rank;
+        itemData.name = `Заклинание ${rank} ранга`;
+    }
+    
+    if (type === 'contract') {
+        itemData.name = "Новый контракт";
+        itemData.system = {
+            equipStatus: "equipped",
+            entityName: "Новое существо",
+            contractType: "spirit",
+            level: 1,
+            xp: 0,
+            xpMax: 100
+        };
+    }
+    
+    // Слова Дракона
+    if (type === 'dragonword' || header.dataset.isDragonWord) {
         itemData.name = "Новое Слово";
-        itemData.type = "feature"; // Принудительно
-        itemData.flags = { "dungeon-stone": { isDragonWord: true } };
-      }
-      
-      return await Item.create(itemData, { parent: this.actor });
+        itemData.type = "dragonword";
+        itemData.system = {
+            dpCost: 5,
+            wordType: "attack"
+        };
+    }
+    
+    const [createdItem] = await this.actor.createEmbeddedDocuments("Item", [itemData]);
+    return createdItem;
   }
 
   async _onDropItemOnSlot(event) {
@@ -821,6 +1060,14 @@ export class DungeonActorSheet extends BaseActorSheet {
   /** @override */
   async _onDrop(event) {
       // Игнорируем сортировку, если это дроп на контейнер
+      const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+      if (data?.type === "Item") {
+          const item = await Item.implementation.fromDropData(data);
+          if (!item?._id && !item?.id) {
+              // Это новый предмет, просто добавляем его
+              return super._onDrop(event);
+          }
+      }
       const target = event.target.closest(".item[data-item-id]");
       if (target) {
           const targetId = target.dataset.itemId;

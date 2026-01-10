@@ -21,18 +21,100 @@
             {{/if}}
 
             <div class="item-controls">
-                {{!-- Экипировка --}}
-                {{#if (or (eq item.type "weapon") (eq item.type "armor") (eq item.type "shield") (eq item.type "essence") (eq item.type "container"))}}
-                    <a class="item-control item-equip" title="{{#if (eq item.system.equipStatus 'equipped')}}Снять{{else}}Надеть{{/if}}">
-                        <i class="fas {{#if (eq item.system.equipStatus 'equipped')}}fa-check-circle{{else}}fa-tshirt{{/if}}" 
-                           style="color: {{#if (eq item.system.equipStatus 'equipped')}}#d4af37{{else}}#666{{/if}};"></i>
-                    </a>
+                {{!-- === ОРУЖИЕ === --}}
+                {{#if (eq item.type "weapon")}}
+                    {{#if (eq item.system.equipStatus "equipped")}}
+                        {{!-- Экипировано --}}
+                        {{#if item.system.tags.versatile}}
+                            {{!-- Универсальное: показываем текущий хват --}}
+                            <a class="item-control item-equip" 
+                               data-item-id="{{item._id}}"
+                               title="{{#if (eq item.system.grip '1h')}}1Р→2Р{{else if (eq item.system.grip '2h')}}2Р→Снять{{/if}}">
+                                <i class="fas fa-hand-rock" style="color: #d4af37;"></i>
+                                <span style="font-size: 9px; color: #d4af37;">{{item.system.grip}}</span>
+                            </a>
+                        {{else}}
+                            {{!-- Обычное: просто снять --}}
+                            <a class="item-control item-equip" 
+                               data-item-id="{{item._id}}"
+                               title="Снять">
+                                <i class="fas fa-times-circle" style="color:#f44;"></i>
+                            </a>
+                        {{/if}}
+                    {{else}}
+                        {{!-- Не экипировано --}}
+                        <a class="item-control item-equip" 
+                           data-item-id="{{item._id}}"
+                           title="Экипировать">
+                            <i class="fas fa-check-circle" style="color:#4f4;"></i>
+                        </a>
+                    {{/if}}
+                {{/if}}
+
+                {{!-- === БРОНЯ === --}}
+                {{#if (eq item.type "armor")}}
+                    {{#if (eq item.system.equipStatus "equipped")}}
+                        <a class="item-control item-equip" 
+                           data-item-id="{{item._id}}"
+                           title="Снять">
+                            <i class="fas fa-times-circle" style="color:#f44;"></i>
+                        </a>
+                    {{else}}
+                        <a class="item-control item-equip" 
+                           data-item-id="{{item._id}}"
+                           title="Экипировать">
+                            <i class="fas fa-check-circle" style="color:#4f4;"></i>
+                        </a>
+                    {{/if}}
+                {{/if}}
+
+                {{!-- === ЭССЕНЦИЯ === --}}
+                {{#if (eq item.type "essence")}}
+                    {{#if (eq item.system.equipStatus "equipped")}}
+                        <a class="item-control item-equip" 
+                        data-item-id="{{item._id}}"
+                        title="Снять">
+                            <i class="fas fa-times-circle" style="color:#f44;"></i>
+                        </a>
+                    {{else}}
+                        {{!-- Проверка лимита в UI --}}
+                        {{#if (gte ../essenceCount ../essenceMax)}}
+                            <span class="item-control" 
+                                title="Нет свободных слотов ({{../essenceCount}}/{{../essenceMax}})"
+                                style="opacity: 0.3; cursor: not-allowed;">
+                                <i class="fas fa-ban" style="color:#666;"></i>
+                            </span>
+                        {{else}}
+                            <a class="item-control item-equip" 
+                            data-item-id="{{item._id}}"
+                            title="Экипировать (слотов: {{../essenceCount}}/{{../essenceMax}})">
+                                <i class="fas fa-star-of-life" style="color:#d4af37;"></i>
+                            </a>
+                        {{/if}}
+                    {{/if}}
+                {{/if}}
+
+                {{!-- === КОНТЕЙНЕР === --}}
+                {{#if (eq item.type "container")}}
+                    {{#if (eq item.system.equipStatus "equipped")}}
+                        <a class="item-control item-equip" 
+                           data-item-id="{{item._id}}"
+                           title="Снять">
+                            <i class="fas fa-times-circle" style="color:#f44;"></i>
+                        </a>
+                    {{else}}
+                        <a class="item-control item-equip" 
+                           data-item-id="{{item._id}}"
+                           title="Экипировать (носить)">
+                            <i class="fas fa-check-circle" style="color:#4f4;"></i>
+                        </a>
+                    {{/if}}
                 {{/if}}
                 
-                {{!-- Редактирование / Удаление (ДЛЯ ВЛАДЕЛЬЦА) --}}
+                {{!-- Редактирование / Удаление --}}
                 {{#if @root.owner}}
-                    <a class="item-control item-edit" title="Изменить"><i class="fas fa-edit"></i></a>
-                    <a class="item-control item-delete" title="Удалить"><i class="fas fa-trash"></i></a>
+                    <a class="item-control item-edit" data-item-id="{{item._id}}" title="Изменить"><i class="fas fa-edit"></i></a>
+                    <a class="item-control item-delete" data-item-id="{{item._id}}" title="Удалить"><i class="fas fa-trash"></i></a>
                 {{/if}}
             </div>
         </div>
@@ -41,11 +123,67 @@
     {{!-- ОПИСАНИЕ --}}
     {{#if item.isExpanded}}
     <div class="item-summary">
-        {{!-- Кнопка Использовать --}}
+        {{!-- Кнопка Использовать (для расходников) --}}
         {{#if (eq item.type "consumable")}}
             <button class="consume-item" data-item-id="{{item._id}}" style="width: 100%; background: #2d4a2d; color: #fff; margin-bottom: 5px;">
                 <i class="fas fa-flask"></i> Использовать
             </button>
+        {{/if}}
+
+        {{#if (eq item.type "essence")}}
+            {{!-- Активные способности --}}
+            <div style="background: rgba(139,69,19,0.2); border: 1px solid #8b4513; padding: 10px; border-radius: 6px; margin-bottom: 8px;">
+                <div style="font-size: 10px; color: #d4af37; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #8b4513; padding-bottom: 4px;">
+                    <i class="fas fa-star"></i> Активные способности
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    {{#if item.system.activeAbilities.length}}
+                        {{#each item.system.activeAbilities as |ability|}}
+                        <div class="essence-ability-card" 
+                            data-essence-id="{{../item._id}}"  {{!-- ← Используем item._id из родительского контекста --}}
+                            data-ability-id="{{ability.id}}"
+                            style="display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center; background: rgba(0,0,0,0.4); border: 1px solid #d4af37; border-radius: 4px; padding: 6px;">
+                            
+                            <img src="{{#if ability.img}}{{ability.img}}{{else}}{{../item.img}}{{/if}}" 
+                                width="36" height="36" 
+                                style="border: 1px solid #8b4513; border-radius: 4px;"/>
+                            
+                            <div style="min-width: 0; overflow: hidden;">
+                                <div style="font-weight: bold; color: #ffd700; font-size: 12px;">{{ability.name}}</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                {{#unless ability.isOnCooldown}}
+                                <button class="essence-ability-use" 
+                                        data-essence-id="{{../item._id}}" 
+                                        data-ability-id="{{ability.id}}"
+                                        style="background: linear-gradient(135deg, #8b4513, #d4af37); border: 1px solid #ffd700; color: #000; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">
+                                    <i class="fas fa-bolt"></i> Исп.
+                                </button>
+                                {{/unless}}
+                            </div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div style="color: #666; font-style: italic; text-align: center; padding: 8px;">
+                            Нет активных способностей
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+            
+            {{!-- Заметки игрока --}}
+            <div style="margin-top: 8px;">
+                <label style="font-size: 10px; color: #888; text-transform: uppercase; display: block; margin-bottom: 4px;">
+                    <i class="fas fa-sticky-note"></i> Ваши заметки:
+                </label>
+                <textarea class="direct-edit" 
+                        name="items.{{item._id}}.system.playerNotes" 
+                        placeholder="Добавьте заметки об этой эссенции..."
+                        style="width: 100%; min-height: 50px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #ccc; padding: 6px; font-size: 11px; resize: vertical; border-radius: 4px;">{{item.system.playerNotes}}</textarea>
+            </div>
         {{/if}}
 
         {{!-- Содержимое контейнера --}}
@@ -58,7 +196,6 @@
                         <div class="chip">
                             <img src="{{cItem.img}}">
                             <span>{{cItem.name}} (x{{cItem.system.quantity}})</span>
-                            {{!-- Кнопка вынуть (для владельца) --}}
                             {{#if @root.owner}}
                             <a class="remove-from-container" data-container-id="{{../item._id}}" data-item-id="{{cItem._id}}">
                                 <i class="fas fa-times"></i>
@@ -73,10 +210,12 @@
             </div>
         {{/if}}
 
-        {{!-- Текст описания --}}
+        {{!-- Текст описания (для ВСЕХ типов кроме эссенций) --}}
+        {{#unless (eq item.type "essence")}}
         <div class="description-text">
             {{{item.system.description}}}
         </div>
+        {{/unless}}
 
         {{!-- Свойства (Тэги) --}}
         <div class="item-tags" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px;">

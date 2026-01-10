@@ -1,0 +1,191 @@
+<form class="essence-ability-edit-dialog" style="background: #151515; color: #e0e0e0; padding: 10px;">
+
+    {{!-- Иконка способности --}}
+    <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+        <img class="ability-img" src="{{ability.img}}"
+            style="width: 48px; height: 48px; border: 2px solid #8b4513; border-radius: 4px; cursor: pointer;"
+            title="Нажмите для выбора иконки" />
+        <div style="flex: 1;">
+            <label>Иконка способности</label>
+            <input type="text" name="img" value="{{ability.img}}" placeholder="icons/svg/aura.svg"
+                style="width: 100%; font-size: 10px; color: #888;" />
+        </div>
+    </div>
+
+    {{!-- Название --}}
+    <div class="form-group" style="margin-bottom: 12px;">
+        <label style="color: #d4af37; font-weight: bold;">Название способности</label>
+        <input type="text" name="name" value="{{ability.name}}"
+            style="width: 100%; background: #222; color: #fff; border: 1px solid #d4af37; padding: 6px;" />
+    </div>
+
+    {{!-- Тип действия и Тип способности --}}
+    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <div class="form-group" style="flex: 1;">
+            <label>Тип действия</label>
+            <select name="activationAction" style="width: 100%; background: #222; color: #fff; border: 1px solid #444;">
+                <option value="action" {{#if (eq ability.activationAction "action" )}}selected{{/if}}>Действие</option>
+                <option value="bonus" {{#if (eq ability.activationAction "bonus" )}}selected{{/if}}>Бонусное</option>
+                <option value="reaction" {{#if (eq ability.activationAction "reaction" )}}selected{{/if}}>Реакция
+                </option>
+                <option value="free" {{#if (eq ability.activationAction "free" )}}selected{{/if}}>Свободное</option>
+                <option value="passive" {{#if (eq ability.activationAction "passive" )}}selected{{/if}}>Пассив</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="flex: 1;">
+            <label>Тип способности</label>
+            <select name="abilityType" style="width: 100%; background: #222; color: #fff; border: 1px solid #444;">
+                <option value="damage" {{#if (eq ability.abilityType "damage" )}}selected{{/if}}>Урон</option>
+                <option value="buff" {{#if (eq ability.abilityType "buff" )}}selected{{/if}}>Усиление</option>
+                <option value="debuff" {{#if (eq ability.abilityType "debuff" )}}selected{{/if}}>Ослабление</option>
+                <option value="utility" {{#if (eq ability.abilityType "utility" )}}selected{{/if}}>Утилита</option>
+                <option value="summon" {{#if (eq ability.abilityType "summon" )}}selected{{/if}}>Призыв</option>
+                <option value="transform" {{#if (eq ability.abilityType "transform" )}}selected{{/if}}>Трансформация
+                </option>
+                <option value="heal" {{#if (eq ability.abilityType "heal" )}}selected{{/if}}>Лечение</option>
+                <option value="other" {{#if (eq ability.abilityType "other" )}}selected{{/if}}>Другое</option>
+            </select>
+        </div>
+    </div>
+
+    {{!-- Стоимость --}}
+    <div
+        style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; margin-bottom: 12px; border: 1px solid #333;">
+        <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase;">Стоимость</div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Мана (MP)</label>
+                <input type="number" name="manaCost" value="{{ability.manaCost}}" min="0"
+                    style="width: 100%; background: #111; color: #6db3f2; border: 1px solid #444; text-align: center;" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Кулдаун (раунды)</label>
+                <input type="number" name="cooldown" value="{{ability.cooldown}}" min="0"
+                    style="width: 100%; background: #111; color: #f2c46d; border: 1px solid #444; text-align: center;" />
+            </div>
+        </div>
+    </div>
+
+    {{!-- Урон (секция) --}}
+    <div class="damage-section"
+        style="background: rgba(100,0,0,0.2); padding: 10px; border-radius: 4px; margin-bottom: 12px; border: 1px solid #633;">
+        <div style="font-size: 11px; color: #f88; margin-bottom: 8px; text-transform: uppercase;">Урон</div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 2;">
+                <label>Формула</label>
+                <input type="text" name="damage" value="{{ability.damage}}" placeholder="2d6+2"
+                    style="width: 100%; background: #111; color: #fff; border: 1px solid #444;" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Тип</label>
+                <select name="damageType" style="width: 100%; background: #111; color: #fff; border: 1px solid #444;">
+                    {{#each damageTypes as |label key|}}
+                    <option value="{{key}}" {{#if (eq key ../ability.damageType)}}selected{{/if}}>{{label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-top: 8px;">
+            <label>Масштабирование от</label>
+            <select name="damageScaling" style="width: 100%; background: #111; color: #fff; border: 1px solid #444;">
+                <option value="none" {{#if (eq ability.damageScaling "none" )}}selected{{/if}}>Нет</option>
+                <option value="soulPower" {{#if (eq ability.damageScaling "soulPower" )}}selected{{/if}}>Сила Души
+                </option>
+                <option value="strength" {{#if (eq ability.damageScaling "strength" )}}selected{{/if}}>Сила</option>
+                <option value="agility" {{#if (eq ability.damageScaling "agility" )}}selected{{/if}}>Ловкость</option>
+                <option value="cognition" {{#if (eq ability.damageScaling "cognition" )}}selected{{/if}}>Когнитивность
+                </option>
+                <option value="willpower" {{#if (eq ability.damageScaling "willpower" )}}selected{{/if}}>Воля</option>
+            </select>
+        </div>
+    </div>
+
+    {{!-- Цель и область --}}
+    <div
+        style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; margin-bottom: 12px; border: 1px solid #333;">
+        <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase;">Цель и область</div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Дальность (м)</label>
+                <input type="number" name="range" value="{{ability.range}}" min="0"
+                    style="width: 100%; background: #111; color: #fff; border: 1px solid #444; text-align: center;" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Тип цели</label>
+                <select name="targetType" style="width: 100%; background: #111; color: #fff; border: 1px solid #444;">
+                    <option value="self" {{#if (eq ability.targetType "self" )}}selected{{/if}}>На себя</option>
+                    <option value="ally" {{#if (eq ability.targetType "ally" )}}selected{{/if}}>Союзник</option>
+                    <option value="enemy" {{#if (eq ability.targetType "enemy" )}}selected{{/if}}>Враг</option>
+                    <option value="any" {{#if (eq ability.targetType "any" )}}selected{{/if}}>Любой</option>
+                    <option value="point" {{#if (eq ability.targetType "point" )}}selected{{/if}}>Точка</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Тип области</label>
+                <select name="areaType" style="width: 100%; background: #111; color: #fff; border: 1px solid #444;">
+                    <option value="none" {{#if (eq ability.areaType "none" )}}selected{{/if}}>Нет</option>
+                    <option value="sphere" {{#if (eq ability.areaType "sphere" )}}selected{{/if}}>Сфера</option>
+                    <option value="cone" {{#if (eq ability.areaType "cone" )}}selected{{/if}}>Конус</option>
+                    <option value="line" {{#if (eq ability.areaType "line" )}}selected{{/if}}>Линия</option>
+                    <option value="emanation" {{#if (eq ability.areaType "emanation" )}}selected{{/if}}>Эманация
+                    </option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Размер (м)</label>
+                <input type="number" name="areaSize" value="{{ability.areaSize}}" min="0"
+                    style="width: 100%; background: #111; color: #fff; border: 1px solid #444; text-align: center;" />
+            </div>
+        </div>
+    </div>
+
+    {{!-- Длительность --}}
+    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <div class="form-group" style="flex: 2;">
+            <label>Длительность</label>
+            <input type="text" name="duration" value="{{ability.duration}}" placeholder="instant, 1 minute, etc."
+                style="width: 100%; background: #222; color: #fff; border: 1px solid #444;" />
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>Раундов</label>
+            <input type="number" name="durationRounds" value="{{ability.durationRounds}}" min="0"
+                style="width: 100%; background: #222; color: #fff; border: 1px solid #444; text-align: center;" />
+        </div>
+    </div>
+
+    {{!-- Спасбросок --}}
+    <div
+        style="background: rgba(0,50,100,0.2); padding: 10px; border-radius: 4px; margin-bottom: 12px; border: 1px solid #346;">
+        <label style="display: flex; align-items: center; cursor: pointer; color: #8cf; margin-bottom: 8px;">
+            <input type="checkbox" name="requiresSave" {{checked ability.requiresSave}} style="margin-right: 8px;" />
+            <span style="font-size: 11px; text-transform: uppercase;">Требует спасбросок</span>
+        </label>
+
+        <div class="save-section" style="{{#unless ability.requiresSave}}display: none;{{/unless}}">
+            <div class="form-group">
+                <label>Атрибут спасброска</label>
+                <select name="saveAttribute"
+                    style="width: 100%; background: #111; color: #fff; border: 1px solid #444;">
+                    <option value="agility" {{#if (eq ability.saveAttribute "agility" )}}selected{{/if}}>Ловкость
+                    </option>
+                    <option value="fortitude" {{#if (eq ability.saveAttribute "fortitude" )}}selected{{/if}}>Стойкость
+                    </option>
+                    <option value="willpower" {{#if (eq ability.saveAttribute "willpower" )}}selected{{/if}}>Воля
+                    </option>
+                    <option value="cognition" {{#if (eq ability.saveAttribute "cognition" )}}selected{{/if}}>Разум
+                    </option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Описание --}}
+    <div class="form-group">
+        <label>Описание способности</label>
+        <textarea name="description" rows="4"
+            style="width: 100%; background: #222; color: #ccc; border: 1px solid #444; resize: vertical;">{{ability.description}}</textarea>
+    </div>
+</form>

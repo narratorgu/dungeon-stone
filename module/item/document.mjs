@@ -1,4 +1,20 @@
 export class DungeonItem extends Item {
+
+  async _preCreate(data, options, user) {
+    await super._preCreate(data, options, user);
+    
+    // Миграция способностей эссенций при создании
+    if (data.type === "essence" && Array.isArray(data.system?.abilities)) {
+      const abilities = data.system.abilities.map(ability => {
+        if (!ability.id || ability.id === "") {
+          return { ...ability, id: foundry.utils.randomID() };
+        }
+        return ability;
+      });
+      
+      this.updateSource({ "system.abilities": abilities });
+    }
+  }
   
   prepareData() {
     super.prepareData();
@@ -91,6 +107,17 @@ export class DungeonItem extends Item {
     
     if (changed.system.armorPenalty !== undefined) {
       changed.system.armorPenalty = Math.round(parseNumber(changed.system.armorPenalty, 0, null, 0));
+    }
+
+    if (this.type === "essence" && Array.isArray(changed.system?.abilities)) {
+      const abilities = changed.system.abilities.map(ability => {
+        if (!ability.id || ability.id === "") {
+          return { ...ability, id: foundry.utils.randomID() };
+        }
+        return ability;
+      });
+      
+      changed.system.abilities = abilities;
     }
   }
 

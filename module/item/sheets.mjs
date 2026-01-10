@@ -26,6 +26,7 @@ export class DungeonItemSheet extends BaseItemSheet {
       lineage: "systems/dungeon-stone/templates/item/item-lineage-sheet.hbs",
       role: "systems/dungeon-stone/templates/item/item-role-sheet.hbs",
       contract: "systems/dungeon-stone/templates/item/item-contract-sheet.hbs",
+      dragonword: "systems/dungeon-stone/templates/item/item-dragonword-sheet.hbs",
       knowledge: "systems/dungeon-stone/templates/item/item-knowledge-sheet.hbs"
     };
     return templates[type] || "systems/dungeon-stone/templates/item/item-base-sheet.hbs";
@@ -87,18 +88,6 @@ export class DungeonItemSheet extends BaseItemSheet {
       stone: "Камни"
     };
 
-    context.qualityLevels = {
-      common: "Обычное",
-      uncommon: "Необычное",
-      rare: "Редкое",
-      epic: "Эпическое",
-      legendary: "Легендарное"
-    };
-
-    context.contractTypes = {
-      spirit: "Контракт с Духами",
-      elemental: "Контракт с Элементалями"
-    };
 
     context.actionTypes = {
       action: "Действие",
@@ -118,13 +107,6 @@ export class DungeonItemSheet extends BaseItemSheet {
       cylinder: "Цилиндр"
     };
 
-    context.poisonDeliveries = {
-      injury: "При ранении",
-      contact: "Контактный",
-      inhaled: "Вдыхаемый",
-      ingested: "Проглатываемый"
-    };
-
     // Loot
     context.lootTypes = {
       treasure: "Ценность",
@@ -132,15 +114,6 @@ export class DungeonItemSheet extends BaseItemSheet {
       trophy: "Трофей",
       quest: "Квестовый",
       junk: "Хлам"
-    };
-
-    context.rarityLevels = {
-      common: "Обычный",
-      uncommon: "Необычный",
-      rare: "Редкий",
-      epic: "Эпический",
-      legendary: "Легендарный",
-      artifact: "Артефакт"
     };
 
     // Container
@@ -153,42 +126,6 @@ export class DungeonItemSheet extends BaseItemSheet {
       saddlebag: "Седельная сумка"
     };
 
-    // Spell
-    context.spellSchools = {
-      evocation: "Воплощение",
-      abjuration: "Ограждение",
-      conjuration: "Призыв",
-      divination: "Прорицание",
-      enchantment: "Очарование",
-      illusion: "Иллюзия",
-      necromancy: "Некромантия",
-      transmutation: "Преобразование",
-      restoration: "Восстановление"
-    };
-
-    context.castTimes = {
-      action: "Действие",
-      bonus: "Бонусное",
-      reaction: "Реакция",
-      minute: "1 минута",
-      hour: "1 час",
-      ritual: "Ритуал"
-    };
-
-    context.targetTypes = {
-      self: "На себя",
-      creature: "Существо",
-      creatures: "Несколько существ",
-      point: "Точка",
-      area: "Область",
-      object: "Объект"
-    };
-
-    context.saveEffects = {
-      none: "Нет эффекта",
-      half: "Половина урона",
-      negate: "Полное отрицание"
-    };
 
     // Общие
     context.saveAttributes = {
@@ -216,7 +153,7 @@ export class DungeonItemSheet extends BaseItemSheet {
 
     // Contract
     context.contractTypes = {
-      nature: "Дух Природы",
+      spirit: "Дух Природы",
       elemental: "Элементаль",
       ancestral: "Дух Предков",
       demonic: "Демон",
@@ -278,6 +215,38 @@ export class DungeonItemSheet extends BaseItemSheet {
       context.containerContents = this._getContainerContents();
     }
 
+    // === Данные для Armor слотов ===
+    if (this.item.type === "armor") {
+      const slotLabels = {
+          head: "Голова",
+          shoulders: "Плечи",
+          body: "Тело",
+          arms: "Руки",
+          hands: "Кисти",
+          legs: "Ноги",
+          feet: "Ступни",
+          neck: "Шея",
+          ring: "Кольцо",
+          cloak: "Плащ",
+          shield: "Щит",
+          ears: "Уши"
+      };
+      
+      // Занимаемые слоты
+      context.coversSlotsList = Object.entries(slotLabels).map(([key, label]) => ({
+          key,
+          label,
+          checked: this.item.system.coversSlots?.[key] === true
+      }));
+      
+      // Блокируемые слоты
+      context.blockedSlotsList = Object.entries(slotLabels).map(([key, label]) => ({
+          key,
+          label,
+          checked: this.item.system.blockedSlots?.[key] === true
+      }));
+    }
+
     return context;
   }
 
@@ -334,16 +303,94 @@ export class DungeonItemSheet extends BaseItemSheet {
         await actor.useItem(this.item.id);
     });
     html.find(".quantity-adjust").click(this._onQuantityAdjust.bind(this));
+    
+    // === Экипировка (для эссенций и других предметов) ===
+    html.find('.item-equip').click(async ev => {
+        ev.preventDefault();
+        if (!this.item.actor) {
+            return ui.notifications.warn("Эссенция не принадлежит персонажу.");
+        }
+        await this.item.actor.toggleEquip(this.item.id);
+    });
 
     // === Container ===
     html.find(".remove-from-container").click(this._onRemoveFromContainer.bind(this));
 
+    html.find('.slot-checkbox').change(async ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      
+      const input = ev.currentTarget;
+      const slotType = input.dataset.slotType; // "covers" или "blocked"
+      const slotKey = input.dataset.slotKey;   // "head", "body", etc.
+      const checked = input.checked;
+      
+      const updatePath = slotType === "covers" 
+          ? `system.coversSlots.${slotKey}` 
+          : `system.blockedSlots.${slotKey}`;
+      
+      await this.item.update({ [updatePath]: checked });
+    });
+
+    // === ЭССЕНЦИИ: Управление способностями ===
+    if (this.item.type === "essence") {
+      html.find(".add-ability-btn").click(async (ev) => {
+        ev.preventDefault();
+        await this._onAddEssenceAbility();
+      });
+      
+      html.find(".ability-edit-btn").click(async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        
+        let abilityId = ev.currentTarget.dataset.abilityId;
+        if (!abilityId) {
+          const parent = ev.currentTarget.closest("[data-ability-id]");
+          abilityId = parent?.dataset.abilityId;
+        }
+        
+        if (abilityId) await this._onEditEssenceAbility(abilityId);
+      });
+      
+      html.find(".ability-delete-btn").click(async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        
+        let abilityId = ev.currentTarget.dataset.abilityId;
+        if (!abilityId) {
+          const parent = ev.currentTarget.closest("[data-ability-id]");
+          abilityId = parent?.dataset.abilityId;
+        }
+        
+        if (abilityId) await this._onDeleteEssenceAbility(abilityId);
+      });
+
+      // ОДИН обработчик для использования
+      html.find(".ability-use-btn, .essence-ability-use, .quick-ability-btn").click(async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        
+        if (!this.item.actor) {
+          ui.notifications.warn("Эссенция не принадлежит персонажу");
+          return;
+        }
+        
+        let abilityId = ev.currentTarget.dataset.abilityId;
+        if (!abilityId) {
+          const parent = ev.currentTarget.closest("[data-ability-id]");
+          abilityId = parent?.dataset.abilityId;
+        }
+        
+        if (abilityId) {
+          await this.item.actor.useEssenceAbility(this.item.id, abilityId);
+        }
+      });
+    }
+
     // === Spell ===
     html.find('.cast-spell').click(ev => {
       ev.preventDefault();
-      // Ищем ближайший родительский элемент с data-item-id (это .spell-item)
-      const itemId = $(ev.currentTarget).closest("[data-item-id]").data("itemId");
-      if (itemId) this._onCastSpell(ev, itemId); // Передаем ID
+      this._onCastSpell(ev);
     });
   }
 
@@ -391,89 +438,6 @@ export class DungeonItemSheet extends BaseItemSheet {
   }
 
   // === Consumable Handlers ===
-
-  async _onConsumeItem(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const btn = event.currentTarget;
-    const itemId = btn.dataset.itemId || $(btn).parents('.item').data("itemId");
-    
-    if (itemId) {
-        await this.actor.useItem(itemId);
-    } else {
-        console.error("No item ID found for consume button");
-    }
-  }
-
-  async _useConsumable(actor, item) {
-    const type = item.system.consumableType;
-    let messageContent = `<div class="consumable-use"><h3>${item.name}</h3>`;
-    messageContent += `<p><strong>${actor.name}</strong> использует <strong>${item.name}</strong></p>`;
-    
-    const rolls = [];
-
-    // Лечение
-    if (item.system.healing) {
-      const healRoll = await new Roll(item.system.healing).evaluate();
-      rolls.push(healRoll);
-      
-      const currentHP = actor.system.resources.hp.value;
-      const maxHP = actor.system.resources.hp.max;
-      const newHP = Math.min(currentHP + healRoll.total, maxHP);
-      await actor.update({ "system.resources.hp.value": newHP });
-      
-      messageContent += `<p class="heal-result">❤️ Восстановлено HP: <strong>${healRoll.total}</strong></p>`;
-    }
-
-    // Восстановление маны
-    if (item.system.manaRestore) {
-      const manaRoll = await new Roll(item.system.manaRestore).evaluate();
-      rolls.push(manaRoll);
-      
-      const currentMana = actor.system.resources.mana.value;
-      const maxMana = actor.system.resources.mana.max;
-      const newMana = Math.min(currentMana + manaRoll.total, maxMana);
-      await actor.update({ "system.resources.mana.value": newMana });
-      
-      messageContent += `<p class="mana-result">💧 Восстановлено маны: <strong>${manaRoll.total}</strong></p>`;
-    }
-
-    // Урон (бомбы, яды)
-    if (item.system.damage) {
-      const damageRoll = await new Roll(item.system.damage).evaluate();
-      rolls.push(damageRoll);
-      
-      messageContent += `<p class="damage-result">💥 Урон: <strong>${damageRoll.total}</strong> (${item.system.damageType})</p>`;
-      
-      if (item.system.areaType !== "none") {
-        messageContent += `<p>📍 Область: ${item.system.areaType} ${item.system.areaSize} кл.</p>`;
-      }
-      
-      if (item.system.saveDC > 0) {
-        messageContent += `<p>🎯 Спасбросок (${item.system.saveAttribute}): КС ${item.system.saveDC}</p>`;
-      }
-    }
-
-    messageContent += `</div>`;
-
-    // Уменьшаем количество
-    const newQty = item.system.quantity - 1;
-    if (newQty <= 0) {
-      await item.delete();
-      ui.notifications.info(`${item.name} закончился и удалён из инвентаря`);
-    } else {
-      await item.update({ "system.quantity": newQty });
-    }
-
-    // Сообщение в чат
-    await ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: messageContent,
-      rolls,
-      type: rolls.length > 0 ? CONST.CHAT_MESSAGE_TYPES.ROLL : CONST.CHAT_MESSAGE_TYPES.OTHER
-    });
-  }
 
   async _onQuantityAdjust(event) {
     event.preventDefault();
@@ -595,5 +559,198 @@ export class DungeonItemSheet extends BaseItemSheet {
       // Уровень предмета (Item Level)
       // Оставляем только у экипировки
       return ["weapon", "armor"].includes(this.item.type);
+  }
+
+  /**
+   * Добавить способность эссенции
+   */
+  async _onAddEssenceAbility() {
+    const newAbility = {
+      id: foundry.utils.randomID(),
+      name: "Новая способность",
+      img: "icons/svg/aura.svg",
+      description: "",
+      activationAction: "action",
+      abilityType: "damage",
+      manaCost: 0,
+      spiritCost: 0,
+      cooldown: 0,
+      currentCooldown: 0,
+      damage: "",
+      damageType: "pure",
+      damageScaling: "soulPower",
+      range: 0,
+      targetType: "enemy",
+      areaType: "none",
+      areaSize: 0,
+      duration: "instant",
+      durationRounds: 0,
+      requiresSave: false,
+      saveAttribute: "agility",
+      playerNotes: ""
+    };
+    
+    const abilities = foundry.utils.deepClone(this.item.system.abilities || []);
+    abilities.push(newAbility);
+    
+    await this.item.update({ "system.abilities": abilities });
+    
+    // Открываем диалог редактирования
+    this._onEditEssenceAbility(newAbility.id);
+  }
+
+  /**
+   * Редактировать способность
+   */
+  async _onEditEssenceAbility(abilityId) {
+    const abilities = this.item.system.abilities || [];
+    const index = abilities.findIndex(a => a.id === abilityId);
+    if (index === -1) return;
+    
+    const ability = abilities[index];
+    
+    // Сохраняем ссылку на item для использования в callback
+    const item = this.item;
+    
+    const content = await renderTemplate(
+      "systems/dungeon-stone/templates/dialogs/essence-ability-edit-dialog.hbs",
+      { 
+        ability, 
+        config: DUNGEON,
+        damageTypes: DUNGEON.damageTypes,
+        subAttributes: DUNGEON.subAttributes,
+        activationActions: {
+          action: "Действие",
+          bonus: "Бонусное",
+          reaction: "Реакция",
+          free: "Свободное",
+          passive: "Пассив"
+        },
+        abilityTypes: {
+          damage: "Урон",
+          buff: "Усиление",
+          debuff: "Ослабление",
+          utility: "Утилита",
+          heal: "Лечение",
+          other: "Другое"
+        },
+        scalingOptions: {
+          none: "Нет",
+          soulPower: "Сила Души",
+          strength: "Сила",
+          agility: "Ловкость",
+          cognition: "Когнитивность",
+          willpower: "Воля"
+        },
+        targetTypes: {
+          enemy: "Враг",
+          ally: "Союзник",
+          self: "На себя",
+          any: "Любой",
+          point: "Точка"
+        },
+        areaTypes: {
+          none: "Нет",
+          sphere: "Сфера",
+          cone: "Конус",
+          line: "Линия"
+        },
+        saveAttributes: {
+          agility: "Ловкость",
+          fortitude: "Стойкость",
+          willpower: "Воля",
+          cognition: "Разум"
+        }
+      }
+    );
+    
+    new Dialog({
+      title: `Редактирование: ${ability.name}`,
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Сохранить",
+          callback: async (html) => {
+            const form = html[0].querySelector("form");
+            if (!form) return;
+            
+            const currentAbilities = foundry.utils.deepClone(item.system.abilities || []);
+            const currentIndex = currentAbilities.findIndex(a => a.id === abilityId);
+            
+            if (currentIndex === -1) return;
+            
+            const existingAbility = currentAbilities[currentIndex];
+            
+            const changes = {
+              id: abilityId,
+              name: form.querySelector('[name="name"]')?.value || existingAbility.name,
+              img: form.querySelector('[name="img"]')?.value || existingAbility.img || "icons/svg/aura.svg",
+              description: form.querySelector('[name="description"]')?.value || "",
+              activationAction: form.querySelector('[name="activationAction"]')?.value || "action",
+              abilityType: form.querySelector('[name="abilityType"]')?.value || "damage",
+              manaCost: Number(form.querySelector('[name="manaCost"]')?.value) || 0,
+              spiritCost: Number(form.querySelector('[name="spiritCost"]')?.value) || 0,
+              cooldown: Number(form.querySelector('[name="cooldown"]')?.value) || 0,
+              currentCooldown: existingAbility.currentCooldown || 0,
+              damage: form.querySelector('[name="damage"]')?.value || "",
+              damageType: form.querySelector('[name="damageType"]')?.value || "pure",
+              damageScaling: form.querySelector('[name="damageScaling"]')?.value || "soulPower",
+              range: Number(form.querySelector('[name="range"]')?.value) || 0,
+              targetType: form.querySelector('[name="targetType"]')?.value || "enemy",
+              areaType: form.querySelector('[name="areaType"]')?.value || "none",
+              areaSize: Number(form.querySelector('[name="areaSize"]')?.value) || 0,
+              duration: form.querySelector('[name="duration"]')?.value || "instant",
+              durationRounds: Number(form.querySelector('[name="durationRounds"]')?.value) || 0,
+              requiresSave: form.querySelector('[name="requiresSave"]')?.checked || false,
+              saveAttribute: form.querySelector('[name="saveAttribute"]')?.value || "agility",
+              playerNotes: form.querySelector('[name="playerNotes"]')?.value || ""
+            };
+            
+            currentAbilities[currentIndex] = foundry.utils.mergeObject(existingAbility, changes);
+            
+            await item.update({ "system.abilities": currentAbilities });
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Отмена"
+        }
+      },
+      default: "save",
+      render: (html) => {
+        html.find('.ability-img').click(async (ev) => {
+          const fp = new FilePicker({
+            type: "image",
+            current: ability.img || "icons/svg/aura.svg",
+            callback: (path) => {
+              html.find('[name="img"]').val(path);
+              html.find('.ability-img').attr('src', path);
+            }
+          });
+          fp.browse();
+        });
+      }
+    }, { width: 500 }).render(true);
+  }
+
+  /**
+  * Удалить способность
+  */
+  async _onDeleteEssenceAbility(abilityId) {
+    const abilities = this.item.system.abilities || [];
+    const ability = abilities.find(a => a.id === abilityId);
+    
+    if (!ability) return;
+    
+    const confirmed = await Dialog.confirm({
+        title: "Удалить способность",
+        content: `<p>Удалить способность "<b>${ability.name}</b>"?</p>`
+    });
+    
+    if (!confirmed) return;
+    
+    const newAbilities = abilities.filter(a => a.id !== abilityId);
+    await this.item.update({ "system.abilities": newAbilities });
   }
 }

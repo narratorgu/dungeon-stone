@@ -11,100 +11,140 @@
     <section class="sheet-body">
         
         <div class="tab description" data-group="primary" data-tab="description">
-            {{editor enrichedDescription target="system.description" button=true owner=owner editable=editable}}
-        </div>
-
-        <div class="tab details" data-group="primary" data-tab="details">
-            <div style="background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid #444; border-radius: 4px;">
-                <div class="grid-2col">
-                    <div class="form-group">
-                        <label>Защита (КУ)</label>
-                        <input type="number" name="system.armorValue" value="{{system.armorValue}}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Штраф ЛВК</label>
-                        <input type="number" name="system.armorPenalty" value="{{system.armorPenalty}}"/>
-                    </div>
-                </div>
-
-                <hr style="border-top:1px solid #444; margin: 10px 0;">
-
-                {{!-- ТИП --}}
-                <div class="form-group">
-                    <label>Тип</label>
-                    <div style="display: flex; gap: 15px;">
-                        {{#unless system.isSet}}
-                        <div class="checkbox-wrapper">
-                            <input type="checkbox" name="system.isShield" id="chk_shield" {{checked system.isShield}}/>
-                            <label for="chk_shield">Щит</label>
-                        </div>
-                        {{/unless}}
-
-                        {{#unless system.isShield}}
-                        <div class="checkbox-wrapper">
-                            <input type="checkbox" name="system.isSet" id="chk_set" {{checked system.isSet}}/>
-                            <label for="chk_set">Комплект</label>
-                        </div>
-                        {{/unless}}
-                    </div>
-                </div>
-
-                {{!-- СЛОТ (Только если не Щит и не Комплект) --}}
-                {{#unless (or system.isShield system.isSet)}}
-                <div class="form-group">
-                    <label>Слот</label>
-                    <select name="system.slot" style="background:#111; color:#fff;">
-                        {{selectOptions config.armorSlots selected=system.slot localize=true}}
-                        <option value="ears" {{#if (eq system.slot "ears")}}selected{{/if}}>Серьги</option>
-                    </select>
-                </div>
-                {{/unless}}
-
-                <hr style="border-top:1px solid #444; margin: 10px 0;">
+            <div class="editor-container" style="min-height: 250px;">
+                {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
             </div>
         </div>
 
-        {{!-- СЛОТЫ --}}
+        <div class="tab details" data-group="primary" data-tab="details">
+            <div class="panel" style="margin-bottom: 15px;">
+                <div class="panel-header"><i class="fas fa-shield-alt"></i> <h3>Характеристики</h3></div>
+                <div class="rigid-grid">
+                    <div class="form-group">
+                        <label>Защита (КУ)</label>
+                        <input type="number" name="system.armorValue" value="{{system.armorValue}}" min="0"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Штраф ЛВК</label>
+                        <input type="number" name="system.armorPenalty" value="{{system.armorPenalty}}" min="0"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Вес</label>
+                        <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Цена</label>
+                        <input type="number" name="system.price" value="{{system.price}}" min="0"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Уровень предмета</label>
+                        <input type="number" name="system.itemLevel" value="{{system.itemLevel}}" min="1"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-cog"></i> <h3>Тип брони</h3></div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; padding: 10px;">
+                    <label class="armor-type-option" style="display: flex; align-items: center; gap: 8px; padding: 10px 15px; background: {{#if system.isShield}}rgba(52,152,219,0.2){{else}}rgba(0,0,0,0.2){{/if}}; border: 2px solid {{#if system.isShield}}#3498db{{else}}#444{{/if}}; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" name="system.isShield" {{checked system.isShield}} style="width: 18px; height: 18px;"/>
+                        <span style="color: {{#if system.isShield}}#3498db{{else}}#888{{/if}}; font-weight: bold;">
+                            <i class="fas fa-shield-alt"></i> Щит
+                        </span>
+                    </label>
+
+                    <label class="armor-type-option" style="display: flex; align-items: center; gap: 8px; padding: 10px 15px; background: {{#if system.isSet}}rgba(241,196,15,0.2){{else}}rgba(0,0,0,0.2){{/if}}; border: 2px solid {{#if system.isSet}}#f1c40f{{else}}#444{{/if}}; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" name="system.isSet" {{checked system.isSet}} style="width: 18px; height: 18px;"/>
+                        <span style="color: {{#if system.isSet}}#f1c40f{{else}}#888{{/if}}; font-weight: bold;">
+                            <i class="fas fa-layer-group"></i> Комплект
+                        </span>
+                    </label>
+                </div>
+
+                {{#unless system.isShield}}
+                {{#unless system.isSet}}
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Основной слот</label>
+                    <select name="system.slot" style="width: 100%;">
+                        <option value="head" {{#if (eq system.slot "head")}}selected{{/if}}>Голова</option>
+                        <option value="shoulders" {{#if (eq system.slot "shoulders")}}selected{{/if}}>Плечи</option>
+                        <option value="body" {{#if (eq system.slot "body")}}selected{{/if}}>Тело</option>
+                        <option value="arms" {{#if (eq system.slot "arms")}}selected{{/if}}>Руки</option>
+                        <option value="hands" {{#if (eq system.slot "hands")}}selected{{/if}}>Кисти</option>
+                        <option value="legs" {{#if (eq system.slot "legs")}}selected{{/if}}>Ноги</option>
+                        <option value="feet" {{#if (eq system.slot "feet")}}selected{{/if}}>Ступни</option>
+                        <option value="neck" {{#if (eq system.slot "neck")}}selected{{/if}}>Шея</option>
+                        <option value="ring" {{#if (eq system.slot "ring")}}selected{{/if}}>Кольцо</option>
+                        <option value="cloak" {{#if (eq system.slot "cloak")}}selected{{/if}}>Плащ</option>
+                        <option value="ears" {{#if (eq system.slot "ears")}}selected{{/if}}>Уши</option>
+                    </select>
+                </div>
+                {{/unless}}
+                {{/unless}}
+            </div>
+        </div>
+
         <div class="tab slots" data-group="primary" data-tab="slots">
             {{#if system.isShield}}
-                <div style="text-align: center; color: #888; margin-top: 40px;">
-                    <i class="fas fa-shield-alt" style="font-size: 48px; margin-bottom: 10px;"></i><br>
-                    Щиты занимают только слот левой руки (Off-Hand).
+                <div style="text-align: center; color: #3498db; margin-top: 40px; padding: 30px; background: rgba(52,152,219,0.1); border: 2px dashed #3498db; border-radius: 8px;">
+                    <i class="fas fa-shield-alt" style="font-size: 64px; margin-bottom: 15px;"></i>
+                    <div style="font-size: 16px; font-weight: bold;">Щит</div>
+                    <div style="font-size: 12px; color: #888; margin-top: 5px;">Занимает слот левой руки (Off-Hand)</div>
                 </div>
             {{else}}
                 
-                {{!-- КОМПЛЕКТ --}}
-                {{#if system.isSet}}
-                <div class="panel" style="margin-bottom: 15px;">
-                    <h3 style="color: #d4af37; border-bottom: 1px solid #d4af37; margin-bottom: 10px;">
-                        <i class="fas fa-tshirt"></i> Занимает слоты (Комплект)
-                    </h3>
-                    <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
-                        {{#each system.coversSlots as |checked key|}}
-                        <div class="checkbox-cell" style="background: rgba(0,0,0,0.3); padding: 4px; border: 1px solid #444; border-radius: 3px; display: flex; align-items: center;">
-                            {{!-- ПРАВИЛЬНЫЙ NAME для авто-сохранения --}}
-                            <input type="checkbox" name="system.coversSlots.{{key}}" id="cover_{{key}}" {{checked checked}} style="margin-right: 5px;"/>
-                            <label for="cover_{{key}}" style="font-size: 11px; cursor: pointer;">{{lookup ../config.armorSlots key}}</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    
+                    {{#if system.isSet}}
+                    <div class="panel" style="border-color: #f1c40f;">
+                        <div class="panel-header" style="color: #f1c40f;">
+                            <i class="fas fa-layer-group"></i> <h3>Занимает слоты (Комплект)</h3>
                         </div>
-                        {{/each}}
+                        <p style="font-size: 11px; color: #888; margin-bottom: 10px;">
+                            Какие части тела закрывает этот комплект
+                        </p>
+                        
+                        <div class="slots-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            {{#each coversSlotsList as |slot|}}
+                            <label class="slot-checkbox-label" style="display: flex; align-items: center; background: {{#if slot.checked}}rgba(241,196,15,0.15){{else}}rgba(0,0,0,0.2){{/if}}; padding: 8px 10px; border-radius: 4px; border: 1px solid {{#if slot.checked}}#f1c40f{{else}}#333{{/if}}; cursor: pointer; transition: all 0.2s;">
+                                <input type="checkbox" 
+                                    class="slot-checkbox"
+                                    data-slot-type="covers"
+                                    data-slot-key="{{slot.key}}"
+                                    name="system.coversSlots.{{slot.key}}" 
+                                    {{#if slot.checked}}checked{{/if}}
+                                    style="margin-right: 8px; width: 16px; height: 16px; accent-color: #f1c40f;">
+                                <span style="color: {{#if slot.checked}}#f1c40f{{else}}#888{{/if}}; font-size: 12px;">{{slot.label}}</span>
+                            </label>
+                            {{/each}}
+                        </div>
                     </div>
-                </div>
-                {{/if}}
+                    {{/if}}
 
-                {{!-- БЛОКИРОВКА --}}
-                <div class="panel">
-                    <h3 style="color: #f44; border-bottom: 1px solid #f44; margin-bottom: 10px;">
-                        <i class="fas fa-ban"></i> Блокирует слоты
-                    </h3>
-                    <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
-                        {{#each system.blockedSlots as |checked key|}}
-                        <div class="checkbox-cell" style="background: rgba(0,0,0,0.3); padding: 4px; border: 1px solid #444; border-radius: 3px; display: flex; align-items: center;">
-                            {{!-- ПРАВИЛЬНЫЙ NAME --}}
-                            <input type="checkbox" name="system.blockedSlots.{{key}}" id="block_{{key}}" {{checked checked}} style="margin-right: 5px;"/>
-                            <label for="block_{{key}}" style="font-size: 11px; cursor: pointer;">{{lookup ../config.armorSlots key}}</label>
+                    <div class="panel" style="border-color: #e74c3c; {{#unless system.isSet}}grid-column: 1 / -1;{{/unless}}">
+                        <div class="panel-header" style="color: #e74c3c;">
+                            <i class="fas fa-ban"></i> <h3>Блокирует слоты</h3>
                         </div>
-                        {{/each}}
+                        <p style="font-size: 11px; color: #888; margin-bottom: 10px;">
+                            Какие слоты нельзя использовать при ношении
+                        </p>
+                        
+                        <div class="slots-grid" style="display: grid; grid-template-columns: repeat({{#if system.isSet}}2{{else}}3{{/if}}, 1fr); gap: 6px;">
+                            {{#each blockedSlotsList as |slot|}}
+                            <label class="slot-checkbox-label" style="display: flex; align-items: center; background: {{#if slot.checked}}rgba(231,76,60,0.15){{else}}rgba(0,0,0,0.2){{/if}}; padding: 8px 10px; border-radius: 4px; border: 1px solid {{#if slot.checked}}#e74c3c{{else}}#333{{/if}}; cursor: pointer; transition: all 0.2s;">
+                                <input type="checkbox" 
+                                    class="slot-checkbox"
+                                    data-slot-type="blocked"
+                                    data-slot-key="{{slot.key}}"
+                                    name="system.blockedSlots.{{slot.key}}" 
+                                    {{#if slot.checked}}checked{{/if}}
+                                    style="margin-right: 8px; width: 16px; height: 16px; accent-color: #e74c3c;">
+                                <span style="color: {{#if slot.checked}}#e74c3c{{else}}#888{{/if}}; font-size: 12px;">{{slot.label}}</span>
+                            </label>
+                            {{/each}}
+                        </div>
                     </div>
+
                 </div>
 
             {{/if}}

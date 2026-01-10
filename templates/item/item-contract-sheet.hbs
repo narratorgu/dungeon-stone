@@ -6,54 +6,159 @@
   <nav class="sheet-tabs tabs" data-group="primary">
     <a class="item" data-tab="description">Описание</a>
     <a class="item" data-tab="abilities">Способности</a>
+    <a class="item" data-tab="progression">Развитие</a>
     <a class="item" data-tab="effects">Эффекты</a>
   </nav>
 
   <section class="sheet-body">
 
+    {{!-- ОПИСАНИЕ --}}
     <div class="tab description" data-group="primary" data-tab="description">
-      <div class="editor-container">
+      <div class="editor-container" style="min-height: 300px;">
         {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
       </div>
     </div>
 
+    {{!-- СПОСОБНОСТИ --}}
     <div class="tab" data-group="primary" data-tab="abilities">
       
+      {{!-- Основная информация --}}
       <div class="panel">
         <div class="panel-header"><i class="fas fa-file-contract"></i> <h3>Контракт</h3></div>
         <div class="rigid-grid">
-          <div class="form-group"><label>Тип</label>
+          <div class="form-group">
+            <label>Тип контракта</label>
             <select name="system.contractType" style="width:100%">
               <option value="spirit" {{#if (eq system.contractType "spirit")}}selected{{/if}}>Дух</option>
               <option value="elemental" {{#if (eq system.contractType "elemental")}}selected{{/if}}>Элементаль</option>
+              <option value="beast" {{#if (eq system.contractType "beast")}}selected{{/if}}>Зверь</option>
             </select>
           </div>
-          <div class="form-group"><label>Стоимость (Дух)</label><input type="number" name="system.spiritCost" value="{{system.spiritCost}}" min="0"/></div>
-          <div class="form-group full-row"><label>Имя Сущности</label><input type="text" name="system.entityName" value="{{system.entityName}}"/></div>
+          <div class="form-group">
+            <label>Статус</label>
+            <select name="system.equipStatus" style="width:100%">
+              <option value="stored" {{#if (eq system.equipStatus "stored")}}selected{{/if}}>Не активен</option>
+              <option value="equipped" {{#if (eq system.equipStatus "equipped")}}selected{{/if}}>Связан</option>
+            </select>
+          </div>
+          <div class="form-group full-row">
+            <label>Имя существа</label>
+            <input type="text" name="system.entityName" value="{{system.entityName}}" placeholder="Имя духа/зверя/элементаля"/>
+          </div>
         </div>
       </div>
 
+      {{!-- Пассивные способности --}}
       <div class="panel">
         <div class="panel-header"><i class="fas fa-shield-alt"></i> <h3>Пассивные способности</h3></div>
-        <div class="editor-container" style="min-height:100px;">
+        <div class="editor-container" style="min-height:120px;">
           {{editor system.passiveAbilities target="system.passiveAbilities" button=true editable=editable engine="prosemirror" collaborate=false}}
         </div>
       </div>
 
+      {{!-- Активная способность --}}
       <div class="panel">
         <div class="panel-header"><i class="fas fa-bolt"></i> <h3>Активная способность</h3></div>
-        <div class="editor-container" style="min-height:100px;">
+        <div class="editor-container" style="min-height:120px;">
           {{editor system.activeAbility target="system.activeAbility" button=true editable=editable engine="prosemirror" collaborate=false}}
         </div>
         <div class="rigid-grid mt-1">
-          <div class="form-group"><label>Мана</label><input type="number" name="system.activeAbilityParams.manaCost" value="{{system.activeAbilityParams.manaCost}}"/></div>
-          <div class="form-group"><label>Кулдаун</label><input type="number" name="system.activeAbilityParams.cooldown" value="{{system.activeAbilityParams.cooldown}}"/></div>
-          <div class="form-group inline"><label>На перезарядке</label><input type="checkbox" name="system.activeAbilityParams.isOnCooldown" {{checked system.activeAbilityParams.isOnCooldown}}/></div>
+          <div class="form-group">
+            <label>Стоимость маны</label>
+            <input type="number" name="system.activeAbilityParams.manaCost" value="{{system.activeAbilityParams.manaCost}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Урон</label>
+            <input type="text" name="system.activeAbilityParams.damage" value="{{system.activeAbilityParams.damage}}" placeholder="2d6"/>
+          </div>
+          <div class="form-group">
+            <label>Тип урона</label>
+            <select name="system.activeAbilityParams.damageType">
+              {{#each config.damageTypes as |label key|}}
+                <option value="{{key}}" {{#if (eq ../system.activeAbilityParams.damageType key)}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Дальность</label>
+            <input type="number" name="system.activeAbilityParams.range" value="{{system.activeAbilityParams.range}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Кулдаун (раунды)</label>
+            <input type="number" name="system.activeAbilityParams.cooldown" value="{{system.activeAbilityParams.cooldown}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>На перезарядке?</label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="system.activeAbilityParams.isOnCooldown" {{checked system.activeAbilityParams.isOnCooldown}}/>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Призыв --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-hand-sparkles"></i> <h3>Призыв</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Можно ли призвать?</label>
+            <input type="checkbox" name="system.canSummon" {{checked system.canSummon}}/>
+          </div>
+          {{#if system.canSummon}}
+          <div class="form-group">
+            <input type="text" name="system.summonActorId" value="{{system.summonActorId}}" placeholder="ID"/>
+          </div>
+          {{/if}}
         </div>
       </div>
 
     </div>
 
+    {{!-- РАЗВИТИЕ --}}
+    <div class="tab" data-group="primary" data-tab="progression">
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-chart-line"></i> <h3>Прогресс существа</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Уровень</label>
+            <input type="number" name="system.level" value="{{system.level}}" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Опыт</label>
+            <input type="number" name="system.xp" value="{{system.xp}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Опыт для след. уровня</label>
+            <input type="number" name="system.xpMax" value="{{system.xpMax}}" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Стоимость духа</label>
+            <input type="number" name="system.spiritCost" value="{{system.spiritCost}}" min="0"/>
+          </div>
+        </div>
+        
+        {{!-- Прогресс-бар --}}
+        <div style="margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-size: 11px; color: #76c7c0;">ПРОГРЕСС</span>
+            <span style="font-size: 11px; color: #aaa;">{{system.xp}} / {{system.xpMax}} XP</span>
+          </div>
+          <div style="height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden;">
+            <div style="height: 100%; background: linear-gradient(90deg, #2a9d8f, #4ecdc4); width: {{#if system.xpMax}}{{multiply (divide system.xp system.xpMax) 100}}{{else}}0{{/if}}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Заметки игрока --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-sticky-note"></i> <h3>Заметки игрока</h3></div>
+        <div class="editor-container" style="min-height:100px;">
+          {{editor system.playerNotes target="system.playerNotes" button=true editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+      </div>
+    </div>
+
+    {{!-- ЭФФЕКТЫ --}}
     {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
 
   </section>

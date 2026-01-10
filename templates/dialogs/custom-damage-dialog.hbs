@@ -1,0 +1,66 @@
+<div class="dungeon-dialog-content" style="background: #151515; color: #e0e0e0; font-family: 'Signika', sans-serif; padding: 10px; border-radius: 4px;">
+    
+    <div style="background: #000; padding: 10px; text-align: center; border: 1px solid #c0392b; border-radius: 4px; margin-bottom: 15px;">
+        <span style="font-size: 16px; font-weight: bold; text-transform: uppercase; color: #e74c3c; display: block;">
+            <i class="fas fa-crosshairs"></i> Кастомная Атака
+        </span>
+        {{#if targetName}}
+            <span style="font-size: 12px; color: #888;">Цель: {{targetName}}</span>
+        {{else}}
+            <span style="font-size: 12px; color: #f44;">Цель не выбрана!</span>
+        {{/if}}
+    </div>
+
+    <form>
+        {{!-- УРОН --}}
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="color: #e74c3c; font-size: 11px; text-transform: uppercase;">Формула урона</label>
+            <input type="text" name="damageFormula" value="{{defaultFormula}}" placeholder="2d6 + 5" 
+                style="width: 100%; background: #222; color: #fff; border: 1px solid #c0392b; padding: 8px; font-size: 14px; text-align: center;">
+        </div>
+
+        {{!-- ТИП УРОНА --}}
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="color: #e74c3c; font-size: 11px; text-transform: uppercase;">Тип урона</label>
+            <select name="damageType" style="width: 100%; background: #222; color: #fff; border: 1px solid #c0392b; height: 32px;">
+                <optgroup label="Физический">
+                    <option value="slashing">Режущий</option>
+                    <option value="blunt">Дробящий</option>
+                    <option value="piercing">Колющий</option>
+                </optgroup>
+                <optgroup label="Стихийный">
+                    <option value="fire">Огонь</option>
+                    <option value="cold">Холод</option>
+                    <option value="lightning">Молния</option>
+                    <option value="acid">Кислота</option>
+                    <option value="poison">Яд</option>
+                </optgroup>
+                <optgroup label="Мистический">
+                    <option value="psychic">Психический</option>
+                    <option value="light">Свет</option>
+                    <option value="dark">Тьма</option>
+                    <option value="pure" selected>Чистый</option>
+                </optgroup>
+            </select>
+        </div>
+
+        {{!-- ОПЦИИ --}}
+        <div style="background: rgba(192,57,43,0.1); padding: 10px; border: 1px dashed #c0392b; border-radius: 4px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; cursor: pointer; color: #e74c3c; font-size: 12px; margin-bottom: 8px;">
+                <input type="checkbox" name="ignoreResist" style="margin-right: 8px;">
+                Игнорировать сопротивления (чистый урон)
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; color: #e74c3c; font-size: 12px;">
+                <input type="checkbox" name="isCritical" style="margin-right: 8px;">
+                Критический удар (×2 урона)
+            </label>
+        </div>
+
+        {{!-- МОДИФИКАТОР --}}
+        <div class="form-group">
+            <label style="color: #888; font-size: 10px;">Дополнительный модификатор</label>
+            <input type="number" name="bonusDamage" value="0" 
+                style="width: 100%; background: #111; color: #fff; border: 1px solid #444; text-align: center;">
+        </div>
+    </form>
+</div>

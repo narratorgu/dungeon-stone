@@ -34,8 +34,13 @@ export function registerHooks() {
     });
 
     Hooks.on("preCreateItem", (item) => {
-        if (item.system.equipStatus) {
-          item.updateSource({ "system.equipStatus": "stored" });
+        // Для контрактов не трогаем equipStatus вообще - он устанавливается в sheets.mjs
+        if (item.type === "contract") {
+            return;
+        }
+        // Для остальных предметов устанавливаем "stored" только если equipStatus не установлен
+        if (!item.system.equipStatus) {
+            item.updateSource({ "system.equipStatus": "stored" });
         }
     });
     

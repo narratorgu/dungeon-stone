@@ -63,7 +63,24 @@ export class DungeonActor extends Actor {
 
     let isDivine = false;
     let isArcane = false;
-    let magicRank = 99;
+    let magicRank = 9;
+
+    // Логика Дракона (Родословная) - проверяем сначала
+    const hasDragonLineage = lineageItem && (lineageItem.name.toLowerCase().includes("дракон") || lineageItem.name.toLowerCase().includes("dragon"));
+    if (hasDragonLineage) {
+      // Если стат равен 0 (скрыт), ставим 1, чтобы он появился
+      // Используем проверку исходных данных, чтобы избежать бесконечных циклов
+      const sourceDragonPower = this._source?.system?.subAttributes?.dragonPowerStat ?? 0;
+      if (sub.dragonPowerStat === 0 && sourceDragonPower === 0) {
+        sub.dragonPowerStat = 1;
+      }
+    } else {
+      // Если драконьей родословной нет, сбрасываем dragonPowerStat обратно в 0, если он был автоматически установлен
+      const sourceDragonPower = this._source?.system?.subAttributes?.dragonPowerStat ?? 0;
+      if (sub.dragonPowerStat === 1 && sourceDragonPower === 0) {
+        sub.dragonPowerStat = 0;
+      }
+    }
 
     if (roleItem) {
       const rName = roleItem.name.toLowerCase();
@@ -71,12 +88,23 @@ export class DungeonActor extends Actor {
       // Божественные классы
       if (rName.match(/жрец|паладин|клирик|priest|paladin/)) {
           isDivine = true;
-          if (sub.divinePowerStat === 0) sub.divinePowerStat = 1;
+          // Устанавливаем divinePowerStat только если он равен 0 и в исходных данных тоже 0
+          // Это предотвращает бесконечные циклы при удалении роли
+          const sourceDivinePower = this._source?.system?.subAttributes?.divinePowerStat ?? 0;
+          if (sub.divinePowerStat === 0 && sourceDivinePower === 0) {
+            sub.divinePowerStat = 1;
+          }
           magicRank = roleItem.system.rank || 9;
       }
       else if (rName.match(/маг|некромант|волшебник|mage|wizard|necromancer/)) {
           isArcane = true;
           magicRank = roleItem.system.rank || 9;
+      }
+    } else {
+      // Если роли нет, сбрасываем divinePowerStat обратно в 0, если он был автоматически установлен
+      const sourceDivinePower = this._source?.system?.subAttributes?.divinePowerStat ?? 0;
+      if (sub.divinePowerStat === 1 && sourceDivinePower === 0) {
+        sub.divinePowerStat = 0;
       }
     }
 
@@ -91,6 +119,9 @@ export class DungeonActor extends Actor {
       } else {
         sys.equipment.essenceSlotsMax = sys.resources.level || 1;
       }
+    } else {
+      // Если роли нет, устанавливаем слоты эссенций на основе уровня
+      sys.equipment.essenceSlotsMax = sys.resources.level || 1;
     }
 
     const cognition = sub.cognition || 0;
@@ -101,26 +132,9 @@ export class DungeonActor extends Actor {
     const magicStats = Calc.calculateMagicStats(cognition, manaSense, powerStat);
 
     this.magicStats = {
-      dc: magicStats.dc,
-      ku: magicStats.ku
+      dc: magicStats?.dc ?? 50,
+      ku: magicStats?.ku ?? 1
     };
-
-    // Логика Дракона (Родословная)
-    if (lineageItem) {
-      const lName = lineageItem.name.toLowerCase();
-      if (lName.includes("дракон") || lName.includes("dragon")) {
-          // Если стат равен 0 (скрыт), ставим 1, чтобы он появился
-          if (sub.dragonPowerStat === 0) sub.dragonPowerStat = 1;
-      }
-    }
-
-    // Логика Божественной силы (Класс: Жрец, Паладин, Клирик и т.д.)
-    if (roleItem) {
-        const rName = roleItem.name.toLowerCase();
-        if (rName.includes("жрец") || rName.includes("паладин") || rName.includes("priest")) {
-            if (sub.divinePowerStat === 0) sub.divinePowerStat = 1;
-        }
-    }
   
     // 1. Инициализация базовых переменных (с учетом AE)
     const strength = sub.strength || 0;
@@ -154,6 +168,27 @@ export class DungeonActor extends Actor {
     let totalItemLevel = 0;
     let equippedCount = 0;
     let blockedRings = 0;
+    let contractMax = 0;
+    if (lineageItem) {
+        const lName = lineageItem.name.toLowerCase();
+        if (lName.match(/зверо|beast/)) {
+            contractMax = 1;
+        } else if (lName.match(/эльф|elf/)) {
+            const soul = sys.subAttributes.soulPower || 0;
+            const spirit = sys.attributes.spirit || 0;
+            const level = sys.resources.level || 1;
+            const totalPower = soul + spirit + (level * 20);
+            contractMax = 1 + Math.floor(Math.sqrt(totalPower / 50));
+        }
+    }
+    if (roleItem && roleItem.name.toLowerCase().match(/элементалист|elementalist/)) {
+        const soul = sys.subAttributes.soulPower || 0;
+        const spirit = sys.attributes.spirit || 0;
+        const level = sys.resources.level || 1;
+        const totalPower = soul + spirit + (level * 20);
+        contractMax = Math.max(contractMax, 1 + Math.floor(Math.sqrt(totalPower / 50)));
+    }
+    sys.equipment.contractSlotsMax = contractMax;
   
     this._resetEquipmentLinks(sys);
   
@@ -372,11 +407,31 @@ export class DungeonActor extends Actor {
           return ui.notifications.warn(`Лимит контрактов исчерпан (${maxSlots})!`);
       }
       updates.push({ _id: item.id, "system.equipStatus": isEquipped ? "stored" : "equipped" });
-  }
-    // --- ЭССЕНЦИИ ---
+    }
     else if (item.type === "essence") {
-        if (sys.equipment.essences.length >= sys.equipment.essenceSlotsMax) return ui.notifications.warn("Слоты эссенций заполнены!");
-        updates.push({ _id: item.id, "system.equipStatus": "equipped" });
+      const maxSlots = sys.equipment.essenceSlotsMax || 0;
+      
+      if (isEquipped) {
+          // Снимаем — всегда разрешено
+          updates.push({ _id: item.id, "system.equipStatus": "stored" });
+      } else {
+          // Надеваем — проверяем лимит ДО изменения
+          const activeCount = this.items.filter(i => 
+              i.type === "essence" && 
+              i.system.equipStatus === "equipped"
+          ).length;
+          
+          // Если лимит 0 — вообще нельзя экипировать
+          if (maxSlots === 0) {
+              return ui.notifications.warn("Вы не можете экипировать эссенции (ваш класс запрещает это)!");
+          }
+          
+          if (activeCount >= maxSlots) {
+              return ui.notifications.warn(`Слоты эссенций заполнены! (${activeCount}/${maxSlots})`);
+          }
+          
+          updates.push({ _id: item.id, "system.equipStatus": "equipped" });
+      }
     }
 
     if (updates.length > 0) {
@@ -491,6 +546,15 @@ export class DungeonActor extends Actor {
       }
       await this.update({"system.resources.mana.value": currentMana - manaCost});
     }
+
+    const gpCost = Number(sys.gpCost) || 0;
+    if (gpCost > 0) {
+        const currentGP = this.system.resources.gp.value;
+        if (currentGP < gpCost) {
+            return ui.notifications.warn(`Недостаточно GP! Требуется ${gpCost}, есть ${currentGP}.`);
+        }
+        await this.update({"system.resources.gp.value": currentGP - gpCost});
+    }
   
     // === 3. КНОПКИ ДЕЙСТВИЙ ===
     let buttons = "";
@@ -515,9 +579,13 @@ export class DungeonActor extends Actor {
       let dc = sys.saveDC || 0;
       const ku = sys.saveKU || 1;
   
-      // Авторасчет DC (твоя формула)
       if (dc === 0) {
-        dc = Calc.calculateSpellDC(this.system.attributes.spirit || 0);
+        const magicStats = Calc.calculateMagicStats(
+          this.system.subAttributes.cognition || 0,
+          this.system.subAttributes.manaSense || 0,
+          this.system.subAttributes.soulPower || 0
+        );
+        dc = magicStats.dc;
       }
   
       // Словарь названий атрибутов
@@ -568,25 +636,6 @@ export class DungeonActor extends Actor {
   /* -------------------------------------------- */
 
   async rollInitiative(options = {}) {
-    if (!game.combat) {
-        return ui.notifications.warn("Нет активного боевого столкновения.");
-    }
-
-    let combatant = game.combat.combatants.find(c => c.actorId === this.id);
-    if (!combatant && options.createCombatants) {
-        const tokens = this.getActiveTokens();
-        if (tokens.length > 0) {
-            await game.combat.createEmbeddedDocuments("Combatant", [{tokenId: tokens[0].id, actorId: this.id}]);
-            combatant = game.combat.combatants.find(c => c.actorId === this.id);
-        }
-    }
-
-    if (!combatant) {
-        return ui.notifications.warn("Этот персонаж не находится в Боевом Трекере.");
-    }
-
-    console.log(`Dungeon & Stone | Force Rolling Initiative for ${this.name}`);
-
     const agility = this.system.subAttributes.agility || 0;
     const pool = Math.max(1, Math.floor(agility / 13));
     
@@ -606,9 +655,24 @@ export class DungeonActor extends Actor {
     let total = successes + tieBreaker;
     if (total < 0) total = 0;
 
-    await game.combat.setInitiative(combatant.id, total);
+    // Если есть активный бой, записываем результат в трекер
+    if (game.combat) {
+        let combatant = game.combat.combatants.find(c => c.actorId === this.id);
+        if (!combatant && options.createCombatants) {
+            const tokens = this.getActiveTokens();
+            if (tokens.length > 0) {
+                await game.combat.createEmbeddedDocuments("Combatant", [{tokenId: tokens[0].id, actorId: this.id}]);
+                combatant = game.combat.combatants.find(c => c.actorId === this.id);
+            }
+        }
 
-    ChatMessage.create({
+        if (combatant) {
+            await game.combat.setInitiative(combatant.id, total);
+        }
+    }
+
+    // Всегда показываем сообщение в чат
+    await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({actor: this}),
         content: `
           <div class="dungeon-chat-card">
@@ -619,17 +683,17 @@ export class DungeonActor extends Actor {
               </div>
               <div class="outcome" style="margin:5px 0;">${successes} Успехов</div>
               <div class="gm-only" style="font-size:10px; border-top:1px dashed #555;">
-                  Кубы: [${diceResults.join(", ")}]<br>Тай-брейкер: +${tieBreaker}
+                  Кубы: [${diceResults.join(", ")}]<br>Тай-брейкер: +${tieBreaker.toFixed(2)}
               </div>
               <div style="background:#222; color:#d4af37; text-align:center; font-weight:bold; padding:2px; margin-top:5px; border-radius:2px;">
-                  Итог: ${total}
+                  Итог: ${total.toFixed(2)}
               </div>
           </div>
         `,
         sound: CONFIG.sounds.dice
     });
 
-    return this;
+    return { total, successes, diceResults, tieBreaker };
   }
 
   /* -------------------------------------------- */
@@ -938,7 +1002,6 @@ export class DungeonActor extends Actor {
           </div>
         </div>
       `,
-      whisper: game.user.isGM ? [] : [game.user.id]
     });
   }
 
@@ -1145,18 +1208,6 @@ export class DungeonActor extends Actor {
 
     const targetToken = targets[0];
     const targetActor = targetToken.actor;
-
-    // Проверка прав на цель
-    if (!targetActor.testUserPermission(game.user, "OBSERVER")) {
-      game.socket.emit("system.dungeon-stone", {
-        type: "proxyAttack",
-        attackerId: this.id,
-        targetId: targetActor.id,
-        itemId: itemId,
-        userId: game.user.id
-      });
-      return ui.notifications.info("Атака отправлена на обработку GM...");
-    }
     
     // Расчет порога крита
     const flexibility = sys.subAttributes.flexibility || 0;
@@ -1355,7 +1406,9 @@ export class DungeonActor extends Actor {
       
       if (attackMode === "ranged" || attackMode === "thrown") {
         const gridDist = canvas.scene.grid.distance; // Например, 2 метра
-        const distMeters = canvas.grid.measureDistance(this.token, targetToken);
+        const attackerToken = this.getActiveTokens()[0];
+        if (!attackerToken) return ui.notifications.warn("Нет токена атакующего на сцене!");
+        const distMeters = canvas.grid.measureDistance(attackerToken, targetToken);
         
         // 1. Максимальная дальность (Жесткий предел)
         const maxRangeCells = weapon.maxRange || 100;
@@ -1518,7 +1571,7 @@ export class DungeonActor extends Actor {
       </div>
     `;
     
-    if (game.dice3d) game.dice3d.showForRoll(roll, game.user, true);
+    if (game.dice3d) await game.dice3d.showForRoll(roll, game.user, true);
     ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this}), content, rolls: [roll], sound: CONFIG.sounds.dice });
   }
 
@@ -1690,18 +1743,20 @@ export class DungeonActor extends Actor {
       </div>
     `;
 
-    if (game.dice3d) game.dice3d.showForRoll(roll, game.user, true);
+    if (game.dice3d) await game.dice3d.showForRoll(roll, game.user, true);
     ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this}), content, rolls: [roll], sound: CONFIG.sounds.dice });
   }
 
   async _preCreateEmbeddedDocuments(embeddedName, resultData, options, userId) {
     await super._preCreateEmbeddedDocuments(embeddedName, resultData, options, userId);
+    
     if (embeddedName === "Item") {
-        for (const data of resultData) {
+        for (let i = resultData.length - 1; i >= 0; i--) {
+            const data = resultData[i];
             if (['role', 'lineage'].includes(data.type)) {
-                if (this.items.find(i => i.type === data.type)) {
-                    ui.notifications.warn(`Уже есть ${data.type}.`);
-                    return false;
+                if (this.items.find(item => item.type === data.type)) {
+                    ui.notifications.warn(`У персонажа уже есть ${data.type === 'role' ? 'класс' : 'родословная'}.`);
+                    resultData.splice(i, 1);  // Удаляем из массива
                 }
             }
         }
@@ -1774,17 +1829,25 @@ async _syncArmorPenaltyEffect(armorItem) {
     if (embeddedName === "Item") {
       // Удаляем эффекты штрафа, связанные с удаленными предметами
       const effectIdsToDelete = [];
+      let roleDeleted = false;
+      
       for (const doc of documents) {
         if (doc.type === "armor") {
           const key = `dungeon-stone.armorPenalty.${doc.id}`;
           const effect = this.effects.find(e => e.getFlag("dungeon-stone", "key") === key);
           if (effect) effectIdsToDelete.push(effect.id);
         }
+        if (doc.type === "role") {
+          roleDeleted = true;
+        }
       }
       
       if (effectIdsToDelete.length > 0) {
         await this.deleteEmbeddedDocuments("ActiveEffect", effectIdsToDelete);
       }
+      
+      // Примечание: сброс divinePowerStat при удалении роли обрабатывается в prepareDerivedData
+      // чтобы избежать проблем с бесконечными циклами рендеринга
     }
   }
 
@@ -1813,7 +1876,7 @@ async _syncArmorPenaltyEffect(armorItem) {
                         ${sys.damage ? `<div style="margin-top:10px; border-top:1px dashed #444; padding-top:5px;">Урон/Эффект: <b>${sys.damage}</b></div>` : ""}
                     </div>
                 </div>`,
-              type: CONST.CHAT_MESSAGE_STYLES.OTHER
+              style: CONST.CHAT_MESSAGE_STYLES.OTHER
           });
           return;
       }
@@ -1847,7 +1910,7 @@ async _syncArmorPenaltyEffect(armorItem) {
           damageTypes: DUNGEON.damageTypes
       };
 
-      const content = await renderTemplate("systems/dungeon-stone/templates/dialogs/spell-save-dialog.hbs", dialogData);
+      const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/spell-save-dialog.hbs", dialogData);
 
       new Dialog({
           title: `Каст: ${item.name}`,
@@ -1983,7 +2046,7 @@ async _syncArmorPenaltyEffect(armorItem) {
       const attrKey = sys.attackAttribute;
       const attrVal = this.system.subAttributes[attrKey] || 0;
 
-      const content = await renderTemplate("systems/dungeon-stone/templates/dialogs/spell-attack-dialog.hbs", {
+      const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/spell-attack-dialog.hbs", {
           item,
           attrLabel: DUNGEON.subAttributes[attrKey],
           attrVal,
@@ -2030,7 +2093,7 @@ async _syncArmorPenaltyEffect(armorItem) {
       const modDC = parseInt(form.modDC.value) || 0;
       const modKU = parseInt(form.modKU.value) || 0;
       
-      const isAOE = item.system.areaType !== "none";
+      const isAOE = item.system.areaType && item.system.areaType !== "none";
 
       // 3. Бросок
       const roll = new Roll(`${pool}d100`);
@@ -2173,7 +2236,1039 @@ async _syncArmorPenaltyEffect(armorItem) {
           </div>
       </div>`;
 
-      if (game.dice3d) game.dice3d.showForRoll(roll, game.user, true);
+      if (game.dice3d) await game.dice3d.showForRoll(roll, game.user, true);
       ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this}), content, rolls: [roll] });
+  }
+
+  
+
+    /**
+   * Использовать Слово Дракона
+   */
+  async useDragonWord(itemId) {
+      const item = this.items.get(itemId);
+      if (!item || item.type !== "dragonword") return;
+      
+      const sys = item.system;
+      const dpCost = sys.dpCost || 0;
+      const currentDP = this.system.resources.dp.value;
+      
+      // Проверка кулдауна
+      if (sys.isOnCooldown) {
+          return ui.notifications.warn(`${item.name} на перезарядке!`);
+      }
+      
+      // Проверка DP
+      if (currentDP < dpCost) {
+          return ui.notifications.warn(`Недостаточно DP! Требуется ${dpCost}, есть ${currentDP}.`);
+      }
+      
+      // Проверка требований
+      const dpStat = this.system.subAttributes.dragonPowerStat || 0;
+      if (sys.requiredDPStat > 0 && dpStat < sys.requiredDPStat) {
+          return ui.notifications.warn(`Требуется Сила Дракона: ${sys.requiredDPStat}. У вас: ${dpStat}.`);
+      }
+      
+      // Определяем тип действия
+      if (sys.rollType === "attack") {
+          return this._rollDragonWordAttack(item);
+      } else if (sys.rollType === "save") {
+          return this._rollDragonWordSave(item);
+      } else {
+          // Без броска — тратим DP и выводим в чат
+          await this._spendDPAndCooldown(item, dpCost);
+          return this._postDragonWordToChat(item);
+      }
+  }
+
+  /**
+   * Кастомный бросок урона
+   */
+  async rollCustomDamage() {
+    const targets = Array.from(game.user.targets);
+    const target = targets.length > 0 ? targets[0].actor : null;
+    
+    const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/custom-damage-dialog.hbs", {
+        targetName: target?.name || null,
+        defaultFormula: "1d6"
+    });
+
+    new Dialog({
+        title: "Кастомная Атака",
+        content,
+        buttons: {
+            roll: {
+                icon: '<i class="fas fa-dice-d20"></i>',
+                label: "Бросить",
+                callback: html => this._executeCustomDamage(html, target)
+            }
+        },
+        default: "roll"
+    }).render(true);
+  }
+
+  /**
+   * Выполнение кастомного урона
+   */
+  async _executeCustomDamage(html, target) {
+    const form = html[0].querySelector("form");
+    
+    let formula = form.damageFormula.value || "1d6";
+    const damageType = form.damageType.value;
+    const ignoreResist = form.ignoreResist.checked;
+    const isCritical = form.isCritical.checked;
+    const bonusDamage = parseInt(form.bonusDamage.value) || 0;
+    
+    // Добавляем бонус
+    if (bonusDamage !== 0) {
+        formula = `${formula} + ${bonusDamage}`;
+    }
+    
+    // Критический урон
+    if (isCritical) {
+        formula = `(${formula}) * 2`;
+    }
+    
+    // Бросок
+    const roll = new Roll(formula);
+    await roll.evaluate();
+    
+    // Финальный тип (если игнорируем сопротивления — pure)
+    const finalType = ignoreResist ? "pure" : damageType;
+    const typeLabel = DUNGEON.damageTypes[finalType] || finalType;
+    
+    // Формируем карточку (без Handlebars комментариев!)
+    const content = `
+    <div class="dungeon-chat-card" style="border-left: 4px solid #e74c3c; background: linear-gradient(180deg, #1a0a0a 0%, #0d0505 100%);">
+        <header style="background: linear-gradient(135deg, #2a0a0a, #1a0505); padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #c0392b;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-crosshairs" style="font-size: 28px; color: #e74c3c; text-shadow: 0 0 10px rgba(231,76,60,0.5);"></i>
+                <div>
+                    <h3 style="margin: 0; color: #ff6b6b; font-size: 16px; text-transform: uppercase;">Кастомная Атака</h3>
+                    <div style="font-size: 11px; color: #888;">${this.name}</div>
+                </div>
+            </div>
+            ${isCritical ? `<span style="background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase;">⚡ КРИТ!</span>` : ""}
+        </header>
+        
+        <div style="padding: 20px; text-align: center; background: radial-gradient(ellipse at center, rgba(192,57,43,0.1) 0%, transparent 70%);">
+            <div style="font-size: 56px; font-weight: bold; color: #e74c3c; text-shadow: 0 0 20px rgba(231,76,60,0.5), 0 4px 8px rgba(0,0,0,0.5);">
+                ${roll.total}
+            </div>
+            <div style="font-size: 14px; color: #ff6b6b; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">
+                ${typeLabel}
+            </div>
+            ${ignoreResist ? `<div style="color: #f1c40f; font-size: 11px; margin-top: 5px;"><i class="fas fa-shield-alt"></i> Игнорирует сопротивления</div>` : ""}
+            
+            <div style="font-size: 11px; color: #666; margin: 15px 0; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                <i class="fas fa-dice"></i> ${formula}
+            </div>
+            
+            ${target ? `
+            <button data-action="apply-damage" data-val="${roll.total}" data-type="${finalType}" 
+                style="width: 100%; background: linear-gradient(135deg, #c0392b, #e74c3c); border: 2px solid #ff6b6b; color: #fff; padding: 12px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(192,57,43,0.4);">
+                <i class="fas fa-heart-broken"></i> Нанести урон → ${target.name}
+            </button>
+            ` : `
+            <div style="color: #888; font-style: italic; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 4px; border: 1px dashed #444;">
+                <i class="fas fa-user-slash"></i> Цель не выбрана<br>
+                <span style="font-size: 10px;">Выберите токен и примените урон вручную</span>
+            </div>
+            `}
+        </div>
+        
+        <div class="gm-only" style="font-size: 10px; color: #555; padding: 8px; background: rgba(0,0,0,0.4); border-top: 1px solid #333;">
+            <i class="fas fa-dice-d20"></i> Результаты: [${roll.terms.filter(t => t.results).map(t => t.results.map(r => r.result).join(", ")).join(", ") || roll.total}]
+        </div>
+    </div>`;
+
+    if (game.dice3d) await game.dice3d.showForRoll(roll, game.user, true);
+    ChatMessage.create({ 
+        speaker: ChatMessage.getSpeaker({actor: this}), 
+        content, 
+        rolls: [roll],
+        sound: CONFIG.sounds.dice
+    });
+  }
+
+  /**
+   * Трата DP и установка кулдауна
+   */
+  async _spendDPAndCooldown(item, dpCost) {
+      const currentDP = this.system.resources.dp.value;
+      await this.update({"system.resources.dp.value": currentDP - dpCost});
+      
+      if (item.system.cooldown > 0) {
+          await item.update({"system.isOnCooldown": true});
+      }
+  }
+
+  /**
+   * Атака Словом Дракона (с диалогом)
+   */
+  async _rollDragonWordAttack(item) {
+      const sys = item.system;
+      
+      // Данные для диалога
+      const subAttrs = Object.entries(DUNGEON.subAttributes).map(([k, v]) => ({ key: k, label: v }));
+      const knowledges = this.items.filter(i => i.type === "knowledge").map(i => ({ 
+          id: i.id, 
+          name: i.name, 
+          val: i.system.value 
+      }));
+      
+      // Базовый атрибут (Сила Дракона)
+      const dpStat = this.system.subAttributes.dragonPowerStat || 0;
+      
+      const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/dragon-word-attack-dialog.hbs", {
+          item,
+          attrLabel: "Сила Дракона",
+          attrVal: dpStat,
+          subAttributes: subAttrs,
+          knowledges,
+          damage: sys.damage,
+          damageType: sys.damageType,
+          damageTypes: DUNGEON.damageTypes
+      });
+
+      new Dialog({
+          title: `Слово Дракона: ${item.name}`,
+          content,
+          buttons: {
+              attack: {
+                  label: "<i class='fas fa-dragon'></i> Произнести",
+                  callback: html => this._executeDragonWordAttack(html, item, dpStat)
+              }
+          },
+          default: "attack"
+      }).render(true);
+  }
+
+  /**
+   * Выполнение атаки Словом
+   */
+  async _executeDragonWordAttack(html, item, baseVal) {
+      const form = html[0].querySelector("form");
+      const target = Array.from(game.user.targets)[0]?.actor;
+      if (!target) return ui.notifications.warn("Выберите цель!");
+
+      const sys = item.system;
+      
+      // Трата DP
+      await this._spendDPAndCooldown(item, sys.dpCost || 0);
+
+      // 1. Сбор Пула
+      let secVal = 0;
+      if (form.secondaryStat.value !== "none") {
+          secVal = this.system.subAttributes[form.secondaryStat.value] || 0;
+      }
+      
+      let knowVal = 0;
+      if (form.knowledgeStat.value !== "none") {
+          const k = this.items.get(form.knowledgeStat.value);
+          if (k) knowVal = k.system.value;
+      }
+
+      const modPool = parseInt(form.modPool.value) || 0;
+      const totalStat = baseVal + secVal + knowVal;
+      let pool = Math.max(1, Math.floor(totalStat / 13)) + modPool;
+
+      // 2. Параметры защиты
+      const defenseMode = form.defenseMode.value;
+      const modDC = parseInt(form.modDC.value) || 0;
+      const modKU = parseInt(form.modKU.value) || 0;
+      
+      const isAOE = item.system.areaType && item.system.areaType !== "none";
+
+      // 3. Бросок
+      const roll = new Roll(`${pool}d100`);
+      await roll.evaluate();
+      
+      let successes = 0;
+      let crits = 0;
+      
+      // Расчет DC и KU цели
+      let targetDC = 50;
+      let targetKU = Math.max(1, Math.floor((target.system.subAttributes.boneDensity || 0) / 13));
+      
+      if (defenseMode === "passive" || defenseMode === "full_cover") {
+          const agiDef = target.system.subAttributes.agility || 0;
+          targetDC = 50 + Math.floor(agiDef / 2);
+      }
+      
+      if (defenseMode === "active_opp") {
+          targetDC += 20;
+      }
+
+      targetDC += modDC;
+      targetKU += modKU;
+
+      // Считаем успехи
+      roll.terms[0].results.forEach(r => {
+          if (r.result >= 95) { successes += 3; crits++; }
+          else if (r.result <= 5) { successes -= 1; }
+          else if (r.result >= targetDC) successes += 1;
+      });
+
+      // Логика исхода
+      let hit = false;
+      let damageMult = 0;
+      let outcomeText = "СЛОВО РАССЕИВАЕТСЯ";
+      let color = "#e74c3c";
+
+      if (defenseMode === "full_cover") {
+          const coverKU = targetKU + 5;
+          if (successes >= coverKU) {
+              hit = true;
+              damageMult = 1;
+              outcomeText = "УКРЫТИЕ ПРОБИТО!";
+              color = "#9b59b6";
+          } else if (isAOE && (coverKU - successes) <= 3) {
+              damageMult = 0.5;
+              outcomeText = "ЗАДЕЛО ВЗРЫВОМ (1/2)";
+              color = "#8e44ad";
+          }
+      } else if (defenseMode === "active_def") {
+          if (successes > targetKU) {
+              hit = true;
+              damageMult = 1;
+              outcomeText = "СЛОВО ПОРАЖАЕТ!";
+              color = "#9b59b6";
+          } else {
+              outcomeText = "ПОЛНЫЙ УВОРОТ";
+          }
+      } else {
+          if (successes >= targetKU) {
+              hit = true;
+              damageMult = 1;
+              outcomeText = "СЛОВО ПОРАЖАЕТ!";
+              color = "#9b59b6";
+          } else if (isAOE && (targetKU - successes) <= 3) {
+              damageMult = 0.5;
+              outcomeText = "ЗАДЕЛО КРАЕМ (1/2)";
+              color = "#8e44ad";
+          }
+      }
+
+      // Урон
+      let finalDamage = 0;
+      if (damageMult > 0 && form.damage.value) {
+          // Заменяем @dp на значение
+          let formula = form.damage.value.replace(/@dp/g, baseVal);
+          const dmgRoll = new Roll(formula);
+          await dmgRoll.evaluate();
+          finalDamage = Math.floor(dmgRoll.total * damageMult);
+      }
+
+      // Карточка в чат
+      const content = `
+      <div class="dungeon-chat-card" style="border-left: 4px solid ${color}; background: linear-gradient(135deg, rgba(142,68,173,0.1), rgba(0,0,0,0.3));">
+          <header style="background: rgba(0,0,0,0.5); padding: 8px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #8e44ad;">
+              <img src="${item.img}" width="32" height="32" style="border: 2px solid #8e44ad; border-radius: 4px;">
+              <div>
+                  <h3 style="margin: 0; color: #d2b4de; font-size: 14px;">${item.name}</h3>
+                  <div style="font-size: 11px; color: #9b59b6;">Слово Дракона • ${sys.dpCost} DP</div>
+              </div>
+          </header>
+          
+          <div style="padding: 12px; text-align: center; background: rgba(0,0,0,0.2);">
+              <div style="font-size: 18px; font-weight: bold; color: ${color}; margin-bottom: 8px; text-transform: uppercase;">
+                  ${outcomeText}
+              </div>
+              
+              ${crits > 0 ? `<div style="color: #f1c40f; font-size: 12px;"><i class="fas fa-star"></i> КРИТИЧЕСКИЙ УСПЕХ (${crits})</div>` : ""}
+              
+              ${finalDamage > 0 ? `
+              <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 4px; border: 1px solid #8e44ad;">
+                  <div style="font-size: 28px; font-weight: bold; color: #e74c3c;">${finalDamage}</div>
+                  <div style="font-size: 11px; color: #9b59b6;">${DUNGEON.damageTypes[form.damageType.value] || form.damageType.value}</div>
+                  <button data-action="apply-damage" data-val="${finalDamage}" data-type="${form.damageType.value}" style="margin-top: 8px; width: 100%; background: linear-gradient(135deg, #8e44ad, #9b59b6); border: 1px solid #a569bd; color: #fff; padding: 6px; cursor: pointer;">
+                      🩸 Нанести урон
+                  </button>
+              </div>
+              ` : ""}
+              
+              <div class="gm-only" style="margin-top: 10px; font-size: 11px; color: #666; text-align: left; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+                  <div style="display: flex; justify-content: space-between;">
+                      <span>КС: <b style="color:#9b59b6;">${targetDC}</b></span>
+                      <span>КУ Цели: <b style="color:#9b59b6;">${targetKU}</b></span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                      <span>Пул: <b>${pool}</b>к</span>
+                      <span>Успехов: <b style="color:${successes >= targetKU ? '#9b59b6' : '#e74c3c'}">${successes}</b></span>
+                  </div>
+                  <div style="margin-top: 4px; word-break: break-all;">
+                      [${roll.terms[0].results.map(r => {
+                          let c = "#888";
+                          if (r.result >= 95) c = "#f1c40f";
+                          else if (r.result <= 5) c = "#e74c3c";
+                          else if (r.result >= targetDC) c = "#9b59b6";
+                          return `<span style="color:${c}">${r.result}</span>`;
+                      }).join(", ")}]
+                  </div>
+              </div>
+          </div>
+      </div>`;
+
+      if (game.dice3d) await game.dice3d.showForRoll(roll, game.user, true);
+      ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this}), content, rolls: [roll] });
+  }
+
+  /**
+   * Слово Дракона со спасброском
+   */
+  async _rollDragonWordSave(item) {
+      const sys = item.system;
+      const dpStat = this.system.subAttributes.dragonPowerStat || 0;
+      
+      // Вычисляем DC
+      const autoDC = 50 + Math.floor(dpStat / 2);
+      
+      const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/dragon-word-save-dialog.hbs", {
+          item,
+          saveAttr: sys.saveAttribute,
+          saveDC: sys.saveDC > 0 ? sys.saveDC : autoDC,
+          saveKU: 1,
+          damage: sys.damage,
+          damageType: sys.damageType,
+          subAttributes: DUNGEON.subAttributes,
+          damageTypes: DUNGEON.damageTypes
+      });
+
+      new Dialog({
+          title: `Слово Дракона: ${item.name}`,
+          content,
+          buttons: {
+              cast: {
+                  label: "<i class='fas fa-dragon'></i> Произнести",
+                  callback: html => this._executeDragonWordSave(html, item)
+              }
+          },
+          default: "cast"
+      }).render(true);
+  }
+
+  /**
+   * Выполнение спасброска Слова
+   */
+  async _executeDragonWordSave(html, item) {
+      const form = html[0].querySelector("form");
+      const sys = item.system;
+      
+      // Трата DP
+      await this._spendDPAndCooldown(item, sys.dpCost || 0);
+      
+      const dc = parseInt(form.dc.value) + parseInt(form.modDC.value);
+      const ku = parseInt(form.ku.value) + parseInt(form.modKU.value);
+      const damageFormula = form.damage.value;
+      const damageType = form.damageType.value;
+      const canAvoid = form.canAvoid.checked;
+      
+      // Бросаем урон сразу
+      let rolledDamage = 0;
+      if (damageFormula) {
+          const dpStat = this.system.subAttributes.dragonPowerStat || 0;
+          let formula = damageFormula.replace(/@dp/g, dpStat);
+          const roll = new Roll(formula);
+          await roll.evaluate();
+          rolledDamage = roll.total;
+      }
+
+      // Цели
+      const targets = Array.from(game.user.targets);
+      let resultsHTML = "";
+
+      for (let t of targets) {
+          const actor = t.actor;
+          if (!actor) continue;
+
+          const saveKey = form.saveAttr.value || sys.saveAttribute;
+          const statVal = actor.system.subAttributes[saveKey] || actor.system.attributes[saveKey] || 0;
+          const pool = Math.max(1, Math.floor(statVal / 13));
+          
+          const saveRoll = new Roll(`${pool}d100`);
+          await saveRoll.evaluate();
+          
+          let successes = 0;
+          saveRoll.terms[0].results.forEach(r => {
+              if (r.result >= 95) successes += 3;
+              else if (r.result <= 5) successes -= 1;
+              else if (r.result >= dc) successes += 1;
+          });
+
+          let finalDamage = rolledDamage;
+          let outcome = "ПРОВАЛ";
+          let color = "#e74c3c";
+
+          if (canAvoid && successes >= (ku + 3)) {
+              finalDamage = 0;
+              outcome = "УКЛОНЕНИЕ (0 урона)";
+              color = "#9b59b6";
+          } else if (successes === ku) {
+              finalDamage = Math.floor(rolledDamage / 2);
+              outcome = "ЧАСТИЧНО (1/2 урона)";
+              color = "#8e44ad";
+          } else if (successes > ku) {
+              finalDamage = Math.floor(rolledDamage / 2);
+              outcome = "УСПЕХ (1/2 урона)";
+              color = "#a569bd";
+          }
+
+          resultsHTML += `
+          <div style="margin-bottom: 8px; border-bottom: 1px dashed #8e44ad; padding: 6px; font-size: 12px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+              <div style="display: flex; justify-content: space-between;">
+                  <span style="font-weight: bold; color: #d2b4de;">${actor.name}</span>
+                  <span style="color: ${color}; font-weight: bold;">${outcome}</span>
+              </div>
+              <div style="color: #888; font-size: 10px;">
+                  Успехов: ${successes}/${ku} | Урон: <b style="color: #e74c3c;">${finalDamage}</b>
+              </div>
+              ${finalDamage > 0 ? `<button data-action="apply-damage" data-val="${finalDamage}" data-type="${damageType}" style="width: 100%; font-size: 10px; margin-top: 4px; background: #8e44ad; border: 1px solid #9b59b6; color: #fff; padding: 4px; cursor: pointer;">Нанести ${finalDamage}</button>` : ""}
+          </div>`;
+      }
+
+      ChatMessage.create({
+          speaker: ChatMessage.getSpeaker({actor: this}),
+          content: `
+          <div class="dungeon-chat-card" style="border-left: 4px solid #8e44ad; background: linear-gradient(135deg, rgba(142,68,173,0.1), rgba(0,0,0,0.3));">
+              <header style="background: rgba(0,0,0,0.5); padding: 8px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #8e44ad;">
+                  <img src="${item.img}" width="32" height="32" style="border: 2px solid #8e44ad; border-radius: 4px;">
+                  <div>
+                      <h3 style="margin: 0; color: #d2b4de;">${item.name}</h3>
+                      <div style="font-size: 11px; color: #9b59b6;">Спасбросок: ${DUNGEON.subAttributes[form.saveAttr.value]}</div>
+                  </div>
+              </header>
+              <div style="padding: 12px;">
+                  <div style="font-size: 11px; color: #9b59b6; text-align: center; margin-bottom: 10px;">
+                      DC: <b style="color: #d2b4de;">${dc}</b> | KU: <b style="color: #d2b4de;">${ku}</b>
+                  </div>
+                  ${resultsHTML || "<div style='color:#666; text-align: center;'>Нет целей</div>"}
+              </div>
+          </div>`
+      });
+  }
+
+  /**
+   * Слово без броска (утилита/бафф)
+   */
+  async _postDragonWordToChat(item) {
+      ChatMessage.create({
+          speaker: ChatMessage.getSpeaker({actor: this}),
+          content: `
+          <div class="dungeon-chat-card" style="border-left: 4px solid #9b59b6; background: linear-gradient(135deg, rgba(142,68,173,0.1), rgba(0,0,0,0.3));">
+              <header style="background: rgba(0,0,0,0.5); padding: 8px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #8e44ad;">
+                  <img src="${item.img}" width="32" height="32" style="border: 2px solid #8e44ad; border-radius: 4px;">
+                  <div>
+                      <h3 style="margin: 0; color: #d2b4de;">${item.name}</h3>
+                      <div style="font-size: 11px; color: #9b59b6;">Слово Дракона • ${item.system.dpCost} DP</div>
+                  </div>
+              </header>
+              <div style="padding: 12px; color: #ccc; font-size: 13px;">
+                  ${item.system.description || "Слово произнесено."}
+              </div>
+          </div>`
+      });
+  }
+  /**
+   * Использовать способность эссенции
+   * @param {string} itemId - ID предмета эссенции
+   * @param {string} abilityId - ID способности внутри эссенции
+   */
+  async useEssenceAbility(itemId, abilityId) {
+    const item = this.items.get(itemId);
+    if (!item || item.type !== "essence") return;
+    
+    const abilities = item.system.abilities || [];
+    const ability = abilities.find(a => a.id === abilityId);
+    
+    if (!ability) {
+        return ui.notifications.error("Способность не найдена");
+    }
+    
+    // Пассивные нельзя активировать
+    if (ability.activationAction === "passive") {
+        return ui.notifications.warn("Пассивные способности нельзя активировать");
+    }
+    
+    // Проверка кулдауна
+    if (ability.currentCooldown > 0) {
+        return ui.notifications.warn(`${ability.name} на перезарядке (${ability.currentCooldown} р.)`);
+    }
+    
+    // Проверка ресурсов (mana используется как "очки духа" для немагов)
+    const manaCost = ability.manaCost || 0;
+    const currentMana = this.system.resources.mana.value;
+    
+    if (manaCost > currentMana) {
+        return ui.notifications.warn(`Недостаточно MP/Духа! Требуется ${manaCost}, есть ${currentMana}`);
+    }
+    
+    // Определяем тип броска по данным способности
+    const hasDamage = ability.damage && ability.damage.trim() !== "";
+    const requiresSave = ability.requiresSave;
+    
+    // Атакующая способность с уроном
+    if (hasDamage && !requiresSave) {
+        return this._rollEssenceAttack(item, ability, manaCost);
+    }
+    
+    // Способность со спасброском
+    if (requiresSave) {
+        return this._rollEssenceSave(item, ability, manaCost);
+    }
+    
+    // Утилитарная способность (без броска)
+    return this._activateEssenceAbility(item, ability, manaCost);
+  }
+
+  /**
+  * Атака способностью эссенции
+  */
+  async _rollEssenceAttack(item, ability, manaCost) {
+    const targets = Array.from(game.user.targets);
+    if (targets.length === 0) {
+        return ui.notifications.warn("Выберите цель!");
+    }
+    
+    const target = targets[0].actor;
+    
+    // Базовый атрибут для атаки
+    const scalingKey = ability.damageScaling || "soulPower";
+    let baseVal = 0;
+    
+    if (scalingKey === "none") {
+        baseVal = 0;
+    } else if (this.system.subAttributes[scalingKey] !== undefined) {
+        baseVal = this.system.subAttributes[scalingKey];
+    } else if (this.system.attributes[scalingKey] !== undefined) {
+        baseVal = this.system.attributes[scalingKey];
+    }
+    
+    // Данные для диалога
+    const subAttrs = Object.entries(DUNGEON.subAttributes).map(([k, v]) => ({ key: k, label: v }));
+    const knowledges = this.items.filter(i => i.type === "knowledge").map(i => ({ 
+        id: i.id, name: i.name, val: i.system.value 
+    }));
+    
+    const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/essence-attack-dialog.hbs", {
+        item,
+        ability,
+        attrLabel: DUNGEON.subAttributes[scalingKey] || scalingKey,
+        attrVal: baseVal,
+        subAttributes: subAttrs,
+        knowledges,
+        damageTypes: DUNGEON.damageTypes
+    });
+
+    new Dialog({
+        title: `${ability.name} — Атака`,
+        content,
+        buttons: {
+            attack: {
+                icon: '<i class="fas fa-burst"></i>',
+                label: "Атаковать",
+                callback: html => this._executeEssenceAttack(html, item, ability, baseVal, target, manaCost)
+            }
+        },
+        default: "attack"
+    }, { width: 420 }).render(true);
+  }
+
+  /**
+  * Выполнение атаки эссенции
+  */
+  async _executeEssenceAttack(html, item, ability, baseVal, target, manaCost) {
+    const form = html[0].querySelector("form");
+    const targetSys = target.system;
+    
+    // Сбор пула
+    let secVal = 0;
+    if (form.secondaryStat && form.secondaryStat.value !== "none") {
+        secVal = this.system.subAttributes[form.secondaryStat.value] || 0;
+    }
+    
+    let knowVal = 0;
+    if (form.knowledgeStat && form.knowledgeStat.value !== "none") {
+        const k = this.items.get(form.knowledgeStat.value);
+        if (k) knowVal = k.system.value;
+    }
+    
+    const modPool = parseInt(form.modPool?.value) || 0;
+    const totalStat = baseVal + secVal + knowVal;
+    let pool = Math.max(1, Math.floor(totalStat / 13)) + modPool;
+    
+    // Параметры защиты
+    const defenseMode = form.defenseMode?.value || "passive";
+    const modDC = parseInt(form.modDC?.value) || 0;
+    const modKU = parseInt(form.modKU?.value) || 0;
+    
+    const isAOE = ability.areaType && ability.areaType !== "none";
+    
+    // Бросок
+    const roll = new Roll(`${pool}d100`);
+    await roll.evaluate();
+    
+    let successes = 0;
+    let crits = 0;
+    
+    // Расчет DC и KU цели
+    let targetDC = 50;
+    let targetKU = Math.max(1, Math.floor((targetSys.subAttributes.boneDensity || 0) / 13));
+    
+    // Броня добавляет КУ
+    const armor = target.items.find(i => i.type === "armor" && i.system.equipStatus === "equipped" && !i.system.isShield);
+    if (armor) targetKU += armor.system.armorValue || 0;
+    
+    if (defenseMode === "passive" || defenseMode === "full_cover") {
+        const agiDef = targetSys.subAttributes.agility || 0;
+        targetDC = 50 + Math.floor(agiDef / 2);
+    }
+    
+    if (defenseMode === "active_opp") {
+        targetDC += 20;
+    }
+    
+    targetDC += modDC;
+    targetKU += modKU;
+    
+    // Подсчет успехов
+    const critThreshold = Calc.getCritThreshold(this.system.subAttributes.flexibility || 0);
+    roll.terms[0].results.forEach(r => {
+        if (r.result >= critThreshold) { successes += 3; crits++; }
+        else if (r.result <= 5) { successes -= 1; }
+        else if (r.result >= targetDC) successes += 1;
+    });
+    
+    // Логика исхода
+    let hit = false;
+    let damageMult = 0;
+    let outcomeText = "ПРОМАХ";
+    let color = "#ff4444";
+    
+    if (defenseMode === "full_cover") {
+        const coverKU = targetKU + 5;
+        if (successes >= coverKU) {
+            hit = true;
+            damageMult = 1;
+            outcomeText = "УКРЫТИЕ ПРОБИТО!";
+            color = "#44ff44";
+        } else if (isAOE && (coverKU - successes) <= 3) {
+            damageMult = 0.5;
+            outcomeText = "ЗАДЕЛО ВЗРЫВОМ (1/2)";
+            color = "#ffaa00";
+        }
+    } else if (defenseMode === "active_def") {
+        if (successes > targetKU) {
+            hit = true;
+            damageMult = 1;
+            outcomeText = "ПОПАДАНИЕ";
+            color = "#44ff44";
+        } else {
+            outcomeText = "ПОЛНЫЙ УВОРОТ";
+        }
+    } else {
+        if (successes >= targetKU) {
+            hit = true;
+            damageMult = 1;
+            outcomeText = "ПОПАДАНИЕ";
+            color = "#44ff44";
+        } else if (isAOE && (targetKU - successes) <= 3) {
+            damageMult = 0.5;
+            outcomeText = "ЗАДЕЛО КРАЕМ (1/2)";
+            color = "#ffaa00";
+        }
+    }
+    
+    // Урон
+    let finalDamage = 0;
+    let damageFormula = ability.damage;
+    
+    if (damageMult > 0 && damageFormula) {
+        // Добавляем модификатор атрибута
+        const scalingKey = ability.damageScaling || "soulPower";
+        if (scalingKey !== "none") {
+            const attrMod = Math.floor(baseVal / 13);
+            if (attrMod > 0) damageFormula = `${damageFormula} + ${attrMod}`;
+        }
+        
+        const dmgRoll = new Roll(damageFormula);
+        await dmgRoll.evaluate();
+        finalDamage = Math.floor(dmgRoll.total * damageMult);
+    }
+    
+    // Списываем ману
+    if (manaCost > 0) {
+        await this.update({"system.resources.mana.value": this.system.resources.mana.value - manaCost});
+    }
+    
+    // Устанавливаем кулдаун
+    if (ability.cooldown > 0) {
+        const newAbilities = foundry.utils.deepClone(item.system.abilities);
+        const idx = newAbilities.findIndex(a => a.id === ability.id);
+        if (idx !== -1) {
+            newAbilities[idx].currentCooldown = ability.cooldown;
+            await item.update({ "system.abilities": newAbilities });
+        }
+    }
+    
+    // Карточка в чат
+    const damageTypeLabel = DUNGEON.damageTypes[ability.damageType] || ability.damageType;
+    
+    const content = `
+    <div class="dungeon-chat-card" style="border-left: 4px solid ${color}; background: linear-gradient(135deg, rgba(180,100,50,0.1), rgba(0,0,0,0.3));">
+        <header style="background: rgba(0,0,0,0.5); padding: 8px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #d4af37;">
+            <img src="${item.img}" width="32" height="32" style="border: 2px solid #d4af37; border-radius: 4px;">
+            <div>
+                <h3 style="margin: 0; color: #ffd700; font-size: 14px;">${ability.name}</h3>
+                <div style="font-size: 11px; color: #b8860b;">${item.name} • ${manaCost > 0 ? manaCost + ' MP' : 'Бесплатно'}</div>
+            </div>
+        </header>
+        
+        <div style="padding: 12px; text-align: center; background: rgba(0,0,0,0.2);">
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">${this.name} → ${target.name}</div>
+            
+            <div style="font-size: 20px; font-weight: bold; color: ${color}; text-transform: uppercase;">
+                ${outcomeText}
+            </div>
+            
+            ${crits > 0 ? `<div style="color: #ffd700; font-size: 11px;"><i class="fas fa-star"></i> КРИТ (${crits})</div>` : ""}
+            
+            ${finalDamage > 0 ? `
+            <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 4px; border: 1px solid #d4af37;">
+                <div style="font-size: 28px; font-weight: bold; color: #ff6b6b;">${finalDamage}</div>
+                <div style="font-size: 11px; color: #ffa500;">${damageTypeLabel}</div>
+                <button data-action="apply-damage" data-val="${finalDamage}" data-type="${ability.damageType}" style="margin-top: 8px; width: 100%; background: linear-gradient(135deg, #8b4513, #d4af37); border: 1px solid #ffd700; color: #fff; padding: 6px; cursor: pointer; border-radius: 4px;">
+                    🩸 Нанести урон
+                </button>
+            </div>
+            ` : ""}
+            
+            <div class="gm-only" style="margin-top: 10px; font-size: 11px; color: #666; text-align: left; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>КС: <b style="color:#d4af37;">${targetDC}</b></span>
+                    <span>КУ Цели: <b style="color:#d4af37;">${targetKU}</b></span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Пул: <b>${pool}</b>к</span>
+                    <span>Успехов: <b style="color:${successes >= targetKU ? '#4f4' : '#f44'}">${successes}</b></span>
+                </div>
+                <div style="margin-top: 4px; word-break: break-all;">
+                    [${roll.terms[0].results.map(r => {
+                        let c = "#888";
+                        if (r.result >= critThreshold) c = "#ffd700";
+                        else if (r.result <= 5) c = "#e74c3c";
+                        else if (r.result >= targetDC) c = "#d4af37";
+                        return `<span style="color:${c}">${r.result}</span>`;
+                    }).join(", ")}]
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    if (game.dice3d) await game.dice3d.showForRoll(roll, game.user, true);
+    ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this}), content, rolls: [roll] });
+  }
+
+  /**
+  * Способность эссенции со спасброском
+  */
+  async _rollEssenceSave(item, ability, manaCost) {
+    // Вычисляем DC на основе магических статов
+    const magicStats = this.magicStats || Calc.calculateMagicStats(
+        this.system.subAttributes.cognition || 0,
+        this.system.subAttributes.manaSense || 0,
+        this.system.subAttributes.soulPower || 0
+    );
+    
+    const content = await foundry.applications.handlebars.renderTemplate("systems/dungeon-stone/templates/dialogs/essence-save-dialog.hbs", {
+        item,
+        ability,
+        saveAttr: ability.saveAttribute,
+        saveDC: magicStats.dc,
+        saveKU: magicStats.ku,
+        subAttributes: DUNGEON.subAttributes,
+        damageTypes: DUNGEON.damageTypes
+    });
+
+    new Dialog({
+        title: `${ability.name} — Спасбросок`,
+        content,
+        buttons: {
+            cast: {
+                icon: '<i class="fas fa-shield-alt"></i>',
+                label: "Активировать",
+                callback: html => this._executeEssenceSave(html, item, ability, manaCost)
+            }
+        },
+        default: "cast"
+    }, { width: 420 }).render(true);
+  }
+
+  /**
+  * Выполнение спасброска эссенции
+  */
+  async _executeEssenceSave(html, item, ability, manaCost) {
+    const form = html[0].querySelector("form");
+    
+    const dc = parseInt(form.dc.value) + parseInt(form.modDC.value);
+    const ku = parseInt(form.ku.value) + parseInt(form.modKU.value);
+    const damageFormula = form.damage.value;
+    const damageType = form.damageType.value;
+    const canAvoid = form.canAvoid.checked;
+    
+    // Бросаем урон сразу
+    let rolledDamage = 0;
+    if (damageFormula) {
+        const roll = new Roll(damageFormula);
+        await roll.evaluate();
+        rolledDamage = roll.total;
+    }
+    
+    // Списываем ману
+    if (manaCost > 0) {
+        await this.update({"system.resources.mana.value": this.system.resources.mana.value - manaCost});
+    }
+    
+    // Устанавливаем кулдаун
+    if (ability.cooldown > 0) {
+        const newAbilities = foundry.utils.deepClone(item.system.abilities);
+        const idx = newAbilities.findIndex(a => a.id === ability.id);
+        if (idx !== -1) {
+            newAbilities[idx].currentCooldown = ability.cooldown;
+            await item.update({ "system.abilities": newAbilities });
+        }
+    }
+    
+    // Цели
+    const targets = Array.from(game.user.targets);
+    let resultsHTML = "";
+    
+    for (let t of targets) {
+        const actor = t.actor;
+        if (!actor) continue;
+        
+        const saveKey = form.saveAttr.value || ability.saveAttribute;
+        const statVal = actor.system.subAttributes[saveKey] || actor.system.attributes[saveKey] || 0;
+        const pool = Math.max(1, Math.floor(statVal / 13));
+        
+        const saveRoll = new Roll(`${pool}d100`);
+        await saveRoll.evaluate();
+        
+        let successes = 0;
+        saveRoll.terms[0].results.forEach(r => {
+            if (r.result >= 95) successes += 3;
+            else if (r.result <= 5) successes -= 1;
+            else if (r.result >= dc) successes += 1;
+        });
+        
+        let finalDamage = rolledDamage;
+        let outcome = "ПРОВАЛ";
+        let color = "#ff4444";
+        
+        if (canAvoid && successes >= (ku + 3)) {
+            finalDamage = 0;
+            outcome = "УКЛОНЕНИЕ (0 урона)";
+            color = "#44ff44";
+        } else if (successes === ku) {
+            finalDamage = Math.floor(rolledDamage / 2);
+            outcome = "ЧАСТИЧНО (1/2 урона)";
+            color = "#ffaa00";
+        } else if (successes > ku) {
+            finalDamage = Math.floor(rolledDamage / 2);
+            outcome = "УСПЕХ (1/2 урона)";
+            color = "#88ccff";
+        }
+        
+        resultsHTML += `
+        <div style="margin-bottom: 8px; border-bottom: 1px dashed #d4af37; padding: 6px; font-size: 12px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: bold; color: #ffd700;">${actor.name}</span>
+                <span style="color: ${color}; font-weight: bold;">${outcome}</span>
+            </div>
+            <div style="color: #888; font-size: 10px;">
+                Успехов: ${successes}/${ku} | Урон: <b style="color: #ff6b6b;">${finalDamage}</b>
+            </div>
+            ${finalDamage > 0 ? `<button data-action="apply-damage" data-val="${finalDamage}" data-type="${damageType}" style="width: 100%; font-size: 10px; margin-top: 4px; background: #8b4513; border: 1px solid #d4af37; color: #fff; padding: 4px; cursor: pointer;">Нанести ${finalDamage}</button>` : ""}
+        </div>`;
+    }
+    
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({actor: this}),
+        content: `
+        <div class="dungeon-chat-card" style="border-left: 4px solid #d4af37; background: linear-gradient(135deg, rgba(180,100,50,0.1), rgba(0,0,0,0.3));">
+            <header style="background: rgba(0,0,0,0.5); padding: 8px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #d4af37;">
+                <img src="${item.img}" width="32" height="32" style="border: 2px solid #d4af37; border-radius: 4px;">
+                <div>
+                    <h3 style="margin: 0; color: #ffd700;">${ability.name}</h3>
+                    <div style="font-size: 11px; color: #b8860b;">Спасбросок: ${DUNGEON.subAttributes[form.saveAttr.value]}</div>
+                </div>
+            </header>
+            <div style="padding: 12px;">
+                <div style="font-size: 11px; color: #d4af37; text-align: center; margin-bottom: 10px;">
+                    DC: <b style="color: #ffd700;">${dc}</b> | KU: <b style="color: #ffd700;">${ku}</b>
+                </div>
+                ${resultsHTML || "<div style='color:#666; text-align: center;'>Нет целей</div>"}
+            </div>
+        </div>`
+    });
+  }
+
+  /**
+  * Активация утилитарной способности эссенции (без броска)
+  */
+  async _activateEssenceAbility(item, ability, manaCost) {
+    // Списываем ману
+    if (manaCost > 0) {
+        await this.update({"system.resources.mana.value": this.system.resources.mana.value - manaCost});
+    }
+    
+    // Устанавливаем кулдаун
+    if (ability.cooldown > 0) {
+        const newAbilities = foundry.utils.deepClone(item.system.abilities);
+        const idx = newAbilities.findIndex(a => a.id === ability.id);
+        if (idx !== -1) {
+            newAbilities[idx].currentCooldown = ability.cooldown;
+            await item.update({ "system.abilities": newAbilities });
+        }
+    }
+    
+    // Размещение шаблона области (если есть)
+    if (ability.areaType && ability.areaType !== "none" && ability.areaSize > 0) {
+        // Создаём фейковый item с данными области для шаблона
+        await this._placeTemplate({
+            system: {
+                areaType: ability.areaType,
+                areaSize: ability.areaSize
+            },
+            img: item.img,
+            name: ability.name
+        });
+    }
+    
+    // Сообщение в чат
+    const durationText = ability.duration !== "instant" 
+        ? `<div style="color: #888; font-size: 11px; margin-top: 5px;"><i class="fas fa-clock"></i> ${ability.duration}${ability.durationRounds > 0 ? ` (${ability.durationRounds} р.)` : ''}</div>` 
+        : '';
+    
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({actor: this}),
+        content: `
+        <div class="dungeon-chat-card" style="border-left: 4px solid #d4af37; background: linear-gradient(135deg, rgba(180,100,50,0.1), rgba(0,0,0,0.3));">
+            <header style="background: rgba(0,0,0,0.5); padding: 8px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #d4af37;">
+                <img src="${item.img}" width="32" height="32" style="border: 2px solid #d4af37; border-radius: 4px;">
+                <div>
+                    <h3 style="margin: 0; color: #ffd700;">${ability.name}</h3>
+                    <div style="font-size: 11px; color: #b8860b;">${item.name} • ${manaCost > 0 ? manaCost + ' MP' : 'Бесплатно'}</div>
+                </div>
+            </header>
+            <div style="padding: 12px; color: #ccc; font-size: 13px;">
+                <div style="text-align: center; margin-bottom: 8px;">
+                    <span style="color: #ffd700;">${this.name}</span> активирует способность
+                </div>
+                ${durationText}
+                ${ability.description ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #555; font-size: 12px;">${ability.description}</div>` : ''}
+            </div>
+        </div>`
+    });
   }
 }

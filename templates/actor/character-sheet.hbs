@@ -90,17 +90,25 @@
                 </div>
                 
                 {{!-- FATE --}}
-                <div class="res-block fate">
+                <div class="res-block fate {{#if isGM}}gm-mode{{/if}}" data-fate="{{system.resources.fate.value}}">
                     <div class="res-label">СУДЬБА</div>
                     <div class="res-bar">
-                        <div class="bar-text">
-                            <input type="number" 
-                                name="system.resources.fate.value" 
-                                value="{{system.resources.fate.value}}" 
-                                min="0" max="3" step="1"
-                                data-dtype="Number"/> 
-                            <span class="sep">/</span> 3
+                        {{!-- Заливка (видят все, 100% ширины, меняется яркость) --}}
+                        <div class="fate-fill"></div>
+                        
+                        {{!-- Текст для игрока (без цифр!) --}}
+                        {{#unless isGM}}
+                        <div class="fate-text">✦ ✦ ✦</div>
+                        {{/unless}}
+                        
+                        {{!-- Кружки для GM --}}
+                        {{#if isGM}}
+                        <div class="fate-pips">
+                            <div class="fate-pip {{#if (gte system.resources.fate.value 1)}}active{{/if}}" data-value="1" title="1 очко"></div>
+                            <div class="fate-pip {{#if (gte system.resources.fate.value 2)}}active{{/if}}" data-value="2" title="2 очка"></div>
+                            <div class="fate-pip {{#if (gte system.resources.fate.value 3)}}active{{/if}}" data-value="3" title="3 очка"></div>
                         </div>
+                        {{/if}}
                     </div>
                 </div>
             </div>
@@ -157,7 +165,7 @@
                         </div>
                         
                         {{!-- КЛАСС --}}
-                        <div class="origin-slot {{#unless roleItem}}empty{{/unless}}" data-item-id="{{roleItem._id}}">
+                        <div class="origin-slot {{#unless roleItem}}empty{{/unless}}" {{#if roleItem}}data-item-id="{{roleItem._id}}"{{/if}}>
                             <label class="slot-label">КЛАСС</label>
                             <div class="slot-content">
                                 {{#if roleItem}}
@@ -938,87 +946,131 @@
         <div class="tab contracts" data-group="primary" data-tab="contracts" style="height: 100%; overflow: hidden;">
             <div class="magic-layout" style="display: flex; height: 100%; gap: 15px;">
                 
-                {{!-- ЛЕВАЯ КОЛОНКА --}}
-                <aside class="magic-sidebar" style="flex: 0 0 250px; background: rgba(0,0,0,0.3); border-right: 2px solid #4a9; padding: 15px; display: flex; flex-direction: column; gap: 20px;">
+                {{!-- ЛЕВАЯ ПАНЕЛЬ --}}
+                <aside class="magic-sidebar" style="flex: 0 0 280px; background: linear-gradient(180deg, rgba(0,20,15,0.4), rgba(0,0,0,0.3)); border-right: 2px solid #2a9d8f; padding: 15px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
                     
-                    <div style="text-align: center;">
-                        <div style="font-size: 18px; font-weight: bold; color: #4a9; text-transform: uppercase; margin-bottom: 5px;">
+                    {{!-- ИСТОЧНИК СИЛЫ --}}
+                    <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.5); border-radius: 8px; border: 1px solid #2a9d8f;">
+                        <div style="font-size: 20px; font-weight: bold; color: #4ecdc4; text-transform: uppercase; margin-bottom: 8px; text-shadow: 0 0 10px rgba(78,205,196,0.5);">
                             {{contractSourceLabel}}
                         </div>
-                        <div style="font-size: 12px; color: #aaa;">Источник силы</div>
-                    </div>
-
-                    <div class="recovery-box" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 4px; border: 1px solid #254;">
-                        <div style="color: #8b9; margin-bottom: 5px; text-transform: uppercase; font-size: 10px; text-align: center;">Слоты Связи</div>
-                        <div style="text-align: center; font-size: 36px; font-weight: bold; color: #fff;">
-                            {{contractCount}} <span style="font-size:18px; color:#666;">/</span> <span style="color:#4a9;">{{contractMax}}</span>
-                        </div>
-                    </div>
-
-                    {{!-- АКТИВНЫЕ СЛОТЫ --}}
-                    <div class="active-contracts" style="display: flex; flex-direction: column; gap: 10px;">
-                        <h4 style="font-size: 12px; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #444;">Активные Связи</h4>
+                        <div style="font-size: 12px; color: #76c7c0;">Источник контрактной силы</div>
                         
-                        {{#each contractSlots as |slot|}}
-                        <div class="slot-card" style="background: rgba(0,0,0,0.4); border: 1px solid {{#if slot.item}}#4a9{{else}}#444{{/if}}; border-radius: 4px; padding: 5px; min-height: 50px; display: flex; align-items: center;">
-                            {{#if slot.item}}
-                                <img src="{{slot.item.img}}" width="40" height="40" style="border-radius: 4px; border: 1px solid #4a9; margin-right: 10px;">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: bold; color: #fff; font-size: 13px;">{{slot.item.name}}</div>
-                                    <div style="font-size: 10px; color: #8b9;">Ур. {{slot.item.system.level}}</div>
-                                </div>
-                                <a class="item-control item-unequip" data-item-id="{{slot.item._id}}" title="Разорвать связь" style="color: #f44; cursor: pointer;">
-                                    <i class="fas fa-unlink"></i>
-                                </a>
-                            {{else}}
-                                <div style="flex: 1; text-align: center; color: #666; font-style: italic; font-size: 11px;">
-                                    Слот свободен
-                                </div>
-                            {{/if}}
+                        <div style="margin-top: 10px; font-size: 48px; color: #2a9d8f; text-shadow: 0 0 20px rgba(42,157,143,0.6);">
+                            {{#if race.isBeastkin}}🐺{{/if}}
+                            {{#if race.isElf}}🍃{{/if}}
+                            {{#if (eq contractSourceLabel "Элементалист")}}⚡{{/if}}
                         </div>
-                        {{/each}}
+                    </div>
+
+                    {{!-- СЛОТЫ --}}
+                    <div style="background: linear-gradient(135deg, rgba(42,157,143,0.1), rgba(0,0,0,0.3)); padding: 15px; border-radius: 8px; border: 1px solid #264653;">
+                        <div style="color: #8ecae6; margin-bottom: 10px; text-transform: uppercase; font-size: 11px; text-align: center; letter-spacing: 1px;">
+                            {{#if race.isBeastkin}}Узы со зверем{{else}}Связующие узы{{/if}}
+                        </div>
+                        
+                        <div style="text-align: center; font-size: 42px; font-weight: bold; margin-bottom: 10px;">
+                            <span style="color: #4ecdc4; text-shadow: 0 0 10px rgba(78,205,196,0.5);">{{contractCount}}</span>
+                            <span style="font-size: 24px; color: #555; margin: 0 5px;">/</span>
+                            <span style="color: #76c7c0;">{{contractMax}}</span>
+                        </div>
+                        
+                        <div style="height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; overflow: hidden;">
+                            <div style="height: 100%; width: {{#if contractMax}}{{multiply (divide contractCount contractMax) 100}}{{else}}0{{/if}}%; background: linear-gradient(90deg, #2a9d8f, #4ecdc4); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+
+                    {{!-- АКТИВНЫЕ СВЯЗИ --}}
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                        <h4 style="font-size: 12px; color: #4ecdc4; text-transform: uppercase; border-bottom: 1px solid #264653; padding-bottom: 5px; margin: 0;">
+                            <i class="fas fa-link"></i> Активные связи
+                        </h4>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto;">
+                            {{#each contractSlots as |slot|}}
+                            <div style="background: {{#if slot.item}}linear-gradient(135deg, rgba(42,157,143,0.2), rgba(0,0,0,0.4)){{else}}rgba(0,0,0,0.3){{/if}}; border: 1px solid {{#if slot.item}}#2a9d8f{{else}}#333{{/if}}; border-radius: 6px; padding: 8px; min-height: 60px; display: flex; align-items: center;">
+                                {{#if slot.item}}
+                                    <img src="{{slot.item.img}}" width="40" height="40" style="border-radius: 6px; border: 2px solid #2a9d8f; margin-right: 10px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: bold; color: #fff; font-size: 13px;">{{slot.item.name}}</div>
+                                        <div style="font-size: 11px; color: #76c7c0;">
+                                            {{slot.item.system.entityName}}
+                                        </div>
+                                    </div>
+                                    <a class="item-control item-unequip" data-item-id="{{slot.item._id}}" title="Разорвать" style="color: #e63946; cursor: pointer;">
+                                        <i class="fas fa-unlink"></i>
+                                    </a>
+                                {{else}}
+                                    <div style="flex: 1; text-align: center; color: #555; font-style: italic; font-size: 12px;">
+                                        <i class="fas fa-circle-notch" style="font-size: 20px; color: #333;"></i>
+                                        <div>Слот пуст</div>
+                                    </div>
+                                {{/if}}
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+
+                    {{!-- СТАДИЯ РАЗВИТИЯ --}}
+                    <div style="background: rgba(0,0,0,0.5); border-radius: 6px; padding: 10px; border: 1px solid #264653;">
+                        <label style="font-size: 10px; color: #4ecdc4; text-transform: uppercase; display: block; margin-bottom: 5px;">
+                            {{#if race.isBeastkin}}Стадия развития зверя{{else}}Стадия развития{{/if}}
+                        </label>
+                        <input type="text" 
+                            class="direct-edit"
+                            name="system.contractStage" 
+                            value="{{system.contractStage}}"
+                            placeholder="Начальная"
+                            style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #2a9d8f; color: #fff; padding: 5px; font-size: 12px; text-align: center;">
                     </div>
 
                 </aside>
 
-                {{!-- ПРАВАЯ КОЛОНКА (СПИСОК) --}}
-                <main class="magic-content" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                {{!-- ПРАВАЯ ПАНЕЛЬ --}}
+                <main class="magic-content" style="flex: 1; overflow-y: auto; padding: 20px;">
                     
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4a9; padding-bottom: 5px; margin-bottom: 15px;">
-                        <h2 style="font-family: serif; font-size: 24px; color: #4a9; margin: 0;">ВСЕ КОНТРАКТЫ</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2a9d8f; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="font-family: serif; font-size: 26px; color: #4ecdc4; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                            <i class="fas fa-handshake"></i> {{contractsTitle}}
+                        </h2>
                         {{#if isGM}}
-                            <a class="item-create" data-type="contract" style="color: #4a9; font-size: 12px; cursor: pointer; border: 1px solid #4a9; padding: 4px 10px; border-radius: 4px;">
-                                <i class="fas fa-plus"></i> Создать
-                            </a>
+                            {{#if (lt contractCount contractMax)}}
+                                <a class="item-create" data-type="contract" style="color: #4ecdc4; font-size: 14px; cursor: pointer; border: 2px solid #2a9d8f; padding: 6px 14px; border-radius: 6px; background: rgba(42,157,143,0.1);">
+                                    <i class="fas fa-plus"></i> Заключить новый
+                                </a>
+                            {{else}}
+                                <span style="color: #666; font-size: 12px;">
+                                    <i class="fas fa-ban"></i> Лимит достигнут
+                                </span>
+                            {{/if}}
                         {{/if}}
                     </div>
 
-                    <div class="contracts-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    {{!-- СПИСОК --}}
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
                         {{#each contracts as |item|}}
-                        <div class="contract-item item {{#if item.isExpanded}}expanded{{/if}}" data-item-id="{{item._id}}">
+                        <div class="contract-item item" data-item-id="{{item._id}}">
                             
-                            {{!-- Хедер Строки --}}
-                            <div class="item-header" style="display: flex; align-items: center; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; border: 1px solid #333;">
-                                <img src="{{item.img}}" width="40" height="40" style="border-radius: 4px; margin-right: 15px; border: 1px solid #555;">
+                            {{!-- Заголовок контракта --}}
+                            <div class="item-clickable" style="display: flex; align-items: center; background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(42,157,143,0.05)); padding: 12px; border-radius: 8px; border: 1px solid {{#if (eq item.system.equipStatus 'equipped')}}#2a9d8f{{else}}#333{{/if}}; cursor: pointer; transition: all 0.3s;">
                                 
-                                <div class="item-name item-clickable" style="flex: 1; font-weight: bold; font-size: 15px; color: #e0e0e0; cursor: pointer;">
-                                    {{item.name}}
-                                    {{#if (eq item.system.equipStatus "equipped")}}
-                                        <span style="font-size: 10px; color: #4a9; border: 1px solid #4a9; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">АКТИВЕН</span>
-                                    {{/if}}
+                                <img src="{{item.img}}" width="48" height="48" style="border-radius: 8px; margin-right: 15px; border: 2px solid {{#if (eq item.system.equipStatus 'equipped')}}#2a9d8f{{else}}#444{{/if}};">
+                                
+                                <div style="flex: 1;">
+                                    <div style="font-weight: bold; font-size: 16px; color: #e0e0e0;">
+                                        {{item.name}}
+                                        {{#if (eq item.system.equipStatus "equipped")}}
+                                            <span style="font-size: 11px; color: #4ecdc4; border: 1px solid #2a9d8f; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">
+                                                СВЯЗАН
+                                            </span>
+                                        {{/if}}
+                                    </div>
+                                    <div style="font-size: 12px; color: #76c7c0; margin-top: 3px;">
+                                        {{item.system.entityName}}
+                                    </div>
                                 </div>
 
-                                {{!-- Кнопки --}}
-                                <div class="item-controls" style="display: flex; gap: 10px;">
-                                    {{!-- Кнопка "Призвать" (Описание в чат) --}}
-                                    <a class="ability-use" title="Показать в чате" style="color: #aaa;"><i class="fas fa-comment-alt"></i></a>
-                                    
-                                    {{!-- Кнопка Экипировать (Заключить) --}}
-                                    <a class="item-equip" title="{{#if (eq item.system.equipStatus 'equipped')}}Разорвать{{else}}Заключить{{/if}}" 
-                                    style="color: {{#if (eq item.system.equipStatus 'equipped')}}#4a9{{else}}#666{{/if}};">
-                                        <i class="fas fa-link"></i>
-                                    </a>
-
+                                <div style="display: flex; gap: 8px;" onclick="event.stopPropagation();">
                                     {{#if ../isGM}}
                                         <a class="item-edit" style="color: #666;"><i class="fas fa-edit"></i></a>
                                         <a class="item-delete" style="color: #666;"><i class="fas fa-trash"></i></a>
@@ -1026,34 +1078,58 @@
                                 </div>
                             </div>
 
-                            {{!-- РАСКРЫТОЕ ОПИСАНИЕ --}}
+                            {{!-- Развёрнутое описание --}}
                             {{#if item.isExpanded}}
-                            <div class="item-summary" style="background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid #444; border-top: none; margin-top: -2px; border-radius: 0 0 4px 4px;">
+                            <div style="background: linear-gradient(180deg, rgba(42,157,143,0.05), rgba(0,0,0,0.2)); padding: 15px; border: 1px solid #264653; border-top: none; margin-top: -2px; border-radius: 0 0 8px 8px;">
                                 
-                                {{!-- Прогресс Существа --}}
-                                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px;">
-                                    <div style="font-weight: bold; color: #4a9;">Ур. {{item.system.level}}</div>
-                                    <div style="flex: 1; height: 8px; background: #111; border-radius: 4px; position: relative;">
-                                        <div style="position: absolute; height: 100%; background: #4a9; width: {{#if item.system.xpMax}}{{multiply (min 1 (divide item.system.xp item.system.xpMax)) 100}}{{else}}0{{/if}}%;"></div>
-                                    </div>
-                                    <div style="font-size: 10px; color: #aaa;">{{item.system.xp}} / {{item.system.xpMax}} XP</div>
-                                </div>
-
-                                {{!-- Заметки Игрока --}}
-                                <div style="margin-bottom: 10px;">
-                                    <label style="font-size: 10px; color: #888;">ЗАМЕТКИ О КОНТРАКТЕ:</label>
-                                    <input type="text" class="direct-edit" name="items.{{item._id}}.system.playerNotes" value="{{item.system.playerNotes}}" 
-                                        style="width: 100%; background: #111; border: 1px solid #444; color: #ccc; padding: 4px; font-size: 12px;">
-                                </div>
-
-                                <div style="font-size: 12px; color: #ccc; margin-top: 10px;">
+                                {{!-- Описание --}}
+                                {{#if item.system.description}}
+                                <div style="font-size: 12px; color: #bbb; line-height: 1.6; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #333;">
                                     {{{item.system.description}}}
+                                </div>
+                                {{/if}}
+
+                                {{!-- Пассивные способности --}}
+                                {{#if item.system.passiveAbilities}}
+                                <div style="background: rgba(42,157,143,0.1); border-left: 3px solid #4ecdc4; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                                    <div style="font-size: 11px; color: #4ecdc4; text-transform: uppercase; margin-bottom: 5px;">
+                                        <i class="fas fa-shield-alt"></i> Пассивные способности
+                                    </div>
+                                    <div style="font-size: 12px; color: #ccc;">{{{item.system.passiveAbilities}}}</div>
+                                </div>
+                                {{/if}}
+
+                                {{!-- Активная способность --}}
+                                {{#if item.system.activeAbility}}
+                                <div style="background: rgba(244,208,63,0.1); border-left: 3px solid #f4d03f; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                                    <div style="font-size: 11px; color: #f4d03f; text-transform: uppercase; margin-bottom: 5px;">
+                                        <i class="fas fa-bolt"></i> Активная способность
+                                    </div>
+                                    <div style="font-size: 12px; color: #ccc;">{{{item.system.activeAbility}}}</div>
+                                </div>
+                                {{/if}}
+
+                                {{!-- Заметки игрока --}}
+                                <div>
+                                    <label style="font-size: 10px; color: #76c7c0; text-transform: uppercase;">Ваши заметки:</label>
+                                    <textarea class="direct-edit" 
+                                        name="items.{{item._id}}.system.playerNotes" 
+                                        placeholder="Добавьте свои заметки о контракте..."
+                                        style="width: 100%; min-height: 60px; background: rgba(0,0,0,0.3); border: 1px solid #264653; color: #ccc; padding: 8px; font-size: 12px; resize: vertical; margin-top: 5px;">{{item.system.playerNotes}}</textarea>
                                 </div>
                             </div>
                             {{/if}}
 
                         </div>
                         {{/each}}
+                        
+                        {{!-- Пустое состояние --}}
+                        {{#unless contracts.length}}
+                        <div style="text-align: center; color: #555; padding: 40px; font-style: italic;">
+                            <i class="fas fa-handshake" style="font-size: 48px; margin-bottom: 10px;"></i>
+                            <div>Нет заключённых контрактов</div>
+                        </div>
+                        {{/unless}}
                     </div>
 
                 </main>
@@ -1206,6 +1282,17 @@
                             </div>
                         </div>
                     </div>
+
+                    {{!-- КАСТОМНАЯ АТАКА --}}
+                    <div class="panel">
+                        <h3><i class="fas fa-crosshairs"></i> ПРОИЗВОЛЬНЫЙ БРОСОК</h3>
+                        <button type="button" class="btn-custom-damage" style="width: 100%; background: linear-gradient(135deg, #c0392b, #e74c3c); border: 1px solid #922; color: #fff; padding: 10px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-dice-d20"></i> Бросить Урон
+                        </button>
+                        <div style="font-size: 10px; color: #666; text-align: center; margin-top: 5px;">
+                            Выберите цель и нажмите для броска
+                        </div>
+                    </div>
                 </div>
 
                 {{!-- =================== ПРАВАЯ КОЛОНКА: АТАКА И РАСОВЫЕ =================== --}}
@@ -1247,27 +1334,79 @@
                         </div>
                     </div>
 
-                    {{!-- АКТИВНЫЕ СПОСОБНОСТИ --}}
-                    <div class="panel">
+                    {{!-- АКТИВНЫЕ СПОСОБНОСТИ (ЭССЕНЦИИ) --}}
+                    <div class="panel essence-abilities-panel">
                         <h3 class="category-header">
-                            СПОСОБНОСТИ (ЭССЕНЦИИ)
+                            <i class="fas fa-gem"></i> СПОСОБНОСТИ (ЭССЕНЦИИ)
                             {{#if isGM}}
                             <a class="item-create" data-type="essence" title="Добавить эссенцию">
                                 <i class="fas fa-plus"></i>
                             </a>
                             {{/if}}
                         </h3>
-                        <div class="abilities-list">
-                            {{#each abilities as |item|}}
-                            <div class="ability-card item" data-item-id="{{item._id}}">
-                                <img src="{{item.img}}"/>
-                                <span class="ability-name">{{item.name}}</span>
-                                <button class="ability-use" title="Использовать">
-                                    <i class="fas fa-magic"></i>
-                                </button>
-                                {{#if ../isGM}}
-                                <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                {{/if}}
+                        
+                        {{!-- Счетчик слотов --}}
+                        <div class="essence-slots-info" style="font-size: 10px; color: #888; margin-bottom: 8px; text-align: center;">
+                            Слоты эссенций: {{essenceCount}} / {{essenceMax}}
+                        </div>
+                        
+                        <div class="essence-abilities-list">
+                            {{#each essenceAbilities as |ability|}}
+                            <div class="essence-ability-card {{#if ability.isOnCooldown}}on-cooldown{{/if}}" 
+                                data-essence-id="{{ability.essenceId}}"
+                                data-ability-id="{{ability.abilityId}}"
+                                style="border-left: 3px solid {{ability.essenceColor}};">
+                                
+                                {{!-- Иконка эссенции --}}
+                                <img src="{{#if ability.img}}{{ability.img}}{{else}}{{ability.essenceImg}}{{/if}}" 
+                                    class="essence-ability-img" 
+                                    title="{{ability.name}} ({{ability.essenceName}})"/>
+                                
+                                {{!-- Информация о способности --}}
+                                <div class="essence-ability-info">
+                                    <div class="essence-ability-name">{{ability.name}}</div>
+                                    <div class="essence-ability-meta">
+                                        {{!-- Тип действия --}}
+                                        <span class="action-badge">
+                                            {{#if (eq ability.activationAction "action")}}Действие{{/if}}
+                                            {{#if (eq ability.activationAction "bonus")}}Часть действия{{/if}}
+                                            {{#if (eq ability.activationAction "reaction")}}Реакция{{/if}}
+                                            {{#if (eq ability.activationAction "free")}}Свободное{{/if}}
+                                        </span>
+                                        
+                                        {{!-- Кулдаун --}}
+                                        {{#if ability.isOnCooldown}}
+                                        <span class="cooldown-badge">
+                                            <i class="fas fa-hourglass-half"></i> {{ability.currentCooldown}}
+                                        </span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                                
+                                {{!-- Кнопка использования --}}
+                                <div class="essence-ability-actions">
+                                    {{#unless ability.isOnCooldown}}
+                                    <button class="essence-ability-use" 
+                                            data-essence-id="{{ability.essenceId}}" 
+                                            data-ability-id="{{ability.abilityId}}"
+                                            title="Использовать {{ability.name}}">
+                                        <i class="fas fa-bolt"></i>
+                                    </button>
+                                    {{/unless}}
+                                    
+                                    {{#if ../isGM}}
+                                    <a class="item-edit" data-item-id="{{ability.essenceId}}" title="Редактировать эссенцию">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {{/if}}
+                                </div>
+                            </div>
+                            {{else}}
+                            {{!-- Пустое состояние --}}
+                            <div class="essence-abilities-empty">
+                                <i class="fas fa-gem"></i>
+                                <span>Нет активных способностей</span>
+                                <span class="hint">Экипируйте эссенцию с активными способностями</span>
                             </div>
                             {{/each}}
                         </div>
@@ -1300,50 +1439,80 @@
 
                     {{!-- ДРАКОНЫ: СЛОВА И DP --}}
                     {{#if race.isDragon}}
-                    <div class="panel dragon-panel">
+                    <div class="panel dragon-panel" style="border: 2px solid #8e44ad; background: linear-gradient(135deg, rgba(142,68,173,0.1), rgba(0,0,0,0.3));">
+                        
                         {{!-- Заголовок --}}
-                        <h3 style="display:flex; justify-content:space-between; align-items:center;">
-                            СЛОВА ДРАКОНА
+                        <h3 style="display:flex; justify-content:space-between; align-items:center; color: #9b59b6; border-bottom: 1px solid #8e44ad; padding-bottom: 8px; margin-bottom: 10px;">
+                            <span><i class="fas fa-dragon"></i> СЛОВА ДРАКОНА</span>
                             {{#if isGM}}
-                                <a class="item-create" data-type="feature" title="Добавить Слово" style="font-size:12px;">
+                                <a class="item-create" data-type="dragonword" title="Добавить Слово" style="font-size:14px; color: #9b59b6;">
                                     <i class="fas fa-plus"></i>
                                 </a>
                             {{/if}}
                         </h3>
 
-                        {{!-- ШКАЛА DP (Dragon Points) --}}
-                        <div class="res-bar" style="height: 14px; margin-bottom: 8px; border-radius: 7px; background: rgba(0,0,0,0.5);">
-                            {{!-- Фиолетовая заливка --}}
-                            <div class="bar-fill" style="width: {{dpPercent}}%; background: linear-gradient(90deg, #8e44ad, #9b59b6);"></div>
+                        {{!-- ШКАЛА DP --}}
+                        <div class="res-bar" style="height: 20px; margin-bottom: 12px; border-radius: 10px; background: rgba(0,0,0,0.5); border: 1px solid #8e44ad; position: relative; overflow: hidden;">
+                            {{!-- Заливка --}}
+                            <div class="bar-fill dp-fill" style="width: {{dpPercent}}%; height: 100%;"></div>
                             
-                            <div class="bar-text" style="font-size: 10px; line-height: 14px;">
-                                <span style="margin-right: 4px;">DP:</span>
+                            <div class="bar-text" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                                <span style="color: #d2b4de; margin-right: 5px;">DP:</span>
                                 <input type="number" 
                                     name="system.resources.dp.value" 
                                     value="{{system.resources.dp.value}}" 
-                                    style="width: 30px; height: 100%; border: none; background: transparent; color: white; text-align: center; font-weight: bold;"
+                                    style="width: 35px; border: none; background: transparent; color: white; text-align: center; font-weight: bold; font-size: 12px;"
                                     data-dtype="Number"/>
-                                <span style="color: rgba(255,255,255,0.7);">/ {{system.resources.dp.max}}</span>
+                                <span style="color: rgba(255,255,255,0.5);"> / {{system.resources.dp.max}}</span>
                             </div>
                         </div>
                         
-                        <div class="dragon-words">
-                            {{#if dragonWords}}
+                        {{!-- Список слов --}}
+                        <div class="dragon-words" style="display: flex; flex-direction: column; gap: 6px;">
+                            {{#if dragonWords.length}}
                                 {{#each dragonWords as |word|}}
-                                <div class="word-card item" data-item-id="{{word._id}}">
-                                    <span class="word-name">{{word.name}}</span>
-                                    <span class="word-cost" style="color: #dcbfff;">{{word.system.cost}} DP</span>
+                                <div class="word-card item" data-item-id="{{word._id}}" style="display: flex; align-items: center; background: rgba(0,0,0,0.4); border: 1px solid {{#if word.system.isOnCooldown}}#555{{else}}#8e44ad{{/if}}; border-radius: 6px; padding: 8px; transition: all 0.2s; {{#if word.system.isOnCooldown}}opacity: 0.6;{{/if}}">
                                     
-                                    {{#if ../isGM}}
-                                    <div class="item-controls item-controls-mini" style="margin-left:auto;">
-                                        <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                        <a class="item-delete"><i class="fas fa-trash"></i></a>
+                                    {{!-- Иконка --}}
+                                    <img src="{{word.img}}" width="32" height="32" style="border-radius: 4px; margin-right: 10px; border: 1px solid #8e44ad;">
+                                    
+                                    {{!-- Инфо --}}
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: bold; color: #d2b4de; font-size: 13px;">
+                                            {{word.name}}
+                                            {{#if word.system.isOnCooldown}}
+                                                <span style="font-size: 10px; color: #e74c3c; margin-left: 5px;"><i class="fas fa-hourglass-half"></i> КД</span>
+                                            {{/if}}
+                                        </div>
+                                        <div style="font-size: 11px; color: #9b59b6;">
+                                            <span style="font-weight: bold;">{{word.system.dpCost}} DP</span>
+                                            {{#if word.system.damage}}
+                                                • <span style="color: #e74c3c;">{{word.system.damage}}</span>
+                                            {{/if}}
+                                        </div>
                                     </div>
-                                    {{/if}}
+                                    
+                                    {{!-- Кнопки --}}
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        {{!-- Использовать --}}
+                                        {{#unless word.system.isOnCooldown}}
+                                            <button class="use-dragon-word" data-item-id="{{word._id}}" title="Произнести Слово" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); border: 1px solid #a569bd; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                                <i class="fas fa-volume-up"></i>
+                                            </button>
+                                        {{/unless}}
+                                        
+                                        {{#if ../isGM}}
+                                            <a class="item-edit" style="color: #888; font-size: 14px;"><i class="fas fa-edit"></i></a>
+                                            <a class="item-delete" style="color: #888; font-size: 14px;"><i class="fas fa-trash"></i></a>
+                                        {{/if}}
+                                    </div>
                                 </div>
                                 {{/each}}
                             {{else}}
-                                <div class="empty-text">Нет изученных Слов</div>
+                                <div style="text-align: center; color: #666; font-style: italic; padding: 15px;">
+                                    <i class="fas fa-dragon" style="font-size: 24px; margin-bottom: 5px;"></i>
+                                    <div>Слова ещё не изучены</div>
+                                </div>
                             {{/if}}
                         </div>
                     </div>
@@ -1460,7 +1629,7 @@
                     <div class="panel" style="background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 4px; padding: 10px; flex: 1; display: flex; flex-direction: column;">
                         <h3 style="color: #ccc; border-bottom: 1px solid #ccc; margin-bottom: 10px;">История Жизни</h3>
                         <div class="editor-box" style="flex: 1; min-height: 300px;">
-                            {{editor enrichedBiography target="system.biography" button=true owner=owner editable=editable engine="prosemirror"}}
+                            {{editor enrichedBiography target="system.details.biography" button=true owner=owner editable=editable engine="prosemirror"}}
                         </div>
                     </div>
 

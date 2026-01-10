@@ -116,9 +116,27 @@
     color: #e0e0e0 !important;
 }
 
-/* styles/actor.css */
 .editor-box {
     min-height: 200px; /* Обязательно! */
     background: rgba(0,0,0,0.2);
     border: 1px solid #444;
+}
+
+.essence-ability-actions button.essence-ability-use {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+.item-row.expanded .item-summary {
+    display: block; /* Показываем описание */
+}
+
+.item-summary {
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid #555;
 }

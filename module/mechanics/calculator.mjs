@@ -155,74 +155,51 @@ export function getCritThreshold(flexibility) {
  */
 export function isFlanked(target, attacker) {
     if (target.system.combat?.conditions?.flanked === true) return true;
-    if (!canvas.grid || !target.token) return false;
+    if (!canvas.grid) return false;
     
-    // Получаем токен атакующего
-    let attackerToken = attacker.token; // Может быть Token или TokenDocument
+    // Получаем токены через getActiveTokens()
+    const targetTokens = target.getActiveTokens();
+    if (targetTokens.length === 0) return false;
+    const targetToken = targetTokens[0];
     
-    // Если токена нет в актере, ищем через getActiveTokens (возвращает TokenDocument[])
-    if (!attackerToken && attacker.getActiveTokens) {
-        const tokens = attacker.getActiveTokens();
-        if (tokens.length > 0) attackerToken = tokens[0];
-    }
-    
-    if (!attackerToken) return false;
+    const attackerTokens = attacker.getActiveTokens();
+    if (attackerTokens.length === 0) return false;
+    const attackerToken = attackerTokens[0];
 
-    // Унифицируем доступ к disposition
-    // Если это Token (canvas), берем .document.disposition
-    // Если это TokenDocument, берем .disposition
-    const getDisposition = (t) => {
-        if (t.document) return t.document.disposition; // Это Token (canvas object)
-        return t.disposition; // Это TokenDocument
-    };
-
-    const attackerDisp = getDisposition(attackerToken);
     const gridDist = canvas.scene.grid.distance; 
 
     const allies = canvas.tokens.placeables.filter(t => {
-      // Игнорируем самого атакующего (сравниваем ID)
-      const tId = t.id || t.document?.id;
-      const aId = attackerToken.id || attackerToken.document?.id;
-      if (tId === aId) return false;
-      
-      // Проверка диспозиции (союзник)
-      if (getDisposition(t) !== attackerDisp) return false;
-      
-      // Живой?
-      if (t.actor?.system?.resources?.hp?.value <= 0) return false;
-      
-      // Дистанция
-      // Для measureDistance нужны объекты Token (не документы)
-      // canvas.tokens.placeables - это Token[].
-      // target.token - может быть Document. Если Document, берем .object
-      const targetObject = target.token.object || target.token;
-      
-      const start = { x: t.x, y: t.y };
-      const end = { x: targetObject.x, y: targetObject.y };
-      const measurement = canvas.grid.measurePath([start, end]);
-      const distMeters = measurement.distance; // Дистанция в единицах сцены
-      const reachCells = getActorReach(t.actor); 
-      const reachMeters = reachCells * gridDist;
-      
-      return distMeters <= reachMeters + 0.5;
+        // Игнорируем самого атакующего
+        if (t.id === attackerToken.id) return false;
+        
+        // Проверка диспозиции (союзник)
+        if (t.document.disposition !== attackerToken.document.disposition) return false;
+        
+        // Живой?
+        if (t.actor?.system?.resources?.hp?.value <= 0) return false;
+        
+        // Дистанция до цели
+        const start = { x: t.x, y: t.y };
+        const end = { x: targetToken.x, y: targetToken.y };
+        const measurement = canvas.grid.measurePath([start, end]);
+        const distMeters = measurement.distance;
+        const reachCells = getActorReach(t.actor); 
+        const reachMeters = reachCells * gridDist;
+        
+        return distMeters <= reachMeters + 0.5;
     });
     
     if (allies.length === 0) return false;
     
-    // Углы (нужны координаты x, y)
-    const targetX = target.token.x || target.token.object?.x;
-    const targetY = target.token.y || target.token.object?.y;
-    const attackerX = attackerToken.x || attackerToken.object?.x;
-    const attackerY = attackerToken.y || attackerToken.object?.y;
-
-    const atkAngle = Math.atan2(targetY - attackerY, targetX - attackerX);
+    // Углы
+    const atkAngle = Math.atan2(targetToken.y - attackerToken.y, targetToken.x - attackerToken.x);
     
     for (let ally of allies) {
-      const allyAngle = Math.atan2(targetY - ally.y, targetX - ally.x);
-      let diff = Math.abs(atkAngle - allyAngle);
-      if (diff > Math.PI) diff = 2 * Math.PI - diff;
-      
-      if (diff >= 2.35 && diff <= 3.93) return true;
+        const allyAngle = Math.atan2(targetToken.y - ally.y, targetToken.x - ally.x);
+        let diff = Math.abs(atkAngle - allyAngle);
+        if (diff > Math.PI) diff = 2 * Math.PI - diff;
+        
+        if (diff >= 2.35 && diff <= 3.93) return true;
     }
     
     return false;

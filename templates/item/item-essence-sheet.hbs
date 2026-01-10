@@ -1,87 +1,236 @@
 {{!-- templates/item/item-essence-sheet.hbs --}}
-<form class="{{cssClass}}" autocomplete="off">
+<form class="{{cssClass}} essence-sheet" autocomplete="off">
 
-  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+  {{!-- ==================== ЗАГОЛОВОК ==================== --}}
+  <header class="sheet-header" style="display: grid; grid-template-columns: 64px 1fr 60px; gap: 12px; padding: 12px; align-items: center; background: linear-gradient(135deg, rgba(139,69,19,0.2), rgba(0,0,0,0.4)); border-bottom: 3px solid {{system.colorHex}};">
+    
+    {{!-- Картинка --}}
+    <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" style="width: 64px; height: 64px; border: 2px solid {{system.colorHex}}; border-radius: 8px; object-fit: cover; cursor: pointer;"/>
+    
+    {{!-- Инфо --}}
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <input name="name" type="text" value="{{item.name}}" placeholder="Название эссенции" style="font-size: 18px; font-weight: bold; background: transparent; border: none; border-bottom: 2px solid {{system.colorHex}}; color: #fff; padding: 2px 0;"/>
+      
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        {{!-- Цвет --}}
+        <select name="system.color" style="background: rgba(0,0,0,0.6); border: 1px solid {{system.colorHex}}; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 11px;">
+          <option value="red" {{#if (eq system.color "red")}}selected{{/if}}>🔴 Красный</option>
+          <option value="orange" {{#if (eq system.color "orange")}}selected{{/if}}>🟠 Оранжевый</option>
+          <option value="yellow" {{#if (eq system.color "yellow")}}selected{{/if}}>🟡 Жёлтый</option>
+          <option value="green" {{#if (eq system.color "green")}}selected{{/if}}>🟢 Зелёный</option>
+          <option value="blue" {{#if (eq system.color "blue")}}selected{{/if}}>🔵 Синий</option>
+          <option value="violet" {{#if (eq system.color "violet")}}selected{{/if}}>🟣 Фиолетовый</option>
+          <option value="white" {{#if (eq system.color "white")}}selected{{/if}}>⚪ Белый</option>
+          <option value="black" {{#if (eq system.color "black")}}selected{{/if}}>⚫ Чёрный</option>
+          <option value="gray" {{#if (eq system.color "gray")}}selected{{/if}}>🔘 Серый</option>
+          <option value="rainbow" {{#if (eq system.color "rainbow")}}selected{{/if}}>🌈 Разноцветный</option>
+        </select>
+        
+        {{!-- Монстр --}}
+        <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+          <i class="fas fa-skull" style="color: #888; font-size: 11px;"></i>
+          <input type="text" name="system.monsterName" value="{{system.monsterName}}" placeholder="Монстр-источник" style="background: rgba(0,0,0,0.4); border: 1px solid #555; color: #ccc; padding: 3px 6px; border-radius: 4px; flex: 1; font-size: 11px;"/>
+        </div>
+        
+        {{!-- Кнопка экипировки (только для принадлежащих предметов) --}}
+        {{#if isOwned}}
+        <a class="item-equip" title="{{#if (eq system.equipStatus 'equipped')}}Снять эссенцию{{else}}Экипировать эссенцию{{/if}}" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: {{#if (eq system.equipStatus 'equipped')}}rgba(212,175,55,0.2){{else}}rgba(0,0,0,0.4){{/if}}; border: 1px solid {{#if (eq system.equipStatus 'equipped')}}#d4af37{{else}}#666{{/if}}; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+          <i class="fas {{#if (eq system.equipStatus 'equipped')}}fa-check-circle{{else}}fa-circle{{/if}}" style="color: {{#if (eq system.equipStatus 'equipped')}}#d4af37{{else}}#666{{/if}}; font-size: 16px;"></i>
+        </a>
+        {{/if}}
+      </div>
+    </div>
+    
+    {{!-- Ранг --}}
+    <div style="text-align: center;">
+      <div style="font-size: 9px; color: #888; text-transform: uppercase; margin-bottom: 2px;">Ранг</div>
+      <input type="number" name="system.rank" value="{{system.rank}}" min="1" max="9" style="width: 44px; height: 44px; font-size: 22px; font-weight: bold; text-align: center; background: {{system.colorHex}}; color: #fff; border: none; border-radius: 50%; cursor: pointer;"/>
+    </div>
+  </header>
 
-  {{!-- Ранг --}}
-  <div class="essence-rank-display">{{system.rank}}</div>
-
-  <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item" data-tab="description">Описание</a>
-    <a class="item" data-tab="properties">Свойства</a>
-    <a class="item" data-tab="effects">Эффекты</a>
+  {{!-- ==================== ТАБЫ ==================== --}}
+  <nav class="sheet-tabs tabs" data-group="primary" style="background: rgba(0,0,0,0.3); border-bottom: 2px solid #8b4513;">
+    <a class="item" data-tab="abilities"><i class="fas fa-star"></i> Способности</a>
+    <a class="item" data-tab="description"><i class="fas fa-book"></i> Описание</a>
+    <a class="item" data-tab="effects"><i class="fas fa-magic"></i> Эффекты</a>
+    {{#if isOwned}}
+    <a class="item" data-tab="notes"><i class="fas fa-sticky-note"></i> Заметки</a>
+    {{/if}}
   </nav>
 
-  <section class="sheet-body">
+  <section class="sheet-body" style="padding: 10px; overflow-y: auto;">
 
-    <div class="tab description" data-group="primary" data-tab="description">
-      <div class="editor-container">
-        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
-      </div>
-    </div>
-
-    <div class="tab" data-group="primary" data-tab="properties">
+    {{!-- ==================== СПОСОБНОСТИ ==================== --}}
+    <div class="tab abilities" data-group="primary" data-tab="abilities">
       
-      <div class="panel">
-        <div class="panel-header"><i class="fas fa-star"></i> <h3>Активная способность</h3></div>
-        
-        <div class="rigid-grid">
-          <div class="form-group full-row">
-            <label>Название способности</label>
-            <input type="text" name="system.abilityName" value="{{system.abilityName}}"/>
+      <div class="abilities-list-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+        {{#each system.abilities as |ability idx|}}
+        <div class="essence-ability-card {{#if (eq ability.activationAction 'passive')}}passive{{/if}}" 
+             data-ability-index="{{idx}}" 
+             data-ability-id="{{ability.id}}"
+             style="background: linear-gradient(135deg, rgba(139,69,19,0.15), rgba(0,0,0,0.3)); border: 1px solid #8b4513; border-radius: 6px; padding: 10px;">
+          
+          {{!-- Заголовок --}}
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid #8b4513; border-radius: 4px; color: #d4af37;">
+              {{#if (eq ability.activationAction "passive")}}<i class="fas fa-infinity" title="Пассивная"></i>
+              {{else if (eq ability.activationAction "action")}}<i class="fas fa-fist-raised" title="Действие"></i>
+              {{else if (eq ability.activationAction "bonus")}}<i class="fas fa-bolt" title="Бонусное"></i>
+              {{else if (eq ability.activationAction "reaction")}}<i class="fas fa-shield-alt" title="Реакция"></i>
+              {{else}}<i class="fas fa-feather" title="Свободное"></i>{{/if}}
+            </div>
+            
+            <input type="text" name="system.abilities.{{idx}}.name" value="{{ability.name}}" 
+                   style="flex: 1; background: transparent; border: none; border-bottom: 1px solid #8b4513; color: #ffd700; font-weight: bold; font-size: 13px; padding: 2px;"/>
+            
+            <div style="display: flex; gap: 4px;">
+              {{#if (neq ability.activationAction "passive")}}
+              <a class="ability-use-btn" data-ability-id="{{ability.id}}" title="Использовать" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: #8b4513; border: 1px solid #d4af37; border-radius: 3px; color: #fff; cursor: pointer;">
+                <i class="fas fa-dice-d20"></i>
+              </a>
+              {{/if}}
+              <a class="ability-edit-btn" data-ability-id="{{ability.id}}" title="Редактировать" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid #555; border-radius: 3px; color: #888; cursor: pointer;">
+                <i class="fas fa-cog"></i>
+              </a>
+              <a class="ability-delete-btn" data-ability-id="{{ability.id}}" title="Удалить" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid #555; border-radius: 3px; color: #f44; cursor: pointer;">
+                <i class="fas fa-times"></i>
+              </a>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label>Тип</label>
-            <select name="system.abilityType" style="width:100%">
-              <option value="damage" {{#if (eq system.abilityType "damage")}}selected{{/if}}>Урон</option>
-              <option value="buff" {{#if (eq system.abilityType "buff")}}selected{{/if}}>Баф</option>
-              <option value="utility" {{#if (eq system.abilityType "utility")}}selected{{/if}}>Утилита</option>
-              <option value="transform" {{#if (eq system.abilityType "transform")}}selected{{/if}}>Трансформация</option>
-            </select>
+          {{!-- Тэги --}}
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+            <span style="padding: 2px 6px; border-radius: 3px; font-size: 10px; background: #2d4a2d; border: 1px solid #3d5a3d; color: #8f8;">
+              {{#if (eq ability.activationAction "action")}}Действие{{/if}}
+              {{#if (eq ability.activationAction "bonus")}}Бонус{{/if}}
+              {{#if (eq ability.activationAction "reaction")}}Реакция{{/if}}
+              {{#if (eq ability.activationAction "passive")}}Пассив{{/if}}
+              {{#if (eq ability.activationAction "free")}}Свободное{{/if}}
+            </span>
+            
+            {{#if ability.damage}}
+            <span style="padding: 2px 6px; border-radius: 3px; font-size: 10px; background: #4a2d2d; border: 1px solid #5a3d3d; color: #f88;">
+              <i class="fas fa-burst"></i> {{ability.damage}}
+            </span>
+            {{/if}}
+            
+            {{#if ability.manaCost}}
+            <span style="padding: 2px 6px; border-radius: 3px; font-size: 10px; background: #2d3d4a; border: 1px solid #3d4d5a; color: #6df;">
+              <i class="fas fa-tint"></i> {{ability.manaCost}}
+            </span>
+            {{/if}}
+            
+            {{#if ability.cooldown}}
+            <span style="padding: 2px 6px; border-radius: 3px; font-size: 10px; background: #4a3d2d; border: 1px solid #5a4d3d; color: #fa0;">
+              <i class="fas fa-hourglass"></i> {{ability.cooldown}}р.
+            </span>
+            {{/if}}
+            
+            {{#if ability.range}}
+            <span style="padding: 2px 6px; border-radius: 3px; font-size: 10px; background: #333; border: 1px solid #444; color: #aaa;">
+              <i class="fas fa-arrows-alt-h"></i> {{ability.range}}м
+            </span>
+            {{/if}}
           </div>
-
-          <div class="form-group">
-            <label>Действие</label>
-            <select name="system.activationAction" style="width:100%">
-              <option value="action" {{#if (eq system.activationAction "action")}}selected{{/if}}>Действие</option>
-              <option value="bonus" {{#if (eq system.activationAction "bonus")}}selected{{/if}}>Бонус</option>
-              <option value="reaction" {{#if (eq system.activationAction "reaction")}}selected{{/if}}>Реакция</option>
-              <option value="passive" {{#if (eq system.activationAction "passive")}}selected{{/if}}>Пассив</option>
-            </select>
+          
+          {{!-- Описание --}}
+          {{#if ability.description}}
+          <div style="font-size: 11px; color: #aaa; padding-top: 6px; border-top: 1px dashed #555;">
+            {{{ability.description}}}
           </div>
+          {{/if}}
         </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><i class="fas fa-coins"></i> <h3>Стоимость</h3></div>
-        <div class="rigid-grid">
-          <div class="form-group"><label>Мана</label><input type="number" name="system.manaCost" value="{{system.manaCost}}"/></div>
-          <div class="form-group"><label>Дух</label><input type="number" name="system.spiritCost" value="{{system.spiritCost}}"/></div>
-          <div class="form-group"><label>Кулдаун</label><input type="number" name="system.cooldown" value="{{system.cooldown}}"/></div>
-          <div class="form-group inline"><label>На перезарядке</label><input type="checkbox" name="system.isOnCooldown" {{checked system.isOnCooldown}}/></div>
+        {{/each}}
+        
+        {{!-- Пустое состояние --}}
+        {{#unless system.abilities.length}}
+        <div style="text-align: center; padding: 40px; color: #666;">
+          <i class="fas fa-gem" style="font-size: 48px; color: #555; margin-bottom: 10px;"></i>
+          <p style="margin: 0;">Нет способностей</p>
+          <p style="font-size: 11px; color: #555; margin-top: 5px;">Нажмите кнопку ниже, чтобы добавить</p>
         </div>
+        {{/unless}}
       </div>
-
-      {{#if (eq system.abilityType "damage")}}
-      <div class="panel">
-        <div class="panel-header"><i class="fas fa-burst"></i> <h3>Урон</h3></div>
-        <div class="rigid-grid">
-          <div class="form-group"><label>Формула</label><input type="text" name="system.damage" value="{{system.damage}}"/></div>
-          <div class="form-group"><label>Тип</label><select name="system.damageType">{{selectOptions config.damageTypes selected=system.damageType}}</select></div>
-        </div>
-      </div>
-      {{/if}}
-
+      
+      {{!-- Кнопка добавления --}}
+      <button type="button" class="add-ability-btn" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #2d4a2d, #3d5a3d); border: 1px solid #4d6a4d; color: #8f8; border-radius: 4px; cursor: pointer; font-weight: bold;">
+        <i class="fas fa-plus"></i> Добавить способность
+      </button>
     </div>
 
+    {{!-- ==================== ОПИСАНИЕ ==================== --}}
+    <div class="tab description" data-group="primary" data-tab="description">
+      
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+        <h4 style="color: #d4af37; margin: 0 0 8px 0; font-size: 12px; border-bottom: 1px solid #555; padding-bottom: 4px;">
+          <i class="fas fa-book-open"></i> Общее описание
+        </h4>
+        <div class="editor-wrapper" style="min-height: 100px;">
+          {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+      </div>
+      
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+        <h4 style="color: #8cf; margin: 0 0 8px 0; font-size: 12px; border-bottom: 1px solid #555; padding-bottom: 4px;">
+          <i class="fas fa-infinity"></i> Пассивные эффекты
+        </h4>
+        <div class="editor-wrapper" style="min-height: 80px;">
+          {{editor system.passiveDescription target="system.passiveDescription" button=true editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+      </div>
+      
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+        <h4 style="color: #888; margin: 0 0 8px 0; font-size: 12px; border-bottom: 1px solid #555; padding-bottom: 4px;">
+          <i class="fas fa-skull"></i> О монстре-источнике
+        </h4>
+        <textarea name="system.monsterDescription" rows="3" placeholder="Описание монстра..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #444; color: #ccc; padding: 6px; resize: vertical;">{{system.monsterDescription}}</textarea>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; border-radius: 6px;">
+          <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">Уровень предмета</label>
+          <input type="number" name="system.itemLevel" value="{{system.itemLevel}}" min="1" style="width: 100%; background: #111; border: 1px solid #444; color: #fff; padding: 4px; text-align: center;"/>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; border-radius: 6px;">
+          <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">Цена</label>
+          <input type="number" name="system.price" value="{{system.price}}" min="0" style="width: 100%; background: #111; border: 1px solid #444; color: #fff; padding: 4px; text-align: center;"/>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ==================== ЭФФЕКТЫ ==================== --}}
     {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+    {{!-- ==================== ЗАМЕТКИ (только для владельца) ==================== --}}
+    {{#if isOwned}}
+    <div class="tab notes" data-group="primary" data-tab="notes">
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; border-radius: 6px;">
+        <h4 style="color: #888; margin: 0 0 8px 0; font-size: 12px; border-bottom: 1px solid #555; padding-bottom: 4px;">
+          <i class="fas fa-sticky-note"></i> Личные заметки
+        </h4>
+        <p style="font-size: 10px; color: #666; margin-bottom: 8px;">Эти заметки видны только вам.</p>
+        <div class="editor-wrapper" style="min-height: 150px;">
+          {{editor system.playerNotes target="system.playerNotes" button=true editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+      </div>
+    </div>
+    {{/if}}
 
   </section>
   
+  {{!-- ==================== ФУТЕР ==================== --}}
   {{#if isOwned}}
-  <footer class="item-sheet-footer">
-    <button type="button" class="essence-use-btn use-essence"><i class="fas fa-star"></i> Использовать</button>
+  <footer style="padding: 8px; background: rgba(0,0,0,0.4); border-top: 2px solid #8b4513; display: flex; flex-wrap: wrap; gap: 4px;">
+    {{#each system.activeAbilities as |ability|}}
+    <button type="button" class="quick-ability-btn" data-ability-id="{{ability.id}}" 
+            {{#if (gt ability.currentCooldown 0)}}disabled title="На перезарядке ({{ability.currentCooldown}} р.)"{{/if}}
+            style="padding: 6px 12px; background: linear-gradient(135deg, #8b4513, #a0522d); border: 1px solid #d4af37; color: #fff; border-radius: 4px; cursor: pointer; font-size: 11px;">
+      <i class="fas fa-star"></i> {{ability.name}}
+      {{#if ability.manaCost}}<span style="margin-left: 4px; padding: 1px 4px; background: rgba(0,0,0,0.3); border-radius: 3px; font-size: 9px;">{{ability.manaCost}}</span>{{/if}}
+    </button>
+    {{else}}
+    <span style="color: #666; font-style: italic; font-size: 11px;"><i class="fas fa-info-circle"></i> Добавьте активную способность</span>
+    {{/each}}
   </footer>
   {{/if}}
 </form>

@@ -1,0 +1,176 @@
+<form class="{{cssClass}}" autocomplete="off">
+
+  {{> "systems/dungeon-stone/templates/item/parts/_item-header.hbs"}}
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Описание</a>
+    <a class="item" data-tab="mechanics">Механика</a>
+    <a class="item" data-tab="effects">Эффекты</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    {{!-- ОПИСАНИЕ --}}
+    <div class="tab description" data-group="primary" data-tab="description">
+      <div class="editor-container" style="min-height: 300px;">
+        {{editor system.description target="system.description" button=true editable=editable engine="prosemirror" collaborate=false}}
+      </div>
+    </div>
+
+    {{!-- МЕХАНИКА --}}
+    <div class="tab" data-group="primary" data-tab="mechanics">
+      
+      {{!-- Основное --}}
+      <div class="panel" style="border-color: #8e44ad;">
+        <div class="panel-header" style="color: #9b59b6;"><i class="fas fa-dragon"></i> <h3>Слово Силы</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Стоимость DP</label>
+            <input type="number" name="system.dpCost" value="{{system.dpCost}}" min="0" style="color: #9b59b6; font-weight: bold;"/>
+          </div>
+          <div class="form-group">
+            <label>Уровень Слова</label>
+            <select name="system.wordLevel">
+              <option value="1" {{#if (eq system.wordLevel 1)}}selected{{/if}}>I - Шёпот</option>
+              <option value="2" {{#if (eq system.wordLevel 2)}}selected{{/if}}>II - Слово</option>
+              <option value="3" {{#if (eq system.wordLevel 3)}}selected{{/if}}>III - Возглас</option>
+              <option value="4" {{#if (eq system.wordLevel 4)}}selected{{/if}}>IV - Рёв</option>
+              <option value="5" {{#if (eq system.wordLevel 5)}}selected{{/if}}>V - Крик Бога</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Тип слова</label>
+            <select name="system.wordType">
+              <option value="attack" {{#if (eq system.wordType "attack")}}selected{{/if}}>Атака</option>
+              <option value="defense" {{#if (eq system.wordType "defense")}}selected{{/if}}>Защита</option>
+              <option value="utility" {{#if (eq system.wordType "utility")}}selected{{/if}}>Утилита</option>
+              <option value="buff" {{#if (eq system.wordType "buff")}}selected{{/if}}>Усиление</option>
+              <option value="debuff" {{#if (eq system.wordType "debuff")}}selected{{/if}}>Ослабление</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Требуется Сила Дракона</label>
+            <input type="number" name="system.requiredDPStat" value="{{system.requiredDPStat}}" min="0"/>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Бросок --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-dice-d20"></i> <h3>Бросок</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Тип броска</label>
+            <select name="system.rollType">
+              <option value="attack" {{#if (eq system.rollType "attack")}}selected{{/if}}>Атака</option>
+              <option value="save" {{#if (eq system.rollType "save")}}selected{{/if}}>Спасбросок</option>
+              <option value="none" {{#if (eq system.rollType "none")}}selected{{/if}}>Без броска</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Атрибут атаки</label>
+            <select name="system.attackAttribute">
+              <option value="dragonPowerStat" {{#if (eq system.attackAttribute "dragonPowerStat")}}selected{{/if}}>Сила Дракона</option>
+              <option value="willpower" {{#if (eq system.attackAttribute "willpower")}}selected{{/if}}>Воля</option>
+              <option value="spirit" {{#if (eq system.attackAttribute "spirit")}}selected{{/if}}>Дух</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Спасбросок цели</label>
+            <select name="system.saveAttribute">
+              <option value="" {{#unless system.saveAttribute}}selected{{/unless}}>—</option>
+              <option value="agility" {{#if (eq system.saveAttribute "agility")}}selected{{/if}}>Ловкость</option>
+              <option value="fortitude" {{#if (eq system.saveAttribute "fortitude")}}selected{{/if}}>Стойкость</option>
+              <option value="willpower" {{#if (eq system.saveAttribute "willpower")}}selected{{/if}}>Воля</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>DC (0 = авто)</label>
+            <input type="number" name="system.saveDC" value="{{system.saveDC}}" min="0"/>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Урон --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-fire"></i> <h3>Урон</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Формула урона</label>
+            <input type="text" name="system.damage" value="{{system.damage}}" placeholder="2d6 + @dp"/>
+          </div>
+          <div class="form-group">
+            <label>Тип урона</label>
+            <select name="system.damageType">
+              {{#each config.damageTypes as |label key|}}
+                <option value="{{key}}" {{#if (eq ../system.damageType key)}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Скалирование</label>
+            <select name="system.damageScaling">
+              <option value="dragonPowerStat" {{#if (eq system.damageScaling "dragonPowerStat")}}selected{{/if}}>Сила Дракона</option>
+              <option value="soulPower" {{#if (eq system.damageScaling "soulPower")}}selected{{/if}}>Сила Души</option>
+              <option value="none" {{#if (eq system.damageScaling "none")}}selected{{/if}}>Нет</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Область и дальность --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-bullseye"></i> <h3>Область</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Дальность (м)</label>
+            <input type="number" name="system.range" value="{{system.range}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Тип области</label>
+            <select name="system.areaType">
+              <option value="none" {{#if (eq system.areaType "none")}}selected{{/if}}>Одиночная цель</option>
+              <option value="cone" {{#if (eq system.areaType "cone")}}selected{{/if}}>Конус</option>
+              <option value="line" {{#if (eq system.areaType "line")}}selected{{/if}}>Линия</option>
+              <option value="sphere" {{#if (eq system.areaType "sphere")}}selected{{/if}}>Сфера</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Размер области (м)</label>
+            <input type="number" name="system.areaSize" value="{{system.areaSize}}" min="0"/>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Кулдаун --}}
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-clock"></i> <h3>Перезарядка</h3></div>
+        <div class="rigid-grid">
+          <div class="form-group">
+            <label>Кулдаун (раунды)</label>
+            <input type="number" name="system.cooldown" value="{{system.cooldown}}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="system.isOnCooldown" {{checked system.isOnCooldown}}/>
+              Сейчас на перезарядке
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Длительность эффекта</label>
+            <input type="text" name="system.duration" value="{{system.duration}}" placeholder="instant"/>
+          </div>
+          <div class="form-group">
+            <label>Раунды эффекта</label>
+            <input type="number" name="system.durationRounds" value="{{system.durationRounds}}" min="0"/>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {{!-- ЭФФЕКТЫ --}}
+    {{> "systems/dungeon-stone/templates/item/parts/effects-tab.hbs"}}
+
+  </section>
+</form>

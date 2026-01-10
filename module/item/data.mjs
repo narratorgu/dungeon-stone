@@ -272,32 +272,33 @@ export class LootData extends foundry.abstract.TypeDataModel {
 
 export class EssenceData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
-    return {
-      rank: new NumberField({ initial: 9, min: 1, max: 9, nullable: true }),
-      
-      equipStatus: new StringField({
-        initial: "stored",
-        choices: ["stored", "equipped"]
-      }),
-      
-      abilityName: new StringField({ initial: "Способность" }),
+    
+    // Схема для одной способности эссенции
+    const abilitySchema = () => new SchemaField({
+      id: new StringField({ required: true }),
+      name: new StringField({ initial: "Новая способность" }),
+      img: new StringField({ initial: "icons/svg/aura.svg" }),
       description: new HTMLField(),
       
-      manaCost: new NumberField({ initial: 0 }),
-      spiritCost: new NumberField({ initial: 0 }),
-      cooldown: new NumberField({ initial: 0 }),
-      isOnCooldown: new BooleanField({ initial: false }),
-      
+      // Тип активации
       activationAction: new StringField({
         initial: "action",
         choices: ["action", "bonus", "reaction", "free", "passive"]
       }),
       
+      // Тип способности
       abilityType: new StringField({
         initial: "damage",
-        choices: ["damage", "buff", "debuff", "utility", "summon", "transform", "other"]
+        choices: ["damage", "buff", "debuff", "utility", "summon", "transform", "heal", "other"]
       }),
       
+      // Стоимость
+      manaCost: new NumberField({ initial: 0, min: 0 }),
+      spiritCost: new NumberField({ initial: 0, min: 0 }),
+      cooldown: new NumberField({ initial: 0, min: 0 }),
+      currentCooldown: new NumberField({ initial: 0, min: 0 }),
+      
+      // Урон
       damage: new StringField({ initial: "" }),
       damageType: new StringField({ 
         initial: "pure",
@@ -307,55 +308,195 @@ export class EssenceData extends foundry.abstract.TypeDataModel {
           "psychic", "light", "dark", "pure"
         ]
       }),
-      
       damageScaling: new StringField({
-        initial: "spirit",
-        choices: ["strength", "agility", "precision", "spirit", "cognition", "none"],
-        blank: true
+        initial: "soulPower",
+        choices: ["strength", "agility", "precision", "soulPower", "spirit", "cognition", "willpower", "none"]
       }),
       
-      range: new NumberField({ initial: 0 }),
-      
+      // Дальность и область
+      range: new NumberField({ initial: 0, min: 0 }),
       targetType: new StringField({
-        initial: "self",
+        initial: "enemy",
         choices: ["self", "ally", "enemy", "any", "point"]
       }),
-      
       areaType: new StringField({
         initial: "none",
         choices: ["none", "sphere", "cone", "line", "emanation"]
       }),
-      areaSize: new NumberField({ initial: 0 }),
+      areaSize: new NumberField({ initial: 0, min: 0 }),
       
+      // Длительность
       duration: new StringField({ initial: "instant" }),
-      durationRounds: new NumberField({ initial: 0 }),
+      durationRounds: new NumberField({ initial: 0, min: 0 }),
       
+      // Спасбросок
       requiresSave: new BooleanField({ initial: false }),
       saveAttribute: new StringField({
         initial: "agility",
-        choices: ["agility", "fortitude", "willpower", "cognition"],
-        blank: true
+        choices: ["agility", "fortitude", "willpower", "cognition"]
       }),
-      saveDC: new NumberField({ initial: 0 }),
       
-      itemLevel: new NumberField({ initial: 1, nullable: true }),
-      price: new NumberField({ initial: 100, nullable: true })
+      // Заметки игрока для этой способности
+      playerNotes: new HTMLField()
+    });
+    
+    return {
+      // === ОСНОВНАЯ ИНФОРМАЦИЯ ===
+      rank: new NumberField({ initial: 1, min: 1, max: 9, integer: true }),
+      
+      equipStatus: new StringField({
+        initial: "stored",
+        choices: ["stored", "equipped"]
+      }),
+      
+      // Цвет эссенции (определяет количество способностей)
+      color: new StringField({
+        initial: "red",
+        choices: [
+          "red", "orange", "yellow", "green", "blue", "indigo", "violet",
+          "white", "black", "gray", "rainbow"
+        ]
+      }),
+      
+      // Дополнительные цвета для многоцветных
+      secondaryColors: new ArrayField(new StringField()),
+      
+      // === ИСТОЧНИК ===
+      monsterName: new StringField({ initial: "" }),
+      monsterDescription: new StringField({ initial: "" }),
+      
+      // === ОПИСАНИЯ ===
+      description: new HTMLField(),
+      passiveDescription: new HTMLField(), // Описание пассивных эффектов
+      
+      // === СПОСОБНОСТИ (массив) ===
+      abilities: new ArrayField(abilitySchema(), { initial: [] }),
+      
+      // === ЗАМЕТКИ ИГРОКА ===
+      playerNotes: new HTMLField(),
+      
+      // === ТОРГОВЛЯ ===
+      itemLevel: new NumberField({ initial: 1, min: 1 }),
+      price: new NumberField({ initial: 100, min: 0 }),
+      
+      // === LEGACY (для совместимости) ===
+      abilityName: new StringField({ initial: "" }),
+      manaCost: new NumberField({ initial: 0 }),
+      spiritCost: new NumberField({ initial: 0 }),
+      cooldown: new NumberField({ initial: 0 }),
+      isOnCooldown: new BooleanField({ initial: false }),
+      activationAction: new StringField({ initial: "action" }),
+      abilityType: new StringField({ initial: "damage" }),
+      damage: new StringField({ initial: "" }),
+      damageType: new StringField({ initial: "pure" }),
+      damageScaling: new StringField({ initial: "spirit" }),
+      range: new NumberField({ initial: 0 }),
+      targetType: new StringField({ initial: "self" }),
+      areaType: new StringField({ initial: "none" }),
+      areaSize: new NumberField({ initial: 0 }),
+      duration: new StringField({ initial: "instant" }),
+      durationRounds: new NumberField({ initial: 0 }),
+      requiresSave: new BooleanField({ initial: false }),
+      saveAttribute: new StringField({ initial: "agility" }),
+      saveDC: new NumberField({ initial: 0 })
     };
   }
   
-  get hasActivation() {
-    return this.activationAction !== "passive";
+  // === ГЕТТЕРЫ ===
+  
+  /** Является ли эссенция многоцветной */
+  get isMulticolored() {
+    return this.color === "rainbow" || (this.secondaryColors && this.secondaryColors.length > 0);
   }
   
-  get dealsDamage() {
-    return this.damage && this.damage.length > 0;
+  /** Количество активных способностей */
+  get activeAbilitiesCount() {
+    return this.abilities.filter(a => a.activationAction !== "passive").length;
   }
-
+  
+  /** Активные способности */
+  get activeAbilities() {
+    return this.abilities.filter(a => a.activationAction !== "passive");
+  }
+  
+  /** Пассивные способности */
+  get passiveAbilities() {
+    return this.abilities.filter(a => a.activationAction === "passive");
+  }
+  
+  /** Цвет для отображения */
+  get colorHex() {
+    const colorMap = {
+      red: "#dc143c",
+      orange: "#ff8c00",
+      yellow: "#ffd700",
+      green: "#228b22",
+      blue: "#4169e1",
+      indigo: "#4b0082",
+      violet: "#9400d3",
+      white: "#f0f0f0",
+      black: "#1a1a1a",
+      gray: "#808080",
+      rainbow: "linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)"
+    };
+    return colorMap[this.color] || "#808080";
+  }
+  
+  /** Локализованное название цвета */
+  get colorLabel() {
+    const labels = {
+      red: "Красный",
+      orange: "Оранжевый", 
+      yellow: "Жёлтый",
+      green: "Зелёный",
+      blue: "Синий",
+      violet: "Фиолетовый",
+      white: "Белый",
+      black: "Чёрный",
+      gray: "Серый",
+      rainbow: "Радужный"
+    };
+    return labels[this.color] || this.color;
+  }
+  
+  // === ПОДГОТОВКА ДАННЫХ ===
+  
   prepareDerivedData() {
     super.prepareDerivedData();
     
-    if (!this.rank || isNaN(this.rank) || typeof this.rank !== "number") {
-      this.rank = 1;
+    // Валидация ранга
+    if (!this.rank || isNaN(this.rank)) {
+        this.rank = 1;
+    }
+  }
+  
+  /** Миграция старого формата */
+  _migrateLegacyAbility() {
+    if (this.abilityName || this.damage) {
+      const legacyAbility = {
+        id: foundry.utils.randomID(),
+        name: this.abilityName || "Способность",
+        description: "",
+        activationAction: this.activationAction || "action",
+        abilityType: this.abilityType || "damage",
+        manaCost: this.manaCost || 0,
+        spiritCost: this.spiritCost || 0,
+        cooldown: this.cooldown || 0,
+        currentCooldown: 0,
+        damage: this.damage || "",
+        damageType: this.damageType || "pure",
+        damageScaling: this.damageScaling || "spirit",
+        range: this.range || 0,
+        targetType: this.targetType || "enemy",
+        areaType: this.areaType || "none",
+        areaSize: this.areaSize || 0,
+        duration: this.duration || "instant",
+        durationRounds: this.durationRounds || 0,
+        requiresSave: this.requiresSave || false,
+        saveAttribute: this.saveAttribute || "agility",
+        playerNotes: ""
+      };
+      this.abilities = [legacyAbility];
     }
   }
 }
@@ -557,6 +698,11 @@ export class ContractData extends foundry.abstract.TypeDataModel {
       activeAbility: new HTMLField(),
 
       equipStatus: new StringField({ initial: "stored", choices: ["stored", "equipped"] }),
+
+      level: new NumberField({ initial: 1, min: 1 }),
+      xp: new NumberField({ initial: 0, min: 0 }),
+      xpMax: new NumberField({ initial: 100 }),
+      passiveAbilities: new HTMLField(),
       
       activeAbilityParams: new SchemaField({
         manaCost: new NumberField({ initial: 0 }),
@@ -579,13 +725,97 @@ export class ContractData extends foundry.abstract.TypeDataModel {
       description: new HTMLField()
     };
   }
+}
 
-  prepareDerivedData() {
-    super.prepareDerivedData();
-    
-    if (!this.rank || isNaN(this.rank) || typeof this.rank !== "number") {
-      this.rank = 1;
-    }
+export class DragonWordData extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {
+      // Стоимость в DP
+      dpCost: new NumberField({ initial: 5, min: 0 }),
+      
+      // Тип слова
+      wordType: new StringField({
+        initial: "attack",
+        choices: ["attack", "defense", "utility", "buff", "debuff"]
+      }),
+      
+      // Механика броска
+      rollType: new StringField({
+        initial: "attack",
+        choices: ["attack", "save", "none"]
+      }),
+      
+      // Атрибут для атаки
+      attackAttribute: new StringField({
+        initial: "dragonPowerStat",
+        choices: ["dragonPowerStat", "willpower", "spirit", "cognition"],
+        blank: true
+      }),
+      
+      // Спасбросок
+      saveAttribute: new StringField({
+        initial: "willpower",
+        choices: ["agility", "fortitude", "willpower", "intuition"],
+        blank: true
+      }),
+      saveDC: new NumberField({ initial: 0 }),
+      
+      // Урон
+      damage: new StringField({ initial: "" }),
+      damageType: new StringField({ 
+        initial: "fire",
+        choices: [
+          "slashing", "blunt", "piercing", 
+          "fire", "cold", "lightning", "acid", "poison", 
+          "psychic", "light", "dark", "pure"
+        ]
+      }),
+      
+      // Скалирование урона
+      damageScaling: new StringField({
+        initial: "dragonPowerStat",
+        choices: ["dragonPowerStat", "soulPower", "spirit", "none"],
+        blank: true
+      }),
+      
+      // Дальность и область
+      range: new NumberField({ initial: 10 }),
+      areaType: new StringField({
+        initial: "none",
+        choices: ["none", "cone", "line", "sphere"]
+      }),
+      areaSize: new NumberField({ initial: 0 }),
+      
+      // Длительность
+      duration: new StringField({ initial: "instant" }),
+      durationRounds: new NumberField({ initial: 0 }),
+      
+      // Кулдаун
+      cooldown: new NumberField({ initial: 0 }),
+      isOnCooldown: new BooleanField({ initial: false }),
+      
+      // Уровень слова (для прогрессии)
+      wordLevel: new NumberField({ initial: 1, min: 1, max: 5 }),
+      
+      // Требования
+      requiredDPStat: new NumberField({ initial: 0 }),
+      
+      // Описание
+      description: new HTMLField(),
+      playerNotes: new HTMLField()
+    };
+  }
+  
+  get isAttack() {
+    return this.rollType === "attack";
+  }
+  
+  get requiresSave() {
+    return this.rollType === "save";
+  }
+  
+  get dealsDamage() {
+    return this.damage && this.damage.length > 0;
   }
 }
 

@@ -89,6 +89,8 @@ class CommonActorData extends foundry.abstract.TypeDataModel {
         )
       }),
 
+      contractStage: new StringField({ initial: "Начальная" }),
+
       resources: new SchemaField({
         hp:   resourceField(10, 10),
         mana: resourceField(10, 10),
@@ -116,6 +118,7 @@ class CommonActorData extends foundry.abstract.TypeDataModel {
       equipment: new SchemaField({
         // Оружие
         mainHand: new StringField({ initial: "" }),
+        waist: new StringField({ initial: "" }),
         offHand: new StringField({ initial: "" }),
         
         // Броня
@@ -238,6 +241,7 @@ export class MonsterData extends CommonActorData {
       }),
       dropChance: new NumberField({ initial: 0.22 }),
       floor: new StringField({ initial: "1" }),
+      passiveAbilities: new HTMLField(),
       monsterType: new StringField({ 
           initial: "normal", 
           choices: ["normal", "mutant", "elite", "boss"] 

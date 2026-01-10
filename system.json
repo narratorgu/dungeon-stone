@@ -2,7 +2,7 @@
     "id": "dungeon-stone",
     "title": "Dungeon & Stone TTRPG",
     "description": "System based on Dungeon & Stone mechanics.",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "compatibility": {
       "minimum": "13",
       "verified": "13"
@@ -40,6 +40,7 @@
       "contract": {},
       "blessing": {},
       "spell": {}, 
+      "dragonword": {},
       "role": {},
       "knowledge": {}
     }
@@ -87,8 +88,29 @@
       "system": "dungeon-stone"
     },
     {
+      "name": "contracts",
+      "label": "Контрактные существа",
+      "path": "packs/contracts",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
+      "name": "items",
+      "label": "Предметы (прочие)",
+      "path": "packs/items",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
+      "name": "monsters",
+      "label": "Бестиарий",
+      "path": "packs/monsters",
+      "type": "Item",
+      "system": "dungeon-stone"
+    },
+    {
       "name": "gear",
-      "label": "Снаряжение и Оружие",
+      "label": "Снаряжение",
       "path": "packs/gear",
       "type": "Item",
       "system": "dungeon-stone"
