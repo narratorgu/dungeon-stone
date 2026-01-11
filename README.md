@@ -1,32 +1,44 @@
-# Dungeon & Stone (Foundry VTT System)
+# Dungeon & Stone — Foundry VTT System
 
-A fan-made system implementation for Foundry VTT based on the mechanics and setting of the webnovel/manhwa **"Surviving the Game as a Barbarian"**.
+Фанатская игровая система для Foundry VTT по мотивам **"Surviving the Game as a Barbarian"** (сеттинг/мир/вдохновение).
 
-**Версия системы:** 1.1.1
-**Совместимость:** Foundry V12 / V13
+- **Текущая версия:** см. `system.json`
+- **Совместимость:** Foundry VTT **v13**
+- **Язык:** RU (EN планируется)
 
----
+## Установка (Foundry VTT)
+1. Foundry → **Game Systems** → **Install System**
+2. Вставьте Manifest URL:
+   https://github.com/narratorgu/dungeon-stone/releases/latest/download/system.json
+3. Install
 
-## ⚠️ Disclaimer / Отказ от ответственности
+## Что внутри (контент)
+Система включает компендиумы (требуют существенных доработок, некоторые пусты):
+- Роли (Классы)
+- Родословные
+- Эссенции
+- Заклинания
+- Контракты
+- Бестиарий
+- Снаряжение / предметы
 
-> **This project is a non-profit fan creation.**
+## Баги и предложения
+- Issues: https://github.com/narratorgu/dungeon-stone/issues  
+Желательно прикладывать:
+- версию Foundry (например, 13.342)
+- версию системы (из system.json)
+- шаги воспроизведения
+- скрин/лог из консоли (F12)
 
-**Intellectual Property Rights:**  
-All rights to the setting, world, characters, and original concepts belong to their respective creators and publishers:
-*   **Original Story:** Jung Yoon-kang
-*   **Adaptation/Art:** MIDNIGHT STUDIO, Team the JICK
-*   **Title:** *Surviving the Game as a Barbarian* (Или рус. *Выживая в игре за варвара*)
+## Changelog / Релизы
+- GitHub Releases: https://github.com/narratorgu/dungeon-stone/releases
+- CHANGELOG.md: https://github.com/narratorgu/dungeon-stone/blob/main/CHANGELOG.md
 
-This system implementation is **not** affiliated with, endorsed by, or sponsored by the copyright holders. It is a tool provided freely for fans to play tabletop games in this setting.
+## Лицензия и дисклеймер
+**Code License:** MIT (см. LICENSE)
 
-**License:**  
-The **code** (JavaScript, CSS, HTML) provided in this repository is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the code for your own Foundry VTT games.
-
----
-
-## Установка
-
-1. Скопируйте ссылку на манифест:
-   `https://github.com/narratorgu/dungeon-stone/releases/latest/download/system.json`
-2. В Foundry VTT перейдите в **Game Systems** -> **Install System**.
-3. Вставьте ссылку в поле **Manifest URL** и нажмите Install.
+**Disclaimer:** This project is a non-profit fan creation.  
+All rights to the setting/world belong to their respective creators and publishers:
+- Original Story: Jung Yoon-kang
+- Adaptation/Art: MIDNIGHT STUDIO, Team the JICK
+- Title: Surviving the Game as a Barbarian
