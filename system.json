@@ -10,9 +10,12 @@
     "authors": [
       {
         "name": "narratorgu",
-        "flags": {}
+        "url": "https://github.com/narratorgu"
       }
     ],
+	"url": "https://github.com/narratorgu/dungeon-stone",
+	"bugs": "https://github.com/narratorgu/dungeon-stone/issues",
+	"license": "MIT",
     "esmodules": ["dungeon-stone.mjs"],
     "styles": [
         "styles/variables.css",
@@ -119,5 +122,6 @@
   "socket": true,
   "manifest": "https://github.com/narratorgu/dungeon-stone/releases/latest/download/system.json",
   "download": "https://github.com/narratorgu/dungeon-stone/releases/latest/download/dungeon-stone.zip",
-  "readme": "https://github.com/narratorgu/dungeon-stone/blob/main/README.md"
+  "readme": "https://raw.githubusercontent.com/narratorgu/dungeon-stone/main/README.md",
+  "changelog": "https://github.com/narratorgu/dungeon-stone/releases"
 }
