@@ -1,0 +1,56 @@
+name: Release (Draft)
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate system.json version matches tag
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"        # например v1.1.1
+          VER="${TAG#v}"                  # 1.1.1
+
+          SYSVER=$(python -c "import json; print(json.load(open('system.json','r',encoding='utf-8'))['version'])")
+
+          echo "Tag: $TAG"
+          echo "Tag version: $VER"
+          echo "system.json version: $SYSVER"
+
+          if [ "$VER" != "$SYSVER" ]; then
+            echo "ERROR: Version mismatch. Tag=$VER system.json=$SYSVER"
+            exit 1
+          fi
+
+      - name: Build dungeon-stone.zip
+        shell: bash
+        run: |
+          zip -r dungeon-stone.zip \
+            assets lang module packs styles templates \
+            system.json README.md LICENSE dungeon-stone.mjs
+
+      - name: Generate sha256
+        shell: bash
+        run: |
+          sha256sum dungeon-stone.zip | awk '{print $1}' > dungeon-stone.zip.sha256
+          sha256sum system.json       | awk '{print $1}' > system.json.sha256
+
+      - name: Create Draft GitHub Release + upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            dungeon-stone.zip
+            dungeon-stone.zip.sha256
+            system.json
+            system.json.sha256
